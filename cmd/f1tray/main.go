@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"f1tray/internal/gui"
 	"f1tray/internal/notify"
@@ -32,8 +33,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	go schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
-	go schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
+	// Create a quit channel to manage background processes
+	quitChannel := make(chan struct{})
+
+	// Start scheduled reminders (background tasks)
+	go func() {
+		for {
+			select {
+			case <-quitChannel:
+				// Stop the scheduled tasks when quit signal is received
+				fmt.Println("Stopping scheduled tasks...")
+				return
+			default:
+				// Continue with scheduling tasks
+				schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
+				schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
+				time.Sleep(10 * time.Second) // Sleep to avoid blocking the loop
+			}
+		}
+	}()
 
 	// Basic fallback window acting as our menu
 	win := myApp.NewWindow("F1 Tray")
@@ -62,7 +80,11 @@ func main() {
 		)
 	}
 
+	// Quit button logic to stop background tasks and exit the app
 	buttons = append(buttons, widget.NewButton("Quit", func() {
+		// Signal the background tasks to stop
+		close(quitChannel)
+		fmt.Println("Exiting F1 Tray.")
 		myApp.Quit()
 	}))
 
@@ -74,5 +96,4 @@ func main() {
 	win.SetContent(container.NewVBox(objects...))
 	win.Resize(fyne.NewSize(300, 200))
 	win.ShowAndRun()
-
 }
