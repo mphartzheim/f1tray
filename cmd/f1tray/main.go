@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"f1tray/internal/gui"
 	"f1tray/internal/notify"
 	"f1tray/internal/preferences"
 	"f1tray/internal/schedule"
@@ -41,6 +42,9 @@ func onReady() {
 
 	var mTestNotify, mTestAPI, mTestScheduler, mTestWeeklyReminder *systray.MenuItem
 
+	// Preferences menu
+	mPreferences := systray.AddMenuItem("Preferences", "Edit application preferences")
+
 	if debugMode {
 		systray.AddSeparator()
 		debugLabel := systray.AddMenuItem("— Debug Options —", "")
@@ -57,6 +61,9 @@ func onReady() {
 	go func() {
 		for {
 			select {
+			case <-mPreferences.ClickedCh:
+				go gui.ShowPreferencesWindow()
+
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -81,6 +88,7 @@ func onReady() {
 		}
 	}()
 
+	// Start actual reminder schedules
 	go schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
 	go schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
 }
