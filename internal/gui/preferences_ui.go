@@ -5,6 +5,7 @@ import (
 	"f1tray/internal/schedule"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -21,7 +22,6 @@ func ShowPreferencesWindow() {
 		prefsApp = app.NewWithID("f1tray-preferences")
 		window = prefsApp.NewWindow("F1 Tray Preferences")
 		window.Resize(fyne.NewSize(400, 240))
-
 		buildPreferencesUI()
 	} else {
 		window.Show()
@@ -33,7 +33,11 @@ func buildPreferencesUI() {
 	current, err := preferences.LoadPrefs()
 	if err != nil {
 		fmt.Println("Failed to load preferences:", err)
-		current = preferences.DefaultPrefs()
+		current = preferences.UserPrefs{
+			RaceReminderHours:  2,
+			WeeklyReminderDay:  "Wednesday",
+			WeeklyReminderHour: 12, // ✅ now an int, not a string
+		}
 	}
 
 	// Widgets
@@ -42,17 +46,16 @@ func buildPreferencesUI() {
 
 	days := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
 	daySelect := widget.NewSelect(days, nil)
-	if current.WeeklyReminderDay >= 0 && current.WeeklyReminderDay < len(days) {
-		daySelect.SetSelectedIndex(current.WeeklyReminderDay)
-	}
+	daySelect.SetSelected(current.WeeklyReminderDay)
 
 	hourOptions := make([]string, 24)
 	for i := 0; i < 24; i++ {
 		hourOptions[i] = fmt.Sprintf("%02d:00", i)
 	}
 	hourSelect := widget.NewSelect(hourOptions, nil)
-	hourSelect.SetSelected(fmt.Sprintf("%02d:00", current.WeeklyReminderHour))
+	hourSelect.SetSelected(fmt.Sprintf("%02d:00", current.WeeklyReminderHour)) // ✅ convert int to string
 
+	// Buttons
 	saveBtn := widget.NewButton("Save", func() {
 		hours, err := strconv.Atoi(hoursEntry.Text)
 		if err != nil || hours < 1 || hours > 48 {
@@ -60,10 +63,18 @@ func buildPreferencesUI() {
 			return
 		}
 
-		newPrefs := preferences.Preferences{
+		// Parse "14:00" to 14
+		hourStr := hourSelect.Selected
+		hourInt, err := strconv.Atoi(strings.Split(hourStr, ":")[0])
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("Invalid hour selected"), window)
+			return
+		}
+
+		newPrefs := preferences.UserPrefs{
 			RaceReminderHours:  hours,
-			WeeklyReminderDay:  daySelect.SelectedIndex(),
-			WeeklyReminderHour: hourSelect.SelectedIndex(),
+			WeeklyReminderDay:  daySelect.Selected,
+			WeeklyReminderHour: hourInt, // ✅ now an int
 		}
 
 		err = preferences.SavePrefs(newPrefs)

@@ -9,9 +9,12 @@ import (
 	"f1tray/internal/notify"
 	"f1tray/internal/preferences"
 	"f1tray/internal/schedule"
-	"f1tray/internal/tray"
 
-	"github.com/getlantern/systray"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 var debugMode bool
@@ -19,81 +22,58 @@ var debugMode bool
 func main() {
 	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode to show test options in the tray menu")
 	flag.Parse()
-	tray.Run(onReady, onExit)
-}
 
-func onReady() {
-	systray.SetTitle("F1 Tray")
-	systray.SetTooltip("F1 Session Notifier")
-
-	// Load tray icon
-	iconData, err := os.ReadFile("assets/tray_icon.png")
-	if err == nil {
-		systray.SetIcon(iconData)
-	} else {
-		fmt.Println("Failed to load tray icon:", err)
-	}
+	myApp := app.NewWithID("f1tray")
+	myApp.SetIcon(theme.ComputerIcon()) // You can load a custom icon from file if needed
 
 	prefs, err := preferences.LoadPrefs()
 	if err != nil {
 		fmt.Println("Error loading preferences:", err)
-		return
+		os.Exit(1)
 	}
 
-	var mTestNotify, mTestAPI, mTestScheduler, mTestWeeklyReminder *systray.MenuItem
-
-	// Preferences menu
-	mPreferences := systray.AddMenuItem("Preferences", "Edit application preferences")
-
-	if debugMode {
-		systray.AddSeparator()
-		debugLabel := systray.AddMenuItem("— Debug Options —", "")
-		debugLabel.Disable()
-		mTestNotify = systray.AddMenuItem("Test Notification", "Send a test notification")
-		mTestAPI = systray.AddMenuItem("Test API Call", "Get next race weekend info")
-		mTestScheduler = systray.AddMenuItem("Test Scheduler", "Trigger race reminder in 10 seconds")
-		mTestWeeklyReminder = systray.AddMenuItem("Test Weekly Reminder", "Trigger weekly reminder in 10 seconds")
-		systray.AddSeparator()
-	}
-
-	mQuit := systray.AddMenuItem("Quit", "Exit the application")
-
-	go func() {
-		for {
-			select {
-			case <-mPreferences.ClickedCh:
-				go gui.ShowPreferencesWindow()
-
-			case <-mQuit.ClickedCh:
-				systray.Quit()
-				return
-
-			case <-mTestNotify.ClickedCh:
-				go func() {
-					err := notify.F1Reminder("F1 Tray Test", "This is a test notification!")
-					if err != nil {
-						fmt.Println("Notification failed:", err)
-					}
-				}()
-
-			case <-mTestAPI.ClickedCh:
-				go schedule.TestRaceNotification()
-
-			case <-mTestScheduler.ClickedCh:
-				go schedule.ScheduleNextRaceReminder(true, prefs.RaceReminderHours)
-
-			case <-mTestWeeklyReminder.ClickedCh:
-				go schedule.ScheduleWeeklyReminder(true, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
-			}
-		}
-	}()
-
-	// Start actual reminder schedules
+	// Start reminders
 	go schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
 	go schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
-}
 
-func onExit() {
-	fmt.Println("Exiting F1 Tray.")
-	os.Exit(0)
+	// Tray menu
+	menuItems := []*fyne.MenuItem{
+		fyne.NewMenuItem("Preferences", func() {
+			go gui.ShowPreferencesWindow()
+		}),
+	}
+
+	if debugMode {
+		menuItems = append(menuItems,
+			fyne.NewMenuItemSeparator(),
+			fyne.NewMenuItem("Test Notification", func() {
+				go notify.F1Reminder("F1 Tray Test", "This is a test notification!")
+			}),
+			fyne.NewMenuItem("Test API Call", func() {
+				go schedule.TestRaceNotification()
+			}),
+			fyne.NewMenuItem("Test Scheduler", func() {
+				go schedule.ScheduleNextRaceReminder(true, prefs.RaceReminderHours)
+			}),
+			fyne.NewMenuItem("Test Weekly Reminder", func() {
+				go schedule.ScheduleWeeklyReminder(true, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
+			}),
+		)
+	}
+
+	menuItems = append(menuItems, fyne.NewMenuItemSeparator())
+
+	menuItems = append(menuItems, fyne.NewMenuItem("Quit", func() {
+		myApp.Quit()
+	}))
+
+	trayMenu := fyne.NewMenu("F1 Tray", menuItems...)
+	myApp.SetSystemTrayMenu(trayMenu)
+
+	// Required: Show a dummy hidden window to keep the app alive
+	win := myApp.NewWindow("F1 Tray (hidden)")
+	win.SetContent(container.NewVBox(widget.NewLabel("F1 Tray is running in the system tray.")))
+	win.Hide()
+
+	myApp.Run()
 }
