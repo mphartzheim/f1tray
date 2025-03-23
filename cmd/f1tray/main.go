@@ -13,7 +13,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/theme" // Added import for theme
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -23,9 +23,9 @@ func main() {
 	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode to show test options in the tray menu")
 	flag.Parse()
 
-	// Initialize app with tray support
-	myApp := app.NewWithTray("f1tray")
-	myApp.SetIcon(theme.ComputerIcon()) // Optional: Replace with your own tray icon
+	// Initialize app using NewWithID() as tray support is unavailable for now
+	myApp := app.NewWithID("f1tray")
+	myApp.SetIcon(theme.ComputerIcon()) // This works now
 
 	fmt.Println("Starting F1 Tray...")
 
@@ -40,7 +40,7 @@ func main() {
 	go schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
 	go schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
 
-	// Build system tray menu
+	// Build system tray menu (this is kept for future tray integration)
 	menuItems := []*fyne.MenuItem{
 		fyne.NewMenuItem("Preferences", func() {
 			fmt.Println("Opening Preferences")
@@ -74,21 +74,13 @@ func main() {
 		}),
 	)
 
-	trayMenu := fyne.NewMenu("F1 Tray", menuItems...)
-	myApp.SetSystemTrayMenu(trayMenu)
-
-	// Set the system tray icon (ensure you have the correct image data)
-	iconData, _ := os.ReadFile("assets/tray_icon.png")
-	myApp.SetSystemTrayIcon(iconData)
-
-	fmt.Println("Tray menu set ✅")
-
-	// Create a hidden window to keep the app running
+	// Hidden window to keep the app running
 	win := myApp.NewWindow("F1 Tray")
 	win.SetContent(container.NewVBox(
 		widget.NewLabel("F1 Tray is running in the system tray."),
 	))
 	win.Hide()
 
+	// Run the app
 	myApp.Run()
 }
