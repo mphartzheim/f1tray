@@ -1,4 +1,15 @@
+# Go build files
 bin/
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# IDE/editor stuff
+.vscode/
 *.log
-*.DS_Store
+
+# OS files
+.DS_Store
+Thumbs.db
