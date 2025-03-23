@@ -2,108 +2,71 @@ package gui
 
 import (
 	"f1tray/internal/preferences"
-	"f1tray/internal/schedule"
 	"fmt"
-	"strconv"
-	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
-var prefsApp fyne.App
-var window fyne.Window
+// ShowPreferencesWindow handles the UI for preferences management
+func ShowPreferencesWindow(myApp fyne.App) {
+	// Create a window for preferences
+	prefsWindow := myApp.NewWindow("Preferences")
 
-func ShowPreferencesWindow() {
-	if prefsApp == nil {
-		prefsApp = app.NewWithID("f1tray-preferences")
-		window = prefsApp.NewWindow("F1 Tray Preferences")
-		window.Resize(fyne.NewSize(400, 240))
-		buildPreferencesUI()
-	} else {
-		window.Show()
-		window.RequestFocus()
-	}
-}
-
-func buildPreferencesUI() {
-	current, err := preferences.LoadPrefs()
+	// Load current preferences to display
+	prefs, err := preferences.LoadPrefs()
 	if err != nil {
-		fmt.Println("Failed to load preferences:", err)
-		current = preferences.UserPrefs{
-			RaceReminderHours:  2,
-			WeeklyReminderDay:  "Wednesday",
-			WeeklyReminderHour: 12, // ✅ now an int, not a string
-		}
+		fmt.Println("Error loading preferences:", err)
 	}
 
-	// Widgets
-	hoursEntry := widget.NewEntry()
-	hoursEntry.SetText(strconv.Itoa(current.RaceReminderHours))
+	// Create UI elements for Preferences (like race reminder hours, weekly reminders)
+	raceReminderHoursEntry := widget.NewEntry()
+	raceReminderHoursEntry.SetText(fmt.Sprintf("%d", prefs.RaceReminderHours))
 
-	days := []string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
-	daySelect := widget.NewSelect(days, nil)
-	daySelect.SetSelected(current.WeeklyReminderDay)
-
-	hourOptions := make([]string, 24)
-	for i := 0; i < 24; i++ {
-		hourOptions[i] = fmt.Sprintf("%02d:00", i)
-	}
-	hourSelect := widget.NewSelect(hourOptions, nil)
-	hourSelect.SetSelected(fmt.Sprintf("%02d:00", current.WeeklyReminderHour)) // ✅ convert int to string
-
-	// Buttons
-	saveBtn := widget.NewButton("Save", func() {
-		hours, err := strconv.Atoi(hoursEntry.Text)
-		if err != nil || hours < 1 || hours > 48 {
-			dialog.ShowError(fmt.Errorf("Reminder hours must be a number between 1 and 48"), window)
-			return
-		}
-
-		// Parse "14:00" to 14
-		hourStr := hourSelect.Selected
-		hourInt, err := strconv.Atoi(strings.Split(hourStr, ":")[0])
-		if err != nil {
-			dialog.ShowError(fmt.Errorf("Invalid hour selected"), window)
-			return
-		}
-
-		newPrefs := preferences.UserPrefs{
-			RaceReminderHours:  hours,
-			WeeklyReminderDay:  daySelect.Selected,
-			WeeklyReminderHour: hourInt, // ✅ now an int
-		}
-
-		err = preferences.SavePrefs(newPrefs)
-		if err != nil {
-			dialog.ShowError(fmt.Errorf("Failed to save preferences: %v", err), window)
-			return
-		}
-
-		go schedule.ScheduleNextRaceReminder(false, newPrefs.RaceReminderHours)
-		go schedule.ScheduleWeeklyReminder(false, newPrefs.WeeklyReminderDay, newPrefs.WeeklyReminderHour)
-
-		dialog.ShowInformation("Saved", "Preferences saved successfully.", window)
-		window.Hide()
+	weeklyReminderDaySelect := widget.NewSelect([]string{"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}, func(value string) {
+		// No action needed for now
 	})
 
-	closeBtn := widget.NewButton("Close", func() {
-		window.Hide()
+	// Populate fields with current preferences
+	weeklyReminderDaySelect.SetSelected(prefs.WeeklyReminderDay)
+
+	// Time selector for Weekly Reminder Time
+	weeklyReminderTimePicker := widget.NewEntry()
+	weeklyReminderTimePicker.SetText(prefs.WeeklyReminderTime.Format("15:04"))
+
+	// Button to save preferences
+	saveButton := widget.NewButton("Save", func() {
+		// Save the preferences to file
+		prefs.RaceReminderHours = prefs.RaceReminderHours
+		prefs.WeeklyReminderDay = weeklyReminderDaySelect.Selected
+
+		// Parse the time string to save the weekly reminder time
+		reminderTime, err := time.Parse("15:04", weeklyReminderTimePicker.Text)
+		if err != nil {
+			fmt.Println("Error parsing Weekly Reminder Time:", err)
+		} else {
+			prefs.WeeklyReminderTime = reminderTime
+		}
+
+		if err := preferences.SavePrefs(prefs); err != nil {
+			fmt.Println("Error saving preferences:", err)
+		}
+		prefsWindow.Close()
 	})
 
-	form := container.NewVBox(
-		widget.NewLabel("Remind me X hours before each session:"),
-		hoursEntry,
-		widget.NewLabel("Weekly reminder day:"),
-		daySelect,
-		widget.NewLabel("Weekly reminder time:"),
-		hourSelect,
-		container.NewHBox(saveBtn, closeBtn),
+	// Layout the widgets
+	content := container.NewVBox(
+		widget.NewLabel("Race Reminder Hours:"),
+		raceReminderHoursEntry,
+		widget.NewLabel("Weekly Reminder Day:"),
+		weeklyReminderDaySelect,
+		widget.NewLabel("Weekly Reminder Time:"),
+		weeklyReminderTimePicker,
+		saveButton,
 	)
 
-	window.SetContent(form)
-	window.Show()
+	prefsWindow.SetContent(content)
+	prefsWindow.Show()
 }
