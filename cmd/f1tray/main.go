@@ -23,8 +23,11 @@ func main() {
 	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode to show test options in the tray menu")
 	flag.Parse()
 
-	myApp := app.NewWithID("f1tray")
-	myApp.SetIcon(theme.ComputerIcon()) // You can load a custom icon from file if needed
+	// 🆕 create app with tray support
+	myApp := app.NewWithTray("f1tray")
+	myApp.SetIcon(theme.ComputerIcon()) // You can replace this with your own .png/.ico if desired
+
+	fmt.Println("Starting F1 Tray...")
 
 	prefs, err := preferences.LoadPrefs()
 	if err != nil {
@@ -32,13 +35,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Start reminders
+	// Start scheduled reminders
 	go schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
 	go schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
 
-	// Tray menu
+	// Build tray menu
 	menuItems := []*fyne.MenuItem{
 		fyne.NewMenuItem("Preferences", func() {
+			fmt.Println("Opening Preferences")
 			go gui.ShowPreferencesWindow()
 		}),
 	}
@@ -61,17 +65,19 @@ func main() {
 		)
 	}
 
-	menuItems = append(menuItems, fyne.NewMenuItemSeparator())
-
-	menuItems = append(menuItems, fyne.NewMenuItem("Quit", func() {
-		myApp.Quit()
-	}))
+	menuItems = append(menuItems,
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Quit", func() {
+			fmt.Println("Exiting F1 Tray.")
+			myApp.Quit()
+		}),
+	)
 
 	trayMenu := fyne.NewMenu("F1 Tray", menuItems...)
 	myApp.SetSystemTrayMenu(trayMenu)
 
-	// Required: Show a dummy hidden window to keep the app alive
-	win := myApp.NewWindow("F1 Tray (hidden)")
+	// Dummy window to keep app alive — hidden
+	win := myApp.NewWindow("F1 Tray")
 	win.SetContent(container.NewVBox(widget.NewLabel("F1 Tray is running in the system tray.")))
 	win.Hide()
 
