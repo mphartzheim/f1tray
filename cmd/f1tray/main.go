@@ -12,10 +12,10 @@ import (
 	"github.com/getlantern/systray"
 )
 
-var testReminder bool
+var debugMode bool
 
 func main() {
-	flag.BoolVar(&testReminder, "test-reminder", false, "Trigger the race reminder after 10 seconds for testing")
+	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode to show test options in the tray menu")
 	flag.Parse()
 	tray.Run(onReady, onExit)
 }
@@ -32,10 +32,19 @@ func onReady() {
 		fmt.Println("Failed to load tray icon:", err)
 	}
 
-	// Menu items
-	mTestNotify := systray.AddMenuItem("Test Notification", "Send a test notification")
-	mTestAPI := systray.AddMenuItem("Test API Call", "Get next race weekend info")
-	systray.AddSeparator()
+	var mTestNotify, mTestAPI, mTestScheduler, mTestWeeklyReminder *systray.MenuItem
+
+	if debugMode {
+		systray.AddSeparator()
+		systray.AddMenuItem("Debug Options", "--")
+		systray.AddSeparator()
+		mTestNotify = systray.AddMenuItem("Test Notification", "Send a test notification")
+		mTestAPI = systray.AddMenuItem("Test API Call", "Get next race weekend info")
+		mTestScheduler = systray.AddMenuItem("Test Scheduler", "Trigger race reminder in 10 seconds")
+		mTestWeeklyReminder = systray.AddMenuItem("Test Weekly Reminder", "Trigger weekly reminder in 10 seconds")
+		systray.AddSeparator()
+	}
+
 	mQuit := systray.AddMenuItem("Quit", "Exit the application")
 
 	go func() {
@@ -55,11 +64,18 @@ func onReady() {
 
 			case <-mTestAPI.ClickedCh:
 				go schedule.TestRaceNotification()
+
+			case <-mTestScheduler.ClickedCh:
+				go schedule.ScheduleNextRaceReminder(true)
+
+			case <-mTestWeeklyReminder.ClickedCh:
+				go schedule.ScheduleWeeklyReminder(true)
 			}
 		}
 	}()
 
-	go schedule.ScheduleNextRaceReminder(testReminder)
+	go schedule.ScheduleNextRaceReminder(false)
+	go schedule.ScheduleWeeklyReminder(false)
 }
 
 func onExit() {
