@@ -36,8 +36,8 @@ func onReady() {
 
 	if debugMode {
 		systray.AddSeparator()
-		systray.AddMenuItem("Debug Options", "--")
-		systray.AddSeparator()
+		debugLabel := systray.AddMenuItem("— Debug Options —", "")
+		debugLabel.Disable()
 		mTestNotify = systray.AddMenuItem("Test Notification", "Send a test notification")
 		mTestAPI = systray.AddMenuItem("Test API Call", "Get next race weekend info")
 		mTestScheduler = systray.AddMenuItem("Test Scheduler", "Trigger race reminder in 10 seconds")
