@@ -311,11 +311,7 @@ func (c *canvas) tapUp(pos fyne.Position, tapID int,
 
 	if c.dragging != nil {
 		previousDelta := c.lastTapDelta[tapID]
-		ev := &fyne.DragEvent{Dragged: previousDelta}
-		draggedObjDelta := c.dragStart.Subtract(c.dragging.(fyne.CanvasObject).Position())
-		ev.Position = pos.Subtract(c.dragOffset).Add(draggedObjDelta)
-		ev.AbsolutePosition = pos
-		dragCallback(c.dragging, ev)
+		dragCallback(c.dragging, &fyne.DragEvent{Dragged: previousDelta})
 
 		c.dragging = nil
 		return

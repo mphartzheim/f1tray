@@ -3,7 +3,7 @@ module f1tray
 go 1.23.7
 
 require (
-	fyne.io/fyne/v2 v2.6.0-beta1.0.20250323092213-2bd0fcc70afb
+	fyne.io/fyne/v2 v2.6.0-alpha1
 	github.com/gen2brain/beeep v0.0.0-20240516210008-9c006672e7f4
 )
 

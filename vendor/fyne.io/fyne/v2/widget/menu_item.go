@@ -7,7 +7,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/internal/svg"
 	"fyne.io/fyne/v2/internal/widget"
 	"fyne.io/fyne/v2/theme"
 )
@@ -342,7 +341,7 @@ func (r *menuItemRenderer) updateIcon(img *canvas.Image, rsc fyne.Resource) {
 	if img == nil {
 		return
 	}
-	if r.i.Item.Disabled && svg.IsResourceSVG(rsc) {
+	if r.i.Item.Disabled {
 		img.Resource = theme.NewDisabledResource(rsc)
 	} else {
 		img.Resource = rsc

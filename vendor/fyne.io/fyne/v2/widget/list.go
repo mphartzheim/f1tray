@@ -678,7 +678,7 @@ func (l *listLayout) setupListItem(li *listItem, id ListItemID, focus bool) {
 		if !fyne.CurrentDevice().IsMobile() {
 			canvas := fyne.CurrentApp().Driver().CanvasForObject(l.list)
 			if canvas != nil {
-				canvas.Focus(l.list.impl.(fyne.Focusable))
+				canvas.Focus(l.list)
 			}
 
 			l.list.currentFocus = id
@@ -760,10 +760,6 @@ func (l *listLayout) updateList(newOnly bool) {
 	} else {
 		for _, vis := range l.visible {
 			l.setupListItem(vis.item, vis.id, l.list.focused && l.list.currentFocus == vis.id)
-		}
-
-		// a full refresh may change theme, we should drain the pool of unused items instead of refreshing them.
-		for l.itemPool.Get() != nil {
 		}
 	}
 

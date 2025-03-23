@@ -766,9 +766,6 @@ func (r *treeContentRenderer) Objects() []fyne.CanvasObject {
 
 func (r *treeContentRenderer) Refresh() {
 	r.refreshForID(r.treeContent.nextRefreshID)
-	for _, s := range r.separators {
-		s.Refresh()
-	}
 }
 
 func (r *treeContentRenderer) refreshForID(toDraw TreeNodeID) {
@@ -897,7 +894,7 @@ func (n *treeNode) Tapped(*fyne.PointEvent) {
 	if canvas != nil && canvas.Focused() != n.tree {
 		n.tree.currentFocus = n.uid
 		if !fyne.CurrentDevice().IsMobile() {
-			canvas.Focus(n.tree.impl.(fyne.Focusable))
+			canvas.Focus(n.tree)
 		}
 	}
 	n.Refresh()

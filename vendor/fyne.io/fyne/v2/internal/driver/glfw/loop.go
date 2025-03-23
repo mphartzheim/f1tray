@@ -2,6 +2,7 @@ package glfw
 
 import (
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -22,6 +23,7 @@ type funcData struct {
 // channel for queuing functions on the main thread
 var funcQueue = async.NewUnboundedChan[funcData]()
 var running atomic.Bool
+var initOnce = &sync.Once{}
 
 // Arrange that main.main runs on main thread.
 func init() {
@@ -54,6 +56,14 @@ func runOnMainWithWait(f func(), wait bool) {
 	}
 }
 
+// Preallocate to avoid allocations on every drawSingleFrame.
+// Note that the capacity of this slice can only grow,
+// but its length will never be longer than the total number of
+// window canvases that are dirty on a single frame.
+// So its memory impact should be negligible and does not
+// need periodic shrinking.
+var refreshingCanvases []fyne.Canvas
+
 func (d *gLDriver) drawSingleFrame() {
 	refreshed := false
 	for _, win := range d.windowList() {
@@ -62,24 +72,22 @@ func (d *gLDriver) drawSingleFrame() {
 			continue
 		}
 
+		canvas := w.canvas
+
 		// CheckDirtyAndClear must be checked after visibility,
 		// because when a window becomes visible, it could be
 		// showing old content without a dirty flag set to true.
 		// Do the clear if and only if the window is visible.
-		if !w.visible || !w.canvas.CheckDirtyAndClear() {
+		if !w.visible || !canvas.CheckDirtyAndClear() {
 			// Window hidden or not being redrawn, mark canvasForObject
 			// cache alive if it hasn't been done recently
 			// n.b. we need to make sure threshold is a bit *after*
 			// time.Now() - CacheDuration()
-			threshold := time.Now().Add(10*time.Second - cache.ValidDuration)
+			threshold := time.Now().Add(time.Second - cache.ValidDuration)
 			if w.lastWalkedTime.Before(threshold) {
 				w.canvas.WalkTrees(nil, func(node *common.RenderCacheNode, _ fyne.Position) {
-					// marks canvas for object cache entry alive
+					// marks canvas for widget cache entry alive
 					_ = cache.GetCanvasForObject(node.Obj())
-					// marks renderer cache entry alive
-					if wid, ok := node.Obj().(fyne.Widget); ok {
-						_, _ = cache.CachedRenderer(wid)
-					}
 				})
 				w.lastWalkedTime = time.Now()
 			}
@@ -87,8 +95,16 @@ func (d *gLDriver) drawSingleFrame() {
 		}
 
 		refreshed = refreshed || d.repaintWindow(w)
+		refreshingCanvases = append(refreshingCanvases, canvas)
 	}
+	cache.CleanCanvases(refreshingCanvases)
 	cache.Clean(refreshed)
+
+	// cleanup refreshingCanvases slice
+	for i := 0; i < len(refreshingCanvases); i++ {
+		refreshingCanvases[i] = nil
+	}
+	refreshingCanvases = refreshingCanvases[:0]
 }
 
 func (d *gLDriver) runGL() {
@@ -96,7 +112,7 @@ func (d *gLDriver) runGL() {
 		return // Run was called twice.
 	}
 
-	d.init()
+	d.initGLFW()
 	if d.trayStart != nil {
 		d.trayStart()
 	}

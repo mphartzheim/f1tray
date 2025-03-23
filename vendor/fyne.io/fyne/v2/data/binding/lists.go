@@ -418,8 +418,6 @@ type boundList[T any] struct {
 	comparator     func(T, T) bool
 	updateExternal bool
 	val            *[]T
-
-	parentListener func(int)
 }
 
 func (l *boundList[T]) Append(val T) error {
@@ -541,16 +539,7 @@ func (l *boundList[T]) doReload() (trigger bool, retErr error) {
 		trigger = true
 	} else if oldLen < newLen {
 		for i := oldLen; i < newLen; i++ {
-			item := bindListItem(l.val, i, l.updateExternal, l.comparator)
-
-			if l.parentListener != nil {
-				index := i
-				item.AddListener(NewDataListener(func() {
-					l.parentListener(index)
-				}))
-			}
-
-			l.appendItem(item)
+			l.appendItem(bindListItem(l.val, i, l.updateExternal, l.comparator))
 		}
 		trigger = true
 	}

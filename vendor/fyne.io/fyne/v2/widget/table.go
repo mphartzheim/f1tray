@@ -266,7 +266,7 @@ func (t *Table) Select(id TableCellID) {
 	}
 
 	rows, cols := t.Length()
-	if id.Row < 0 || id.Row >= rows || id.Col < 0 || id.Col >= cols {
+	if id.Row >= rows || id.Col >= cols {
 		return
 	}
 
@@ -277,7 +277,6 @@ func (t *Table) Select(id TableCellID) {
 		f(*t.selectedCell)
 	}
 	t.selectedCell = &id
-	t.currentFocus = id
 
 	t.ScrollTo(id)
 
@@ -590,11 +589,11 @@ func (t *Table) Tapped(e *fyne.PointEvent) {
 	}
 
 	col := t.columnAt(e.Position)
-	if col == noCellMatch || col < 0 {
+	if col == noCellMatch {
 		return // out of col range
 	}
 	row := t.rowAt(e.Position)
-	if row == noCellMatch || row < 0 {
+	if row == noCellMatch {
 		return // out of row range
 	}
 	t.Select(TableCellID{row, col})
@@ -603,8 +602,9 @@ func (t *Table) Tapped(e *fyne.PointEvent) {
 		t.RefreshItem(t.currentFocus)
 		canvas := fyne.CurrentApp().Driver().CanvasForObject(t)
 		if canvas != nil {
-			canvas.Focus(t.impl.(fyne.Focusable))
+			canvas.Focus(t)
 		}
+		t.currentFocus = TableCellID{row, col}
 		t.RefreshItem(t.currentFocus)
 	}
 }

@@ -66,7 +66,6 @@ func (w *window) Resize(size fyne.Size) {
 		w.requestedWidth, w.requestedHeight = width, height
 		if runtime.GOOS != "js" {
 			w.view().SetSize(width, height)
-			w.processResized(width, height)
 		}
 	})
 }
@@ -77,10 +76,9 @@ func (w *window) FixedSize() bool {
 
 func (w *window) SetFixedSize(fixed bool) {
 	w.fixedSize = fixed
-	w.runOnMainWhenCreated(func() {
-		w.fitContent()
-		w.processResized(w.width, w.height)
-	})
+	if w.view() != nil {
+		w.runOnMainWhenCreated(w.fitContent)
+	}
 }
 
 func (w *window) Padded() bool {
@@ -138,11 +136,7 @@ func (w *window) Show() {
 			return
 		}
 
-		if !w.created {
-			w.created = true
-			w.create()
-		}
-
+		w.createLock.Do(w.create)
 		if w.view() == nil {
 			return
 		}
@@ -162,7 +156,7 @@ func (w *window) Show() {
 		}
 
 		if w.fullScreen { // this does not work if called before viewport.Show()
-			w.doSetFullScreen(true)
+			w.SetFullScreen(true)
 		}
 
 		// show top canvas element
@@ -183,7 +177,9 @@ func (w *window) Hide() {
 		}
 
 		w.visible = false
-		w.viewport.Hide()
+		v := w.viewport
+
+		v.Hide()
 
 		// hide top canvas element
 		if content := w.canvas.Content(); content != nil {
@@ -243,9 +239,7 @@ func (w *window) SetContent(content fyne.CanvasObject) {
 	if content != nil {
 		content.Show()
 	}
-	async.EnsureMain(func() {
-		w.RunWithContext(w.RescaleContext)
-	})
+	async.EnsureMain(w.RescaleContext)
 }
 
 func (w *window) Canvas() fyne.Canvas {
@@ -956,7 +950,7 @@ func (d *gLDriver) createWindow(title string, decorate bool) fyne.Window {
 		title = defaultTitle
 	}
 
-	d.init()
+	d.initGLFW()
 
 	ret = &window{title: title, decorate: decorate, driver: d}
 	ret.canvas = newCanvas()

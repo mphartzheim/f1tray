@@ -9,13 +9,15 @@ import (
 )
 
 func (d *gLDriver) initGLFW() {
-	err := glfw.Init()
-	if err != nil {
-		fyne.LogError("failed to initialise GLFW", err)
-		return
-	}
+	initOnce.Do(func() {
+		err := glfw.Init()
+		if err != nil {
+			fyne.LogError("failed to initialise GLFW", err)
+			return
+		}
 
-	initCursors()
+		initCursors()
+	})
 }
 
 func (d *gLDriver) pollEvents() {
