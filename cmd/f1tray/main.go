@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -22,57 +23,72 @@ func main() {
 	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode to show test options in the tray menu")
 	flag.Parse()
 
-	fmt.Println("Launching F1 Tray with stable Fyne...")
+	// Initialize app with tray support
+	myApp := app.NewWithTray("f1tray")
+	myApp.SetIcon(theme.ComputerIcon()) // Optional: Replace with your own tray icon
 
-	myApp := app.NewWithID("f1tray")
+	fmt.Println("Starting F1 Tray...")
 
+	// Load preferences
 	prefs, err := preferences.LoadPrefs()
 	if err != nil {
 		fmt.Println("Error loading preferences:", err)
 		os.Exit(1)
 	}
 
+	// Start scheduled reminders
 	go schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
 	go schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
 
-	// Basic fallback window acting as our menu
-	win := myApp.NewWindow("F1 Tray")
-
-	// Core buttons
-	buttons := []*widget.Button{
-		widget.NewButton("Preferences", func() {
+	// Build system tray menu
+	menuItems := []*fyne.MenuItem{
+		fyne.NewMenuItem("Preferences", func() {
+			fmt.Println("Opening Preferences")
 			go gui.ShowPreferencesWindow()
 		}),
 	}
 
 	if debugMode {
-		buttons = append(buttons,
-			widget.NewButton("Test Notification", func() {
+		menuItems = append(menuItems,
+			fyne.NewMenuItemSeparator(),
+			fyne.NewMenuItem("Test Notification", func() {
 				go notify.F1Reminder("F1 Tray Test", "This is a test notification!")
 			}),
-			widget.NewButton("Test API Call", func() {
+			fyne.NewMenuItem("Test API Call", func() {
 				go schedule.TestRaceNotification()
 			}),
-			widget.NewButton("Test Scheduler", func() {
+			fyne.NewMenuItem("Test Scheduler", func() {
 				go schedule.ScheduleNextRaceReminder(true, prefs.RaceReminderHours)
 			}),
-			widget.NewButton("Test Weekly Reminder", func() {
+			fyne.NewMenuItem("Test Weekly Reminder", func() {
 				go schedule.ScheduleWeeklyReminder(true, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
 			}),
 		)
 	}
 
-	buttons = append(buttons, widget.NewButton("Quit", func() {
-		myApp.Quit()
-	}))
+	menuItems = append(menuItems,
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Quit", func() {
+			fmt.Println("Exiting F1 Tray.")
+			myApp.Quit()
+		}),
+	)
 
-	objects := make([]fyne.CanvasObject, len(buttons))
-	for i, b := range buttons {
-		objects[i] = b
-	}
+	trayMenu := fyne.NewMenu("F1 Tray", menuItems...)
+	myApp.SetSystemTrayMenu(trayMenu)
 
-	win.SetContent(container.NewVBox(objects...))
-	win.Resize(fyne.NewSize(300, 200))
-	win.ShowAndRun()
+	// Set the system tray icon (ensure you have the correct image data)
+	iconData, _ := os.ReadFile("assets/tray_icon.png")
+	myApp.SetSystemTrayIcon(iconData)
 
+	fmt.Println("Tray menu set ✅")
+
+	// Create a hidden window to keep the app running
+	win := myApp.NewWindow("F1 Tray")
+	win.SetContent(container.NewVBox(
+		widget.NewLabel("F1 Tray is running in the system tray."),
+	))
+	win.Hide()
+
+	myApp.Run()
 }
