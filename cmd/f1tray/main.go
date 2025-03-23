@@ -3,119 +3,65 @@ package main
 import (
 	"flag"
 	"fmt"
+	"image/png"
+	"log"
 	"os"
-	"sync"
-	"time"
-
-	"f1tray/internal/gui"
-	"f1tray/internal/notify"
-	"f1tray/internal/preferences"
-	"f1tray/internal/schedule"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 var debugMode bool
 
 func main() {
-	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode to show test options in the tray menu")
+	// Parse debug flag
+	flag.BoolVar(&debugMode, "debug", false, "Enable debug mode")
 	flag.Parse()
 
-	// Initialize the app using NewWithID()
-	myApp := app.NewWithID("f1tray")
+	// Create app
+	f1App := app.NewWithID("com.f1tray.app")
+	f1App.Settings().SetTheme(theme.LightTheme())
 
-	// Load icon from assets folder
-	iconData, err := os.ReadFile("assets/tray_icon.png") // or .ico if you prefer
+	// Load window icon
+	iconFile, err := os.Open("assets/tray_icon.png")
 	if err != nil {
-		fmt.Println("Error loading icon:", err)
+		log.Printf("Failed to load icon: %v", err)
 	} else {
-		// Convert icon data to a fyne.Resource and set it as the app icon
-		iconResource := fyne.NewStaticResource("tray_icon", iconData)
-		myApp.SetIcon(iconResource)
-	}
-
-	fmt.Println("Launching F1 Tray with stable Fyne...")
-
-	// Load preferences
-	prefs, err := preferences.LoadPrefs()
-	if err != nil {
-		fmt.Println("Error loading preferences:", err)
-		os.Exit(1)
-	}
-
-	// Create a quit channel to manage background processes
-	quitChannel := make(chan struct{})
-	var wg sync.WaitGroup
-
-	// Start scheduled reminders (background tasks)
-	wg.Add(1) // Increment WaitGroup counter
-	go func() {
-		defer wg.Done() // Decrement WaitGroup counter when goroutine completes
-		for {
-			select {
-			case <-quitChannel:
-				// Exit the goroutine when quit signal is received
-				return
-			default:
-				// Continue with scheduling tasks
-				schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
-				schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderTime) // Use WeeklyReminderTime
-				time.Sleep(10 * time.Second)                                                              // Sleep to avoid blocking the loop
-			}
+		img, err := png.Decode(iconFile)
+		if err != nil {
+			log.Printf("Failed to decode icon: %v", err)
+		} else {
+			resource := fyne.NewStaticResource("icon.png", nil)
+			f1App.SetIcon(fyne.NewStaticResource("icon.png", nil))
+			f1App.SetIcon(resource)
+			f1App.SetIcon(fyne.NewStaticResource("icon.png", nil))
+			f1App.Settings().SetTheme(theme.LightTheme())
 		}
-	}()
-
-	// Basic fallback window acting as our menu
-	win := myApp.NewWindow("F1 Tray")
-
-	// Core buttons
-	buttons := []*widget.Button{
-		widget.NewButton("Preferences", func() {
-			go gui.ShowPreferencesWindow(myApp) // Pass myApp to preferences window
-		}),
+		iconFile.Close()
 	}
+
+	// Create window
+	mainWindow := f1App.NewWindow("F1 Tray")
+	mainWindow.Resize(fyne.NewSize(400, 300))
+
+	// Main content
+	content := container.NewVBox(
+		widget.NewLabel("Welcome to F1 Tray!"),
+		widget.NewButton("Fetch Results (Coming Soon)", func() {
+			fmt.Println("Fetch button pressed")
+		}),
+	)
 
 	if debugMode {
-		buttons = append(buttons,
-			widget.NewButton("Test Notification", func() {
-				go notify.F1Reminder("F1 Tray Test", "This is a test notification!")
-			}),
-			widget.NewButton("Test API Call", func() {
-				go schedule.TestRaceNotification()
-			}),
-			widget.NewButton("Test Scheduler", func() {
-				go schedule.ScheduleNextRaceReminder(true, prefs.RaceReminderHours)
-			}),
-			widget.NewButton("Test Weekly Reminder", func() {
-				go schedule.ScheduleWeeklyReminder(true, prefs.WeeklyReminderDay, prefs.WeeklyReminderTime) // Use WeeklyReminderTime
-			}),
-		)
+		content.Add(widget.NewLabel("[DEBUG MODE ENABLED]"))
+		content.Add(widget.NewButton("Run Debug Test", func() {
+			fmt.Println("Debug button clicked")
+		}))
 	}
 
-	// Quit button logic to stop background tasks and exit the app
-	buttons = append(buttons, widget.NewButton("Quit", func() {
-		// Signal the background tasks to stop immediately
-		close(quitChannel)
-		wg.Wait() // Wait for the background task to finish
-		fmt.Println("Exiting F1 Tray.")
-		myApp.Quit()
-	}))
-
-	objects := make([]fyne.CanvasObject, len(buttons))
-	for i, b := range buttons {
-		objects[i] = b
-	}
-
-	// Set window content and size
-	win.SetContent(container.NewVBox(objects...))
-	win.Resize(fyne.NewSize(300, 200))
-
-	// Ensure the window is displayed
-	win.Show()
-
-	// Run the app
-	myApp.Run()
+	mainWindow.SetContent(content)
+	mainWindow.ShowAndRun()
 }
