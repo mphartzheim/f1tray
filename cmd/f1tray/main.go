@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"f1tray/internal/notify"
+	"f1tray/internal/preferences"
 	"f1tray/internal/schedule"
 	"f1tray/internal/tray"
 
@@ -30,6 +31,12 @@ func onReady() {
 		systray.SetIcon(iconData)
 	} else {
 		fmt.Println("Failed to load tray icon:", err)
+	}
+
+	prefs, err := preferences.LoadPrefs()
+	if err != nil {
+		fmt.Println("Error loading preferences:", err)
+		return
 	}
 
 	var mTestNotify, mTestAPI, mTestScheduler, mTestWeeklyReminder *systray.MenuItem
@@ -66,16 +73,16 @@ func onReady() {
 				go schedule.TestRaceNotification()
 
 			case <-mTestScheduler.ClickedCh:
-				go schedule.ScheduleNextRaceReminder(true)
+				go schedule.ScheduleNextRaceReminder(true, prefs.RaceReminderHours)
 
 			case <-mTestWeeklyReminder.ClickedCh:
-				go schedule.ScheduleWeeklyReminder(true)
+				go schedule.ScheduleWeeklyReminder(true, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
 			}
 		}
 	}()
 
-	go schedule.ScheduleNextRaceReminder(false)
-	go schedule.ScheduleWeeklyReminder(false)
+	go schedule.ScheduleNextRaceReminder(false, prefs.RaceReminderHours)
+	go schedule.ScheduleWeeklyReminder(false, prefs.WeeklyReminderDay, prefs.WeeklyReminderHour)
 }
 
 func onExit() {
