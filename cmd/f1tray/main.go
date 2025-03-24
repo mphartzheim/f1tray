@@ -31,7 +31,7 @@ func main() {
 	f1App.Settings().SetTheme(theme.DefaultTheme())
 
 	mainWindow.SetCloseIntercept(func() {
-		mainWindow.Hide()
+		fyne.CurrentApp().Quit()
 	})
 
 	f1App.Lifecycle().SetOnStopped(func() {
