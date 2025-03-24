@@ -3,8 +3,6 @@ package gui
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
 	"f1tray/internal/api"
 
@@ -14,19 +12,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func isEmptyResponse(raw map[string]interface{}) bool {
-	mrData, ok := raw["MRData"].(map[string]interface{})
-	if !ok {
-		return true
-	}
-	raceTable, ok := mrData["RaceTable"].(map[string]interface{})
-	if !ok {
-		return true
-	}
-	races, ok := raceTable["Races"].([]interface{})
-	return !ok || len(races) == 0
-}
-
 type RowData struct {
 	Pos         string
 	Driver      string
@@ -35,37 +20,11 @@ type RowData struct {
 }
 
 func BuildSessionResults(mainWindow fyne.Window, session string, backTo fyne.CanvasObject) (fyne.CanvasObject, error) {
-	var err error
-	var resp *http.Response
-	var sessionBody []byte
-
-	// Get the session data
-	resp, err = api.GetSessionResults(session)
+	resp, err := api.GetSessionResults(session)
 	if err != nil {
 		return nil, err
 	}
-	sessionBody, err = io.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	// Try decoding response once
-	var raw map[string]interface{}
-	_ = json.Unmarshal(sessionBody, &raw)
-	if isEmptyResponse(raw) {
-		// Fallback to last race endpoint
-		fallbackSession := "last/" + session
-		resp, err = api.GetSessionResults(fallbackSession)
-		if err != nil {
-			return nil, err
-		}
-		sessionBody, err = io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if err != nil {
-			return nil, err
-		}
-	}
+	defer resp.Body.Close()
 
 	var title string
 	headers := []string{"Pos", "Driver", "Constructor", "Time / Status"}
@@ -75,7 +34,7 @@ func BuildSessionResults(mainWindow fyne.Window, session string, backTo fyne.Can
 	switch session {
 	case "qualifying":
 		var data api.MRDataContainer[api.QualifyingRace]
-		err = json.Unmarshal(sessionBody, &data)
+		err = json.NewDecoder(resp.Body).Decode(&data)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +62,7 @@ func BuildSessionResults(mainWindow fyne.Window, session string, backTo fyne.Can
 
 	case "sprint":
 		var data api.MRDataContainer[api.SprintRace]
-		err = json.Unmarshal(sessionBody, &data)
+		err = json.NewDecoder(resp.Body).Decode(&data)
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +87,7 @@ func BuildSessionResults(mainWindow fyne.Window, session string, backTo fyne.Can
 
 	default:
 		var data api.MRDataContainer[api.ResultsRace]
-		err = json.Unmarshal(sessionBody, &data)
+		err = json.NewDecoder(resp.Body).Decode(&data)
 		if err != nil {
 			return nil, err
 		}
