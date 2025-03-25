@@ -60,6 +60,8 @@ func LoadSchedule(url string, parseFunc func([]byte) (string, [][]string, error)
 				if id.Row == highlightRow {
 					bg.FillColor = theme.Color(theme.ColorNamePrimary)
 					bg.Show()
+				} else {
+					bg.Hide()
 				}
 				bg.Resize(wrapper.Size())
 			}
