@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"f1tray/internal/models"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,96 +16,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
-
-type QualifyingResultResponse struct {
-	MRData struct {
-		RaceTable struct {
-			Races []struct {
-				RaceName          string `json:"raceName"`
-				QualifyingResults []struct {
-					Position string `json:"position"`
-					Driver   struct {
-						FamilyName string `json:"familyName"`
-						GivenName  string `json:"givenName"`
-					} `json:"Driver"`
-					Constructor struct {
-						Name string `json:"name"`
-					} `json:"Constructor"`
-					Q1 string `json:"Q1"`
-					Q2 string `json:"Q2"`
-					Q3 string `json:"Q3"`
-				} `json:"QualifyingResults"`
-			} `json:"Races"`
-		} `json:"RaceTable"`
-	} `json:"MRData"`
-}
-
-type SprintResultResponse struct {
-	MRData struct {
-		RaceTable struct {
-			Races []struct {
-				RaceName      string `json:"raceName"`
-				SprintResults []struct {
-					Position string `json:"position"`
-					Driver   struct {
-						FamilyName string `json:"familyName"`
-						GivenName  string `json:"givenName"`
-					} `json:"Driver"`
-					Constructor struct {
-						Name string `json:"name"`
-					} `json:"Constructor"`
-					Time struct {
-						Time string `json:"time"`
-					} `json:"Time"`
-					Status string `json:"status"`
-				} `json:"SprintResults"`
-			} `json:"Races"`
-		} `json:"RaceTable"`
-	} `json:"MRData"`
-}
-
-type RaceResultResponse struct {
-	MRData struct {
-		RaceTable struct {
-			Races []struct {
-				RaceName string `json:"raceName"`
-				Results  []struct {
-					Position string `json:"position"`
-					Driver   struct {
-						FamilyName string `json:"familyName"`
-						GivenName  string `json:"givenName"`
-					} `json:"Driver"`
-					Constructor struct {
-						Name string `json:"name"`
-					} `json:"Constructor"`
-					Time struct {
-						Time string `json:"time"`
-					} `json:"Time"`
-					Status string `json:"status"`
-				} `json:"Results"`
-			} `json:"Races"`
-		} `json:"RaceTable"`
-	} `json:"MRData"`
-}
-
-type ScheduleResponse struct {
-	MRData struct {
-		RaceTable struct {
-			Races []struct {
-				Round    string `json:"round"`
-				RaceName string `json:"raceName"`
-				Date     string `json:"date"`
-				Circuit  struct {
-					CircuitName string `json:"circuitName"`
-					Location    struct {
-						Locality string `json:"locality"`
-						Country  string `json:"country"`
-					} `json:"Location"`
-				} `json:"Circuit"`
-			} `json:"Races"`
-		} `json:"RaceTable"`
-	} `json:"MRData"`
-}
 
 func main() {
 	myApp := app.New()
@@ -210,7 +121,7 @@ func createScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 
 		// Determine the row for the current race weekend
 		highlightRow = -1
-		var schedule ScheduleResponse
+		var schedule models.ScheduleResponse
 		err = json.Unmarshal(body, &schedule)
 		if err != nil {
 			status.SetText(fmt.Sprintf("Error parsing schedule: %v", err))
@@ -268,7 +179,7 @@ func createScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 }
 
 func parseRaceResults(body []byte) (string, [][]string, error) {
-	var result RaceResultResponse
+	var result models.RaceResultResponse
 	err := json.Unmarshal(body, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("JSON error: %v", err)
@@ -296,7 +207,7 @@ func parseRaceResults(body []byte) (string, [][]string, error) {
 }
 
 func parseSprintResults(body []byte) (string, [][]string, error) {
-	var result SprintResultResponse
+	var result models.SprintResultResponse
 	err := json.Unmarshal(body, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("JSON error: %v", err)
@@ -324,7 +235,7 @@ func parseSprintResults(body []byte) (string, [][]string, error) {
 }
 
 func parseQualifyingResults(body []byte) (string, [][]string, error) {
-	var result QualifyingResultResponse
+	var result models.QualifyingResultResponse
 	err := json.Unmarshal(body, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("JSON error: %v", err)
@@ -355,7 +266,7 @@ func parseQualifyingResults(body []byte) (string, [][]string, error) {
 }
 
 func parseSchedule(body []byte) (string, [][]string, error) {
-	var result ScheduleResponse
+	var result models.ScheduleResponse
 	err := json.Unmarshal(body, &result)
 	if err != nil {
 		return "", nil, fmt.Errorf("JSON error: %v", err)
