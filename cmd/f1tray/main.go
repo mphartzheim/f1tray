@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 
+	"f1tray/internal/processes"
 	"f1tray/internal/ui"
 
 	"fyne.io/fyne/v2"
@@ -18,10 +19,10 @@ func main() {
 	myApp := app.NewWithID("f1tray")
 	myWindow := myApp.NewWindow("F1 Viewer")
 
-	scheduleTab := ui.CreateScheduleTableTab("https://api.jolpi.ca/ergast/f1/current.json", ui.ParseSchedule)
-	resultsTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/results.json", ui.ParseRaceResults)
-	qualifyingTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/qualifying.json", ui.ParseQualifyingResults)
-	sprintTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/sprint.json", ui.ParseSprintResults)
+	scheduleTab := ui.CreateScheduleTableTab("https://api.jolpi.ca/ergast/f1/current.json", processes.ParseSchedule)
+	resultsTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/results.json", processes.ParseRaceResults)
+	qualifyingTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/qualifying.json", processes.ParseQualifyingResults)
+	sprintTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/sprint.json", processes.ParseSprintResults)
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Schedule", scheduleTab),
