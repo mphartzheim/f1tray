@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"f1tray/internal/config"
+	"f1tray/internal/models"
 	"f1tray/internal/processes"
 	"f1tray/internal/ui"
 
@@ -22,10 +23,10 @@ func main() {
 
 	prefs := config.LoadConfig()
 
-	scheduleTab := ui.CreateScheduleTableTab("https://api.jolpi.ca/ergast/f1/current.json", processes.ParseSchedule)
-	resultsTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/results.json", processes.ParseRaceResults)
-	qualifyingTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/qualifying.json", processes.ParseQualifyingResults)
-	sprintTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/sprint.json", processes.ParseSprintResults)
+	scheduleTab := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
+	resultsTab := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
+	qualifyingTab := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
+	sprintTab := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
 	preferencesTab := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 		_ = config.SaveConfig(updated)
 		prefs = updated // Update in-memory copy for close behavior
@@ -56,25 +57,12 @@ func main() {
 	}
 	iconResource := fyne.NewStaticResource("tray_icon.png", iconBytes)
 
-	// Track hidden state for restoration
-	isClosed := false
-
 	if desk, ok := myApp.(desktop.App); ok {
 		showItem := fyne.NewMenuItem("Show", func() {
-			if isClosed {
-				myWindow = myApp.NewWindow("F1 Viewer")
-				myWindow.SetContent(tabs)
-				myWindow.Resize(fyne.NewSize(900, 600))
-				myWindow.SetOnClosed(func() {
-					myWindow.Hide()
-					isClosed = true
-				})
-				myWindow.Show()
-				isClosed = false
-			} else {
-				myWindow.Show()
-			}
+			myWindow.Show()
+			myWindow.RequestFocus()
 		})
+
 		quitItem := fyne.NewMenuItem("Quit", func() {
 			myApp.Quit()
 		})
@@ -91,7 +79,6 @@ func main() {
 			myApp.Quit()
 		} else {
 			myWindow.Hide()
-			isClosed = true
 		}
 	})
 

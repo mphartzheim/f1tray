@@ -9,16 +9,20 @@ import (
 )
 
 func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences)) fyne.CanvasObject {
-	options := []string{"minimize", "exit"}
-	selectWidget := widget.NewSelect(options, func(selected string) {
-		currentPrefs.CloseBehavior = selected
+	isExit := currentPrefs.CloseBehavior == "exit"
+
+	checkbox := widget.NewCheck("Close on exit?", func(checked bool) {
+		if checked {
+			currentPrefs.CloseBehavior = "exit"
+		} else {
+			currentPrefs.CloseBehavior = "minimize"
+		}
 		onSave(currentPrefs)
 	})
-
-	selectWidget.SetSelected(currentPrefs.CloseBehavior)
+	checkbox.SetChecked(isExit)
 
 	return container.NewVBox(
 		widget.NewLabel("Window Close Behavior:"),
-		selectWidget,
+		checkbox,
 	)
 }
