@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -183,6 +186,8 @@ func createScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 	status := widget.NewLabel("Press 'Load Schedule' to fetch data.")
 	tableContainer := container.NewStack()
 
+	var highlightRow int
+
 	loadButton := widget.NewButton("Load Schedule", func() {
 		resp, err := http.Get(url)
 		if err != nil {
@@ -203,20 +208,48 @@ func createScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 			return
 		}
 
+		// Determine the row for the current race weekend
+		highlightRow = -1
+		var schedule ScheduleResponse
+		err = json.Unmarshal(body, &schedule)
+		if err != nil {
+			status.SetText(fmt.Sprintf("Error parsing schedule: %v", err))
+			return
+		}
+
+		now := time.Now()
+		for i, race := range schedule.MRData.RaceTable.Races {
+			raceDate, _ := time.Parse("2006-01-02", race.Date)
+			if raceDate.After(now) || raceDate.Equal(now) {
+				highlightRow = i + 1 // +1 to account for the header row
+				break
+			}
+		}
+
 		table := widget.NewTable(
 			func() (int, int) { return len(rows) + 1, 4 },
 			func() fyne.CanvasObject {
+				bg := canvas.NewRectangle(nil)
 				label := widget.NewLabel("")
-				return container.New(layout.NewStackLayout(), label)
+				return container.NewStack(bg, label)
 			},
-			func(id widget.TableCellID, o fyne.CanvasObject) {
-				label := o.(*fyne.Container).Objects[0].(*widget.Label)
+			func(id widget.TableCellID, obj fyne.CanvasObject) {
+				wrapper := obj.(*fyne.Container)
+				label := wrapper.Objects[1].(*widget.Label)
+				bg := wrapper.Objects[0].(*canvas.Rectangle)
 				if id.Row == 0 {
 					headers := []string{"Round", "Race Name", "Circuit", "Location (Date)"}
 					label.SetText(headers[id.Col])
+					bg.Hide()
 				} else {
 					label.SetText(rows[id.Row-1][id.Col])
+					if id.Row == highlightRow {
+						bg.FillColor = theme.Color(theme.ColorNamePrimary)
+						bg.Show()
+					}
+					bg.Resize(wrapper.Size())
 				}
+				wrapper.Refresh()
 			},
 		)
 
@@ -242,7 +275,7 @@ func parseRaceResults(body []byte) (string, [][]string, error) {
 	}
 
 	if len(result.MRData.RaceTable.Races) == 0 {
-		return "", nil, fmt.Errorf("No race data found.")
+		return "", nil, fmt.Errorf("no race data found")
 	}
 
 	race := result.MRData.RaceTable.Races[0]
@@ -270,7 +303,7 @@ func parseSprintResults(body []byte) (string, [][]string, error) {
 	}
 
 	if len(result.MRData.RaceTable.Races) == 0 {
-		return "", nil, fmt.Errorf("No sprint data found.")
+		return "", nil, fmt.Errorf("no sprint data found")
 	}
 
 	race := result.MRData.RaceTable.Races[0]
@@ -298,7 +331,7 @@ func parseQualifyingResults(body []byte) (string, [][]string, error) {
 	}
 
 	if len(result.MRData.RaceTable.Races) == 0 {
-		return "", nil, fmt.Errorf("No qualifying data found.")
+		return "", nil, fmt.Errorf("no qualifying data found")
 	}
 
 	race := result.MRData.RaceTable.Races[0]
