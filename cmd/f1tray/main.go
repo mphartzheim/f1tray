@@ -18,16 +18,16 @@ func main() {
 	myApp := app.NewWithID("f1tray")
 	myWindow := myApp.NewWindow("F1 Viewer")
 
+	scheduleTab := ui.CreateScheduleTableTab("https://api.jolpi.ca/ergast/f1/current.json", ui.ParseSchedule)
 	resultsTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/results.json", ui.ParseRaceResults)
 	qualifyingTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/qualifying.json", ui.ParseQualifyingResults)
 	sprintTab := ui.CreateResultsTableTab("https://api.jolpi.ca/ergast/f1/current/last/sprint.json", ui.ParseSprintResults)
-	scheduleTab := ui.CreateScheduleTableTab("https://api.jolpi.ca/ergast/f1/current.json", ui.ParseSchedule)
 
 	tabs := container.NewAppTabs(
+		container.NewTabItem("Schedule", scheduleTab),
 		container.NewTabItem("Race Results", resultsTab),
 		container.NewTabItem("Qualifying", qualifyingTab),
 		container.NewTabItem("Sprint", sprintTab),
-		container.NewTabItem("Schedule", scheduleTab),
 	)
 
 	myWindow.SetContent(tabs)
