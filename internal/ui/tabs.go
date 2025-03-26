@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"f1tray/internal/config"
 	"f1tray/internal/processes"
 
 	"fyne.io/fyne/v2"
@@ -34,4 +35,23 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 
 	return container.NewBorder(nil, status, nil, nil, tableContainer)
 
+}
+
+func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences)) fyne.CanvasObject {
+	isExit := currentPrefs.CloseBehavior == "exit"
+
+	checkbox := widget.NewCheck("Close on exit?", func(checked bool) {
+		if checked {
+			currentPrefs.CloseBehavior = "exit"
+		} else {
+			currentPrefs.CloseBehavior = "minimize"
+		}
+		onSave(currentPrefs)
+	})
+	checkbox.SetChecked(isExit)
+
+	return container.NewVBox(
+		widget.NewLabel("Window Close Behavior:"),
+		checkbox,
+	)
 }

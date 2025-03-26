@@ -19,10 +19,10 @@ import (
 var trayIconBytes []byte
 
 func main() {
+	prefs := config.LoadConfig()
+
 	myApp := app.NewWithID("f1tray")
 	myWindow := myApp.NewWindow("F1 Viewer")
-
-	prefs := config.LoadConfig()
 
 	// Create tab content for each section.
 	scheduleContent := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
