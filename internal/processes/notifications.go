@@ -1,8 +1,10 @@
 package processes
 
 import (
+	"time"
+
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/widget"
 )
 
 // SendNotification sends a desktop notification using the Fyne app.
@@ -12,7 +14,13 @@ func SendNotification(a fyne.App, title, content string) {
 	a.SendNotification(notif)
 }
 
-// ShowInAppNotification displays an in-app dialog notification.
-func ShowInAppNotification(w fyne.Window, title, content string) {
-	dialog.ShowInformation(title, content, w)
+// ShowInAppNotification sets the message and hides it after 5 seconds.
+func ShowInAppNotification(label *widget.Label, wrapper fyne.CanvasObject, message string) {
+	label.SetText(message)
+	wrapper.Show()
+	label.Show()
+
+	time.AfterFunc(5*time.Second, func() {
+		wrapper.Hide()
+	})
 }

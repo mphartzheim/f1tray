@@ -9,11 +9,13 @@ import (
 type Preferences struct {
 	CloseBehavior string `json:"close_behavior"` // "exit" or "minimize"
 	HideOnOpen    bool   `json:"hide_on_open"`   // if true, the window is hidden on launch
+	DebugMode     bool   `json:"debug_mode"`     // if true, debug mode is enabled
 }
 
 var DefaultPreferences = Preferences{
 	CloseBehavior: "minimize",
-	HideOnOpen:    true, // default behavior: hide window on open
+	HideOnOpen:    true,
+	DebugMode:     false,
 }
 
 func LoadConfig() Preferences {
