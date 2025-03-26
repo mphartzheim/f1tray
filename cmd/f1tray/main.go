@@ -24,21 +24,30 @@ func main() {
 
 	prefs := config.LoadConfig()
 
-	scheduleTab := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
-	resultsTab := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
-	qualifyingTab := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
-	sprintTab := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
-	preferencesTab := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
+	// Create tab content for each section.
+	scheduleContent := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
+	resultsContent := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
+	qualifyingContent := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
+	sprintContent := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
+	preferencesContent := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 		_ = config.SaveConfig(updated)
 		prefs = updated // Update in-memory copy for close behavior
 	})
 
+	// Create tab items for each section.
+	scheduleTabItem := container.NewTabItem("Schedule", scheduleContent)
+	resultsTabItem := container.NewTabItem("Race Results", resultsContent)
+	qualifyingTabItem := container.NewTabItem("Qualifying", qualifyingContent)
+	sprintTabItem := container.NewTabItem("Sprint", sprintContent)
+	preferencesTabItem := container.NewTabItem("Preferences", preferencesContent)
+
+	// Create the AppTabs container.
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Schedule", scheduleTab),
-		container.NewTabItem("Race Results", resultsTab),
-		container.NewTabItem("Qualifying", qualifyingTab),
-		container.NewTabItem("Sprint", sprintTab),
-		container.NewTabItem("Preferences", preferencesTab),
+		scheduleTabItem,
+		resultsTabItem,
+		qualifyingTabItem,
+		sprintTabItem,
+		preferencesTabItem,
 	)
 
 	myWindow.SetContent(tabs)
@@ -49,25 +58,61 @@ func main() {
 
 	if desk, ok := myApp.(desktop.App); ok {
 		// Delay to allow tray to become ready (Windows quirk)
-		// 100ms is usually enough, adjust if needed
 		time.Sleep(500 * time.Millisecond)
 
+		// Create systray menu items that directly select tabs.
+		scheduleItem := fyne.NewMenuItem("Schedule", func() {
+			tabs.Select(scheduleTabItem)
+			myWindow.Show()
+			myWindow.RequestFocus()
+		})
+		resultsItem := fyne.NewMenuItem("Race Results", func() {
+			tabs.Select(resultsTabItem)
+			myWindow.Show()
+			myWindow.RequestFocus()
+		})
+		qualifyingItem := fyne.NewMenuItem("Qualifying", func() {
+			tabs.Select(qualifyingTabItem)
+			myWindow.Show()
+			myWindow.RequestFocus()
+		})
+		sprintItem := fyne.NewMenuItem("Sprint", func() {
+			tabs.Select(sprintTabItem)
+			myWindow.Show()
+			myWindow.RequestFocus()
+		})
+		preferencesItem := fyne.NewMenuItem("Preferences", func() {
+			tabs.Select(preferencesTabItem)
+			myWindow.Show()
+			myWindow.RequestFocus()
+		})
+		// A generic "Show" menu item.
 		showItem := fyne.NewMenuItem("Show", func() {
 			myWindow.Show()
 			myWindow.RequestFocus()
 		})
-
 		quitItem := fyne.NewMenuItem("Quit", func() {
 			myApp.Quit()
 		})
+
+		// Create a menu that includes the new items.
 		desk.SetSystemTrayIcon(iconResource)
-		desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray", showItem, quitItem))
+		desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
+			scheduleItem,
+			resultsItem,
+			qualifyingItem,
+			sprintItem,
+			preferencesItem,
+			fyne.NewMenuItemSeparator(),
+			showItem,
+			quitItem,
+		))
 	}
 
-	// Hide window on startup
+	// Hide window on startup.
 	myWindow.Hide()
 
-	// Set behavior for clicking the window X based on config
+	// Set behavior for clicking the window X based on config.
 	myWindow.SetCloseIntercept(func() {
 		if prefs.CloseBehavior == "exit" {
 			myApp.Quit()
