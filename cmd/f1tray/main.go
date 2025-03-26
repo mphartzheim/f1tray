@@ -25,6 +25,10 @@ var trayIconBytes []byte
 
 func main() {
 	prefs := config.LoadConfig()
+	state := models.AppState{
+		DebugMode:   prefs.DebugMode,
+		Preferences: prefs,
+	}
 
 	myApp := app.NewWithID("f1tray")
 	myWindow := myApp.NewWindow("F1 Viewer")
@@ -38,6 +42,8 @@ func main() {
 	preferencesContent := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 		_ = config.SaveConfig(updated)
 		prefs = updated
+		state.Preferences = updated
+		state.DebugMode = updated.DebugMode
 	})
 
 	// Create floating notification with close button
@@ -86,14 +92,14 @@ func main() {
 
 	// Manual refresh button
 	refreshButton := widget.NewButton("Refresh All Data", func() {
-		refreshAllData(notificationLabel, notificationWrapper,
+		refreshAllData(state, notificationLabel, notificationWrapper,
 			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 	})
 
 	// Auto-refresh every hour
 	go func() {
 		var refreshInterval time.Duration
-		if prefs.DebugMode {
+		if state.DebugMode {
 			refreshInterval = 1 * time.Minute
 		} else {
 			refreshInterval = 1 * time.Hour
@@ -103,7 +109,7 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			refreshAllData(notificationLabel, notificationWrapper,
+			refreshAllData(state, notificationLabel, notificationWrapper,
 				scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 		}
 	}()
@@ -117,53 +123,51 @@ func main() {
 	// Setup tray
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
 	if desk, ok := myApp.(desktop.App); ok {
-		go func() {
-			maxAttempts := 5
-			success := false
+		maxAttempts := 5
+		success := false
 
-			if runtime.GOOS == "windows" {
-				for i := 0; i < maxAttempts; i++ {
-					func() {
-						defer func() {
-							if r := recover(); r != nil {
-								// Optionally log panic info
-							}
-						}()
-
-						desk.SetSystemTrayIcon(iconResource)
-						success = true
+		if runtime.GOOS == "windows" {
+			for i := 0; i < maxAttempts; i++ {
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							// Optionally log panic info
+						}
 					}()
 
-					if success {
-						break
-					}
+					desk.SetSystemTrayIcon(iconResource)
+					success = true
+				}()
 
-					println("[F1Tray] Attempt", i+1, "to set system tray icon failed. Retrying...")
-					time.Sleep(2 * time.Second)
+				if success {
+					break
 				}
 
-				if !success {
-					println("[F1Tray] Failed to set system tray icon after 5 attempts. Exiting.")
-					myApp.Quit()
-					return
-				}
-			} else {
-				desk.SetSystemTrayIcon(iconResource)
+				println("[F1Tray] Attempt", i+1, "to set system tray icon failed. Retrying...")
+				time.Sleep(2 * time.Second)
 			}
 
-			// Tray icon was set successfully; now set the menu
-			desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
-				fyne.NewMenuItem("Schedule", func() { tabs.SelectIndex(0); myWindow.Show(); myWindow.RequestFocus() }),
-				fyne.NewMenuItem("Upcoming", func() { tabs.SelectIndex(1); myWindow.Show(); myWindow.RequestFocus() }),
-				fyne.NewMenuItem("Race Results", func() { tabs.SelectIndex(2); myWindow.Show(); myWindow.RequestFocus() }),
-				fyne.NewMenuItem("Qualifying", func() { tabs.SelectIndex(3); myWindow.Show(); myWindow.RequestFocus() }),
-				fyne.NewMenuItem("Sprint", func() { tabs.SelectIndex(4); myWindow.Show(); myWindow.RequestFocus() }),
-				fyne.NewMenuItem("Preferences", func() { tabs.SelectIndex(5); myWindow.Show(); myWindow.RequestFocus() }),
-				fyne.NewMenuItemSeparator(),
-				fyne.NewMenuItem("Show", func() { myWindow.Show(); myWindow.RequestFocus() }),
-				fyne.NewMenuItem("Quit", myApp.Quit),
-			))
-		}()
+			if !success {
+				println("[F1Tray] Failed to set system tray icon after 5 attempts. Exiting.")
+				myApp.Quit()
+				return
+			}
+		} else {
+			desk.SetSystemTrayIcon(iconResource)
+		}
+
+		// Tray icon was set successfully; now set the menu
+		desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
+			fyne.NewMenuItem("Schedule", func() { tabs.SelectIndex(0); myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItem("Upcoming", func() { tabs.SelectIndex(1); myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItem("Race Results", func() { tabs.SelectIndex(2); myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItem("Qualifying", func() { tabs.SelectIndex(3); myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItem("Sprint", func() { tabs.SelectIndex(4); myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItem("Preferences", func() { tabs.SelectIndex(5); myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItemSeparator(),
+			fyne.NewMenuItem("Show", func() { myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItem("Quit", myApp.Quit),
+		))
 	}
 
 	// Window visibility
@@ -185,10 +189,10 @@ func main() {
 	myApp.Run()
 }
 
-func refreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
+func refreshAllData(state models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	updated := false
 	for _, tab := range tabs {
-		if tab.Refresh() {
+		if state.DebugMode || tab.Refresh() {
 			updated = true
 		}
 	}
@@ -196,8 +200,11 @@ func refreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...mode
 	if updated {
 		processes.PlayNotificationSound()
 		processes.ShowInAppNotification(label, wrapper, "Data has been refreshed.")
+		fyne.CurrentApp().SendNotification(&fyne.Notification{
+			Title:   "F1Tray",
+			Content: "New F1 data is available!",
+		})
 	} else {
 		processes.ShowInAppNotification(label, wrapper, "No new data to load.")
 	}
-
 }

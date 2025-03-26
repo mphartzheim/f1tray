@@ -1,6 +1,10 @@
 package models
 
-import "fyne.io/fyne/v2"
+import (
+	"f1tray/internal/config"
+
+	"fyne.io/fyne/v2"
+)
 
 type QualifyingResultResponse struct {
 	MRData struct {
@@ -134,4 +138,10 @@ type UpcomingResponse struct {
 type TabData struct {
 	Content fyne.CanvasObject
 	Refresh func() bool
+}
+
+type AppState struct {
+	DebugMode   bool
+	Preferences config.Preferences
+	// Add more things later like logger, user session, etc
 }
