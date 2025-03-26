@@ -54,15 +54,31 @@ func main() {
 		preferencesTabItem,
 	)
 
+	// Create a refresh button that is always accessible.
 	refreshButton := widget.NewButton("Refresh All Data", func() {
-		// Call refresh functions for all tabs.
-		scheduleTabData.Refresh()
-		upcomingTabData.Refresh()
-		resultsTabData.Refresh()
-		qualifyingTabData.Refresh()
-		sprintTabData.Refresh()
+		// Call refresh functions for all tabs and aggregate the boolean results.
+		updated := false
+		if scheduleTabData.Refresh() {
+			updated = true
+		}
+		if upcomingTabData.Refresh() {
+			updated = true
+		}
+		if resultsTabData.Refresh() {
+			updated = true
+		}
+		if qualifyingTabData.Refresh() {
+			updated = true
+		}
+		if sprintTabData.Refresh() {
+			updated = true
+		}
 
-		processes.ShowInAppNotification(myWindow, "Data Refresh", "All data has been refreshed.")
+		if updated {
+			processes.ShowInAppNotification(myWindow, "Data Refresh", "Data has been refreshed.")
+		} else {
+			processes.ShowInAppNotification(myWindow, "Data Refresh", "No new data to load.")
+		}
 	})
 
 	// Wrap the refresh button above the tabs.

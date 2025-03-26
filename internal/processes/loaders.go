@@ -1,6 +1,8 @@
 package processes
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,14 +19,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// etagCache stores ETag values for endpoints to support conditional requests.
-var etagCache = make(map[string]string)
+// hashCache stores computed SHA256 hashes for endpoints to detect changes.
+var hashCache = make(map[string]string)
 
-func LoadSchedule(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) {
+// LoadSchedule fetches and updates the schedule data and returns true if new data was loaded.
+func LoadSchedule(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) bool {
 	body, title, rows, ok := fetchAndParse(url, parseFunc, status)
 	if !ok {
-		// If no new data, exit early.
-		return
+		// No new data loaded.
+		return false
 	}
 
 	highlightRow := -1
@@ -32,7 +35,7 @@ func LoadSchedule(url string, parseFunc func([]byte) (string, [][]string, error)
 	err := json.Unmarshal(body, &schedule)
 	if err != nil {
 		status.SetText(fmt.Sprintf("Error parsing schedule: %v", err))
-		return
+		return false
 	}
 
 	now := time.Now()
@@ -82,12 +85,14 @@ func LoadSchedule(url string, parseFunc func([]byte) (string, [][]string, error)
 	tableContainer.Objects = []fyne.CanvasObject{table}
 	tableContainer.Refresh()
 	status.SetText(fmt.Sprintf("%s loaded", title))
+	return true
 }
 
-func LoadResults(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) {
+// LoadResults fetches and updates the race results and returns true if new data was loaded.
+func LoadResults(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) bool {
 	_, title, rows, ok := fetchAndParse(url, parseFunc, status)
 	if !ok {
-		return
+		return false
 	}
 
 	table := widget.NewTable(
@@ -116,12 +121,14 @@ func LoadResults(url string, parseFunc func([]byte) (string, [][]string, error),
 	tableContainer.Objects = []fyne.CanvasObject{table}
 	tableContainer.Refresh()
 	status.SetText(fmt.Sprintf("Results loaded for %s", title))
+	return true
 }
 
-func LoadUpcoming(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) {
+// LoadUpcoming fetches and updates the upcoming race data and returns true if new data was loaded.
+func LoadUpcoming(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) bool {
 	_, title, rows, ok := fetchAndParse(url, parseFunc, status)
 	if !ok {
-		return
+		return false
 	}
 
 	table := widget.NewTable(
@@ -149,21 +156,18 @@ func LoadUpcoming(url string, parseFunc func([]byte) (string, [][]string, error)
 	tableContainer.Objects = []fyne.CanvasObject{table}
 	tableContainer.Refresh()
 	status.SetText(fmt.Sprintf("Upcoming race loaded: %s", title))
+	return true
 }
 
+// fetchAndParse fetches JSON from a URL, compares its SHA256 hash to detect changes, and returns parsed data if updated.
 func fetchAndParse(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label) ([]byte, string, [][]string, bool) {
-	// Create a new HTTP request
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		status.SetText(fmt.Sprintf("Fetch error: %v", err))
 		return nil, "", nil, false
 	}
 
-	// Add the If-None-Match header if an ETag is cached for this URL.
-	if etag, ok := etagCache[url]; ok && etag != "" {
-		req.Header.Set("If-None-Match", etag)
-	}
-
+	// Perform the request.
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		status.SetText(fmt.Sprintf("Fetch error: %v", err))
@@ -171,24 +175,27 @@ func fetchAndParse(url string, parseFunc func([]byte) (string, [][]string, error
 	}
 	defer resp.Body.Close()
 
-	// If the data hasn't changed, exit without updating.
-	if resp.StatusCode == http.StatusNotModified {
-		status.SetText("No new updates")
-		return nil, "", nil, false
-	}
-
-	// Cache the new ETag if provided.
-	newETag := resp.Header.Get("ETag")
-	if newETag != "" {
-		etagCache[url] = newETag
-	}
-
+	// Read the response body.
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		status.SetText(fmt.Sprintf("Read error: %v", err))
 		return nil, "", nil, false
 	}
 
+	// Compute SHA256 hash of the body.
+	newHashBytes := sha256.Sum256(body)
+	newHash := hex.EncodeToString(newHashBytes[:])
+
+	// Compare with the previously stored hash.
+	if oldHash, ok := hashCache[url]; ok && oldHash == newHash {
+		status.SetText("No new updates")
+		return nil, "", nil, false
+	}
+
+	// Update the hash cache.
+	hashCache[url] = newHash
+
+	// Process the fetched data.
 	title, rows, err := parseFunc(body)
 	if err != nil {
 		status.SetText(err.Error())

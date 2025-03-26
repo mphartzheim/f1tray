@@ -2,6 +2,7 @@ package ui
 
 import (
 	"f1tray/internal/config"
+	"f1tray/internal/models"
 	"f1tray/internal/processes"
 
 	"fyne.io/fyne/v2"
@@ -9,60 +10,54 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// TabData encapsulates a tab's content and its refresh function.
-type TabData struct {
-	Content fyne.CanvasObject
-	Refresh func()
-}
-
-func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) TabData {
+func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading results...")
 	tableContainer := container.NewStack()
 
 	// Define refresh function to load data.
-	refresh := func() {
-		processes.LoadResults(url, parseFunc, status, tableContainer)
+	refresh := func() bool {
+		return processes.LoadResults(url, parseFunc, status, tableContainer)
 	}
 
 	// Load data initially.
-	go refresh()
+	go func() { refresh() }()
 
 	content := container.NewBorder(nil, status, nil, nil, tableContainer)
-	return TabData{
+	return models.TabData{
 		Content: content,
 		Refresh: refresh,
 	}
 }
 
-func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) TabData {
+func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
 
-	refresh := func() {
-		processes.LoadSchedule(url, parseFunc, status, tableContainer)
+	refresh := func() bool {
+		return processes.LoadSchedule(url, parseFunc, status, tableContainer)
 	}
 
-	go refresh()
+	go func() { refresh() }()
 
 	content := container.NewBorder(nil, status, nil, nil, tableContainer)
-	return TabData{
+	return models.TabData{
 		Content: content,
 		Refresh: refresh,
 	}
 }
 
-func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) TabData {
+func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading upcoming races...")
 	tableContainer := container.NewStack()
 
-	refresh := func() {
-		processes.LoadUpcoming(url, parseFunc, status, tableContainer)
+	refresh := func() bool {
+		return processes.LoadUpcoming(url, parseFunc, status, tableContainer)
 	}
 
-	go refresh()
+	go func() { refresh() }()
 
 	content := container.NewBorder(nil, status, nil, nil, tableContainer)
-	return TabData{
+	return models.TabData{
 		Content: content,
 		Refresh: refresh,
 	}

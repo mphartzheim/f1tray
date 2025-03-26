@@ -131,8 +131,7 @@ type UpcomingResponse struct {
 	} `json:"MRData"`
 }
 
-// TabData encapsulates a tab's content and an update function.
 type TabData struct {
 	Content fyne.CanvasObject
-	Refresh func() // Call this to refresh the tab's data.
+	Refresh func() bool
 }
