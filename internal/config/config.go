@@ -10,12 +10,14 @@ type Preferences struct {
 	CloseBehavior string `json:"close_behavior"` // "exit" or "minimize"
 	HideOnOpen    bool   `json:"hide_on_open"`   // if true, the window is hidden on launch
 	DebugMode     bool   `json:"debug_mode"`     // if true, debug mode is enabled
+	EnableSound   bool   `json:"enable_sound"`   // if true, play system sounds
 }
 
 var DefaultPreferences = Preferences{
 	CloseBehavior: "minimize",
 	HideOnOpen:    true,
 	DebugMode:     false,
+	EnableSound:   true,
 }
 
 func LoadConfig() Preferences {

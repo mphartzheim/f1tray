@@ -158,8 +158,10 @@ func refreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...mode
 	}
 
 	if updated {
+		processes.PlayNotificationSound()
 		processes.ShowInAppNotification(label, wrapper, "Data has been refreshed.")
 	} else {
 		processes.ShowInAppNotification(label, wrapper, "No new data to load.")
 	}
+
 }

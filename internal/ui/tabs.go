@@ -247,6 +247,21 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 	})
 	hideCheckbox.SetChecked(currentPrefs.HideOnOpen)
 
+	soundCheckbox := widget.NewCheck("Enable sounds?", func(checked bool) {
+		currentPrefs.EnableSound = checked
+		onSave(currentPrefs)
+	})
+	soundCheckbox.SetChecked(currentPrefs.EnableSound)
+
+	testButton := widget.NewButton("Test", func() {
+		processes.PlayNotificationSound()
+	})
+
+	soundRow := container.NewHBox(
+		soundCheckbox,
+		testButton,
+	)
+
 	debugCheckbox := widget.NewCheck("Debug Mode?", func(checked bool) {
 		currentPrefs.DebugMode = checked
 		onSave(currentPrefs)
@@ -254,11 +269,9 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 	debugCheckbox.SetChecked(currentPrefs.DebugMode)
 
 	return container.NewVBox(
-		widget.NewLabel("Window Close Behavior:"),
 		closeCheckbox,
-		widget.NewLabel("Window Open Behavior:"),
 		hideCheckbox,
-		widget.NewLabel("Debug Mode Behavior:"),
+		soundRow,
 		debugCheckbox,
 	)
 }
