@@ -40,10 +40,11 @@ mkdir -p "$APPDIR/usr/bin"
 # Copy binary into AppDir
 cp "$BINARY_PATH" "$APPDIR/usr/bin/$APP_NAME"
 
-# Create AppRun script
+# Create AppRun script with dynamic path resolution
 cat > "$APPDIR/AppRun" <<EOF
 #!/bin/sh
-exec usr/bin/$APP_NAME "\$@"
+HERE="\$(dirname "\$(readlink -f "\$0")")"
+exec "\$HERE/usr/bin/$APP_NAME" "\$@"
 EOF
 chmod +x "$APPDIR/AppRun"
 
@@ -59,7 +60,7 @@ EOF
 
 # Generate icon with ImageMagick (using 'magick')
 echo "🎨 Converting icon..."
-magick assets/tray_icon.png -resize 256x256 "$APPDIR/$BINARY_NAME.png"
+magick cmd/f1tray/assets/tray_icon.png -resize 256x256 "$APPDIR/$BINARY_NAME.png"
 chmod 644 "$APPDIR/$BINARY_NAME.png"
 
 # Package AppImage

@@ -1,9 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"io"
-	"os"
+	_ "embed"
+	"time"
 
 	"f1tray/internal/config"
 	"f1tray/internal/models"
@@ -14,8 +13,10 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/storage"
 )
+
+//go:embed assets/tray_icon.png
+var trayIconBytes []byte
 
 func main() {
 	myApp := app.NewWithID("f1tray")
@@ -43,21 +44,14 @@ func main() {
 	myWindow.SetContent(tabs)
 	myWindow.Resize(fyne.NewSize(900, 600))
 
-	// Load tray icon
-	iconFileURI := storage.NewFileURI("assets/tray_icon.png")
-	iconReader, err := storage.Reader(iconFileURI)
-	if err != nil {
-		fmt.Println("Failed to load tray icon:", err)
-		os.Exit(1)
-	}
-	iconBytes, err := io.ReadAll(iconReader)
-	if err != nil {
-		fmt.Println("Failed to read icon file:", err)
-		os.Exit(1)
-	}
-	iconResource := fyne.NewStaticResource("tray_icon.png", iconBytes)
+	// Use embedded tray icon
+	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
 
 	if desk, ok := myApp.(desktop.App); ok {
+		// Delay to allow tray to become ready (Windows quirk)
+		// 100ms is usually enough, adjust if needed
+		time.Sleep(500 * time.Millisecond)
+
 		showItem := fyne.NewMenuItem("Show", func() {
 			myWindow.Show()
 			myWindow.RequestFocus()
