@@ -69,9 +69,9 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 }
 
 func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences)) fyne.CanvasObject {
+	// Checkbox for Close Behavior.
 	isExit := currentPrefs.CloseBehavior == "exit"
-
-	checkbox := widget.NewCheck("Close on exit?", func(checked bool) {
+	closeCheckbox := widget.NewCheck("Close on exit?", func(checked bool) {
 		if checked {
 			currentPrefs.CloseBehavior = "exit"
 		} else {
@@ -79,10 +79,19 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 		}
 		onSave(currentPrefs)
 	})
-	checkbox.SetChecked(isExit)
+	closeCheckbox.SetChecked(isExit)
+
+	// Checkbox for Hide on Open.
+	hideCheckbox := widget.NewCheck("Hide on open?", func(checked bool) {
+		currentPrefs.HideOnOpen = checked
+		onSave(currentPrefs)
+	})
+	hideCheckbox.SetChecked(currentPrefs.HideOnOpen)
 
 	return container.NewVBox(
 		widget.NewLabel("Window Close Behavior:"),
-		checkbox,
+		closeCheckbox,
+		widget.NewLabel("Window Open Behavior:"),
+		hideCheckbox,
 	)
 }

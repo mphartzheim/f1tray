@@ -129,8 +129,12 @@ func main() {
 		))
 	}
 
-	// Hide window on startup.
-	myWindow.Hide()
+	// Check the preferences for HideOnOpen
+	if prefs.HideOnOpen {
+		myWindow.Hide()
+	} else {
+		myWindow.Show()
+	}
 
 	// Set behavior for clicking the window X based on config.
 	myWindow.SetCloseIntercept(func() {

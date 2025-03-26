@@ -8,10 +8,12 @@ import (
 
 type Preferences struct {
 	CloseBehavior string `json:"close_behavior"` // "exit" or "minimize"
+	HideOnOpen    bool   `json:"hide_on_open"`   // if true, the window is hidden on launch
 }
 
 var DefaultPreferences = Preferences{
 	CloseBehavior: "minimize",
+	HideOnOpen:    true, // default behavior: hide window on open
 }
 
 func LoadConfig() Preferences {
