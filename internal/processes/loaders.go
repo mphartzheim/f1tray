@@ -17,9 +17,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// etagCache stores ETag values for endpoints to support conditional requests.
+var etagCache = make(map[string]string)
+
 func LoadSchedule(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) {
 	body, title, rows, ok := fetchAndParse(url, parseFunc, status)
 	if !ok {
+		// If no new data, exit early.
 		return
 	}
 
@@ -81,7 +85,7 @@ func LoadSchedule(url string, parseFunc func([]byte) (string, [][]string, error)
 }
 
 func LoadResults(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) {
-	_, label, rows, ok := fetchAndParse(url, parseFunc, status)
+	_, title, rows, ok := fetchAndParse(url, parseFunc, status)
 	if !ok {
 		return
 	}
@@ -111,7 +115,7 @@ func LoadResults(url string, parseFunc func([]byte) (string, [][]string, error),
 
 	tableContainer.Objects = []fyne.CanvasObject{table}
 	tableContainer.Refresh()
-	status.SetText(fmt.Sprintf("Results loaded for %s", label))
+	status.SetText(fmt.Sprintf("Results loaded for %s", title))
 }
 
 func LoadUpcoming(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) {
@@ -121,7 +125,7 @@ func LoadUpcoming(url string, parseFunc func([]byte) (string, [][]string, error)
 	}
 
 	table := widget.NewTable(
-		func() (int, int) { return len(rows) + 1, 3 }, // 3 columns: session, date, and time
+		func() (int, int) { return len(rows) + 1, 3 },
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
 			return container.New(layout.NewStackLayout(), label)
@@ -148,12 +152,36 @@ func LoadUpcoming(url string, parseFunc func([]byte) (string, [][]string, error)
 }
 
 func fetchAndParse(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label) ([]byte, string, [][]string, bool) {
-	resp, err := http.Get(url)
+	// Create a new HTTP request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		status.SetText(fmt.Sprintf("Fetch error: %v", err))
+		return nil, "", nil, false
+	}
+
+	// Add the If-None-Match header if an ETag is cached for this URL.
+	if etag, ok := etagCache[url]; ok && etag != "" {
+		req.Header.Set("If-None-Match", etag)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		status.SetText(fmt.Sprintf("Fetch error: %v", err))
 		return nil, "", nil, false
 	}
 	defer resp.Body.Close()
+
+	// If the data hasn't changed, exit without updating.
+	if resp.StatusCode == http.StatusNotModified {
+		status.SetText("No new updates")
+		return nil, "", nil, false
+	}
+
+	// Cache the new ETag if provided.
+	newETag := resp.Header.Get("ETag")
+	if newETag != "" {
+		etagCache[url] = newETag
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

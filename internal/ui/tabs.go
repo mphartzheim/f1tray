@@ -9,32 +9,63 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) fyne.CanvasObject {
+// TabData encapsulates a tab's content and its refresh function.
+type TabData struct {
+	Content fyne.CanvasObject
+	Refresh func()
+}
+
+func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) TabData {
 	status := widget.NewLabel("Loading results...")
 	tableContainer := container.NewStack()
 
-	go processes.LoadResults(url, parseFunc, status, tableContainer)
+	// Define refresh function to load data.
+	refresh := func() {
+		processes.LoadResults(url, parseFunc, status, tableContainer)
+	}
 
-	return container.NewBorder(nil, status, nil, nil, tableContainer)
+	// Load data initially.
+	go refresh()
+
+	content := container.NewBorder(nil, status, nil, nil, tableContainer)
+	return TabData{
+		Content: content,
+		Refresh: refresh,
+	}
 }
 
-func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) fyne.CanvasObject {
-	status := widget.NewLabel("Press 'Load Schedule' to fetch data.")
+func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) TabData {
+	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
 
-	go processes.LoadSchedule(url, parseFunc, status, tableContainer)
+	refresh := func() {
+		processes.LoadSchedule(url, parseFunc, status, tableContainer)
+	}
 
-	return container.NewBorder(nil, status, nil, nil, tableContainer)
+	go refresh()
+
+	content := container.NewBorder(nil, status, nil, nil, tableContainer)
+	return TabData{
+		Content: content,
+		Refresh: refresh,
+	}
 }
 
-func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) fyne.CanvasObject {
-	status := widget.NewLabel("Press 'Load Upcoming' to fetch data.")
+func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) TabData {
+	status := widget.NewLabel("Loading upcoming races...")
 	tableContainer := container.NewStack()
 
-	go processes.LoadUpcoming(url, parseFunc, status, tableContainer)
+	refresh := func() {
+		processes.LoadUpcoming(url, parseFunc, status, tableContainer)
+	}
 
-	return container.NewBorder(nil, status, nil, nil, tableContainer)
+	go refresh()
 
+	content := container.NewBorder(nil, status, nil, nil, tableContainer)
+	return TabData{
+		Content: content,
+		Refresh: refresh,
+	}
 }
 
 func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences)) fyne.CanvasObject {

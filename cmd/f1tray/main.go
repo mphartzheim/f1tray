@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/widget"
 )
 
 //go:embed assets/tray_icon.png
@@ -24,23 +25,23 @@ func main() {
 	myApp := app.NewWithID("f1tray")
 	myWindow := myApp.NewWindow("F1 Viewer")
 
-	// Create tab content for each section.
-	scheduleContent := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
-	upcomingContent := ui.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming)
-	resultsContent := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
-	qualifyingContent := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
-	sprintContent := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
+	// Create tab content for each section using TabData.
+	scheduleTabData := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
+	upcomingTabData := ui.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming)
+	resultsTabData := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
+	qualifyingTabData := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
+	sprintTabData := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
 	preferencesContent := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 		_ = config.SaveConfig(updated)
 		prefs = updated // Update in-memory copy for close behavior
 	})
 
-	// Create tab items for each section.
-	scheduleTabItem := container.NewTabItem("Schedule", scheduleContent)
-	upcomingTabItem := container.NewTabItem("Upcoming", upcomingContent)
-	resultsTabItem := container.NewTabItem("Race Results", resultsContent)
-	qualifyingTabItem := container.NewTabItem("Qualifying", qualifyingContent)
-	sprintTabItem := container.NewTabItem("Sprint", sprintContent)
+	// Create tab items using the Content field from TabData.
+	scheduleTabItem := container.NewTabItem("Schedule", scheduleTabData.Content)
+	upcomingTabItem := container.NewTabItem("Upcoming", upcomingTabData.Content)
+	resultsTabItem := container.NewTabItem("Race Results", resultsTabData.Content)
+	qualifyingTabItem := container.NewTabItem("Qualifying", qualifyingTabData.Content)
+	sprintTabItem := container.NewTabItem("Sprint", sprintTabData.Content)
 	preferencesTabItem := container.NewTabItem("Preferences", preferencesContent)
 
 	// Create the AppTabs container.
@@ -53,14 +54,26 @@ func main() {
 		preferencesTabItem,
 	)
 
-	myWindow.SetContent(tabs)
+	refreshButton := widget.NewButton("Refresh All Data", func() {
+		// Call refresh functions for all tabs.
+		scheduleTabData.Refresh()
+		upcomingTabData.Refresh()
+		resultsTabData.Refresh()
+		qualifyingTabData.Refresh()
+		sprintTabData.Refresh()
+
+		processes.ShowInAppNotification(myWindow, "Data Refresh", "All data has been refreshed.")
+	})
+
+	// Wrap the refresh button above the tabs.
+	content := container.NewBorder(refreshButton, nil, nil, nil, tabs)
+	myWindow.SetContent(content)
 	myWindow.Resize(fyne.NewSize(900, 600))
 
-	// Use embedded tray icon
+	// Use embedded tray icon.
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
-
 	if desk, ok := myApp.(desktop.App); ok {
-		// Delay to allow tray to become ready (Windows quirk)
+		// Delay to allow tray to become ready (Windows quirk).
 		time.Sleep(500 * time.Millisecond)
 
 		// Create systray menu items that directly select tabs.
@@ -94,7 +107,6 @@ func main() {
 			myWindow.Show()
 			myWindow.RequestFocus()
 		})
-		// A generic "Show" menu item.
 		showItem := fyne.NewMenuItem("Show", func() {
 			myWindow.Show()
 			myWindow.RequestFocus()
@@ -103,7 +115,6 @@ func main() {
 			myApp.Quit()
 		})
 
-		// Create a menu that includes the new items.
 		desk.SetSystemTrayIcon(iconResource)
 		desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
 			scheduleItem,

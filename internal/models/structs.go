@@ -1,5 +1,7 @@
 package models
 
+import "fyne.io/fyne/v2"
+
 type QualifyingResultResponse struct {
 	MRData struct {
 		RaceTable struct {
@@ -127,4 +129,10 @@ type UpcomingResponse struct {
 			} `json:"Races"`
 		} `json:"RaceTable"`
 	} `json:"MRData"`
+}
+
+// TabData encapsulates a tab's content and an update function.
+type TabData struct {
+	Content fyne.CanvasObject
+	Refresh func() // Call this to refresh the tab's data.
 }
