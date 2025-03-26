@@ -59,15 +59,11 @@ func main() {
 	popup := container.NewPadded(notificationRow)
 
 	// Background layer
-	popupBG := canvas.NewRectangle(theme.Color(theme.ColorNameBackground))
+	popupBG := canvas.NewRectangle(theme.Color(theme.ColorNamePrimary))
 	popupBG.SetMinSize(fyne.NewSize(320, 50))
 
-	// Border layer (slightly larger, behind background)
-	border := canvas.NewRectangle(theme.Color(theme.ColorNameFocus))
-	border.SetMinSize(fyne.NewSize(330, 60)) // slightly bigger than popupBG
-
 	// Stack them: border > background > content
-	notificationContainer := container.NewStack(border, popupBG, popup)
+	notificationContainer := container.NewStack(popupBG, popup)
 	notificationWrapper = container.NewCenter(notificationContainer)
 	notificationWrapper.Hide()
 
@@ -89,7 +85,7 @@ func main() {
 
 	// Manual refresh button
 	refreshButton := widget.NewButton("Refresh All Data", func() {
-		refreshAllData(myWindow, notificationLabel, notificationWrapper,
+		refreshAllData(notificationLabel, notificationWrapper,
 			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 	})
 
@@ -106,7 +102,7 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			refreshAllData(myWindow, notificationLabel, notificationWrapper,
+			refreshAllData(notificationLabel, notificationWrapper,
 				scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 		}
 	}()
@@ -153,7 +149,7 @@ func main() {
 	myApp.Run()
 }
 
-func refreshAllData(win fyne.Window, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
+func refreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	updated := false
 	for _, tab := range tabs {
 		if tab.Refresh() {

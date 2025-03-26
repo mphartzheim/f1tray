@@ -21,9 +21,12 @@ func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]strin
 	tableContainer := container.NewStack()
 
 	refresh := func() bool {
-		data, err := processes.FetchData(url)
+		data, changed, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch results.")
+			return false
+		}
+		if !changed {
 			return false
 		}
 
@@ -82,9 +85,12 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 	tableContainer := container.NewStack()
 
 	refresh := func() bool {
-		data, err := processes.FetchData(url)
+		data, changed, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch upcoming data.")
+			return false
+		}
+		if !changed {
 			return false
 		}
 
@@ -139,9 +145,12 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 	tableContainer := container.NewStack()
 
 	refresh := func() bool {
-		data, err := processes.FetchData(url)
+		data, changed, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch schedule.")
+			return false
+		}
+		if !changed {
 			return false
 		}
 
