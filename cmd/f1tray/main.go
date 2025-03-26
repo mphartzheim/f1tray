@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"runtime"
 	"time"
 
 	"f1tray/internal/config"
@@ -116,18 +117,53 @@ func main() {
 	// Setup tray
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
 	if desk, ok := myApp.(desktop.App); ok {
-		desk.SetSystemTrayIcon(iconResource)
-		desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
-			fyne.NewMenuItem("Schedule", func() { tabs.SelectIndex(0); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Upcoming", func() { tabs.SelectIndex(1); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Race Results", func() { tabs.SelectIndex(2); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Qualifying", func() { tabs.SelectIndex(3); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Sprint", func() { tabs.SelectIndex(4); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Preferences", func() { tabs.SelectIndex(5); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItemSeparator(),
-			fyne.NewMenuItem("Show", func() { myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Quit", myApp.Quit),
-		))
+		go func() {
+			maxAttempts := 5
+			success := false
+
+			if runtime.GOOS == "windows" {
+				for i := 0; i < maxAttempts; i++ {
+					func() {
+						defer func() {
+							if r := recover(); r != nil {
+								// Optionally log panic info
+							}
+						}()
+
+						desk.SetSystemTrayIcon(iconResource)
+						success = true
+					}()
+
+					if success {
+						break
+					}
+
+					println("[F1Tray] Attempt", i+1, "to set system tray icon failed. Retrying...")
+					time.Sleep(2 * time.Second)
+				}
+
+				if !success {
+					println("[F1Tray] Failed to set system tray icon after 5 attempts. Exiting.")
+					myApp.Quit()
+					return
+				}
+			} else {
+				desk.SetSystemTrayIcon(iconResource)
+			}
+
+			// Tray icon was set successfully; now set the menu
+			desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
+				fyne.NewMenuItem("Schedule", func() { tabs.SelectIndex(0); myWindow.Show(); myWindow.RequestFocus() }),
+				fyne.NewMenuItem("Upcoming", func() { tabs.SelectIndex(1); myWindow.Show(); myWindow.RequestFocus() }),
+				fyne.NewMenuItem("Race Results", func() { tabs.SelectIndex(2); myWindow.Show(); myWindow.RequestFocus() }),
+				fyne.NewMenuItem("Qualifying", func() { tabs.SelectIndex(3); myWindow.Show(); myWindow.RequestFocus() }),
+				fyne.NewMenuItem("Sprint", func() { tabs.SelectIndex(4); myWindow.Show(); myWindow.RequestFocus() }),
+				fyne.NewMenuItem("Preferences", func() { tabs.SelectIndex(5); myWindow.Show(); myWindow.RequestFocus() }),
+				fyne.NewMenuItemSeparator(),
+				fyne.NewMenuItem("Show", func() { myWindow.Show(); myWindow.RequestFocus() }),
+				fyne.NewMenuItem("Quit", myApp.Quit),
+			))
+		}()
 	}
 
 	// Window visibility
