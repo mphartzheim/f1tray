@@ -29,3 +29,15 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 
 	return container.NewBorder(loadButton, status, nil, nil, tableContainer)
 }
+
+func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) fyne.CanvasObject {
+	status := widget.NewLabel("Press 'Load Upcoming' to fetch data.")
+	tableContainer := container.NewStack()
+
+	loadButton := widget.NewButton("Load Upcoming", func() {
+		processes.LoadUpcoming(url, parseFunc, status, tableContainer)
+	})
+
+	return container.NewBorder(loadButton, status, nil, nil, tableContainer)
+
+}

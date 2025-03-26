@@ -26,6 +26,7 @@ func main() {
 
 	// Create tab content for each section.
 	scheduleContent := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
+	upcomingContent := ui.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming)
 	resultsContent := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
 	qualifyingContent := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
 	sprintContent := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
@@ -36,6 +37,7 @@ func main() {
 
 	// Create tab items for each section.
 	scheduleTabItem := container.NewTabItem("Schedule", scheduleContent)
+	upcomingTabItem := container.NewTabItem("Upcoming", upcomingContent)
 	resultsTabItem := container.NewTabItem("Race Results", resultsContent)
 	qualifyingTabItem := container.NewTabItem("Qualifying", qualifyingContent)
 	sprintTabItem := container.NewTabItem("Sprint", sprintContent)
@@ -44,6 +46,7 @@ func main() {
 	// Create the AppTabs container.
 	tabs := container.NewAppTabs(
 		scheduleTabItem,
+		upcomingTabItem,
 		resultsTabItem,
 		qualifyingTabItem,
 		sprintTabItem,
@@ -63,6 +66,11 @@ func main() {
 		// Create systray menu items that directly select tabs.
 		scheduleItem := fyne.NewMenuItem("Schedule", func() {
 			tabs.Select(scheduleTabItem)
+			myWindow.Show()
+			myWindow.RequestFocus()
+		})
+		upcomingItem := fyne.NewMenuItem("Upcoming", func() {
+			tabs.Select(upcomingTabItem)
 			myWindow.Show()
 			myWindow.RequestFocus()
 		})
@@ -99,6 +107,7 @@ func main() {
 		desk.SetSystemTrayIcon(iconResource)
 		desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
 			scheduleItem,
+			upcomingItem,
 			resultsItem,
 			qualifyingItem,
 			sprintItem,

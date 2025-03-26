@@ -89,3 +89,42 @@ type ScheduleResponse struct {
 		} `json:"RaceTable"`
 	} `json:"MRData"`
 }
+
+type UpcomingResponse struct {
+	MRData struct {
+		RaceTable struct {
+			Races []struct {
+				RaceName string `json:"raceName"`
+				Date     string `json:"date"`
+				Time     string `json:"time"`
+				Circuit  struct {
+					CircuitName string `json:"circuitName"`
+					Location    struct {
+						Locality string `json:"locality"`
+						Country  string `json:"country"`
+					} `json:"Location"`
+				} `json:"Circuit"`
+				FirstPractice struct {
+					Date string `json:"date"`
+					Time string `json:"time"`
+				} `json:"FirstPractice"`
+				SecondPractice struct {
+					Date string `json:"date"`
+					Time string `json:"time"`
+				} `json:"SecondPractice"`
+				ThirdPractice struct {
+					Date string `json:"date"`
+					Time string `json:"time"`
+				} `json:"ThirdPractice"`
+				Qualifying struct {
+					Date string `json:"date"`
+					Time string `json:"time"`
+				} `json:"Qualifying"`
+				Sprint struct {
+					Date string `json:"date"`
+					Time string `json:"time"`
+				} `json:"Sprint"`
+			} `json:"Races"`
+		} `json:"RaceTable"`
+	} `json:"MRData"`
+}

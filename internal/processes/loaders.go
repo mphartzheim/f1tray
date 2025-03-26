@@ -114,6 +114,39 @@ func LoadResults(url string, parseFunc func([]byte) (string, [][]string, error),
 	status.SetText(fmt.Sprintf("Results loaded for %s", label))
 }
 
+func LoadUpcoming(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label, tableContainer *fyne.Container) {
+	_, title, rows, ok := fetchAndParse(url, parseFunc, status)
+	if !ok {
+		return
+	}
+
+	table := widget.NewTable(
+		func() (int, int) { return len(rows) + 1, 3 }, // 3 columns: session, date, and time
+		func() fyne.CanvasObject {
+			label := widget.NewLabel("")
+			return container.New(layout.NewStackLayout(), label)
+		},
+		func(id widget.TableCellID, o fyne.CanvasObject) {
+			label := o.(*fyne.Container).Objects[0].(*widget.Label)
+			if id.Row == 0 {
+				headers := []string{"Session", "Date", "Time"}
+				label.SetText(headers[id.Col])
+			} else {
+				label.SetText(rows[id.Row-1][id.Col])
+			}
+		},
+	)
+
+	table.SetColumnWidth(0, 150)
+	table.SetColumnWidth(1, 150)
+	table.SetColumnWidth(2, 150)
+	table.Resize(fyne.NewSize(500, float32((len(rows)+1)*30)))
+
+	tableContainer.Objects = []fyne.CanvasObject{table}
+	tableContainer.Refresh()
+	status.SetText(fmt.Sprintf("Upcoming race loaded: %s", title))
+}
+
 func fetchAndParse(url string, parseFunc func([]byte) (string, [][]string, error), status *widget.Label) ([]byte, string, [][]string, bool) {
 	resp, err := http.Get(url)
 	if err != nil {

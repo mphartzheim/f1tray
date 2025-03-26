@@ -113,3 +113,44 @@ func ParseSchedule(body []byte) (string, [][]string, error) {
 	}
 	return "Current Season Schedule", rows, nil
 }
+
+func ParseUpcoming(body []byte) (string, [][]string, error) {
+	var result models.UpcomingResponse
+	err := json.Unmarshal(body, &result)
+	if err != nil {
+		return "", nil, fmt.Errorf("JSON error: %v", err)
+	}
+
+	races := result.MRData.RaceTable.Races
+	if len(races) == 0 {
+		return "", nil, fmt.Errorf("no upcoming race data found")
+	}
+
+	race := races[0]
+	location := fmt.Sprintf("%s, %s", race.Circuit.Location.Locality, race.Circuit.Location.Country)
+	title := fmt.Sprintf("Next Race: %s (%s)", race.RaceName, location)
+
+	var rows [][]string
+
+	// Append session rows first
+	if race.FirstPractice.Date != "" {
+		rows = append(rows, []string{"Practice 1", race.FirstPractice.Date, race.FirstPractice.Time})
+	}
+	if race.SecondPractice.Date != "" {
+		rows = append(rows, []string{"Practice 2", race.SecondPractice.Date, race.SecondPractice.Time})
+	}
+	if race.ThirdPractice.Date != "" {
+		rows = append(rows, []string{"Practice 3", race.ThirdPractice.Date, race.ThirdPractice.Time})
+	}
+	if race.Qualifying.Date != "" {
+		rows = append(rows, []string{"Qualifying", race.Qualifying.Date, race.Qualifying.Time})
+	}
+	if race.Sprint.Date != "" {
+		rows = append(rows, []string{"Sprint", race.Sprint.Date, race.Sprint.Time})
+	}
+
+	// Append the Race row last
+	rows = append(rows, []string{"Race", race.Date, race.Time})
+
+	return title, rows, nil
+}
