@@ -1,9 +1,10 @@
 package processes
 
 import (
-	"f1tray/internal/models"
 	"runtime"
 	"time"
+
+	"f1tray/internal/models"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

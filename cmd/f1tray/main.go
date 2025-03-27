@@ -6,7 +6,7 @@ import (
 	"f1tray/internal/config"
 	"f1tray/internal/models"
 	"f1tray/internal/processes"
-	"f1tray/internal/ui"
+	"f1tray/internal/ui/tabs"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -32,11 +32,11 @@ func main() {
 	myWindow := myApp.NewWindow("F1 Viewer")
 
 	// Create tab content (data will be lazy-loaded)
-	scheduleTabData := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
-	upcomingTabData := ui.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming)
-	resultsTabData := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
-	qualifyingTabData := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
-	sprintTabData := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
+	scheduleTabData := tabs.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
+	upcomingTabData := tabs.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming)
+	resultsTabData := tabs.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
+	qualifyingTabData := tabs.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
+	sprintTabData := tabs.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
 
 	// Notification overlay
 	notificationLabel := widget.NewLabel("")
@@ -59,7 +59,7 @@ func main() {
 	notificationWrapper.Hide()
 
 	// Preferences tab with save + refresh callback
-	preferencesContent := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
+	preferencesContent := tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 		_ = config.SaveConfig(updated)
 		prefs = updated
 		state.Preferences = updated
