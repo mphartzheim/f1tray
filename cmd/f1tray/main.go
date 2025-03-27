@@ -49,7 +49,6 @@ func main() {
 	// Create floating notification with close button
 	notificationLabel := widget.NewLabel("")
 	notificationLabel.Alignment = fyne.TextAlignCenter
-
 	notificationWrapper := container.NewWithoutLayout() // Defined early so we can reference it in the close button
 
 	closeButton := widget.NewButton("✕", func() {

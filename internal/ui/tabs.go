@@ -84,6 +84,13 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 	titleLabel := widget.NewLabel("")
 	tableContainer := container.NewStack()
 
+	// Create the "Watch on F1TV" button.
+	watchButton := widget.NewButton("Watch on F1TV", func() {
+		if err := OpenWebPage(models.F1tvURL); err != nil {
+			status.SetText("Failed to open F1TV URL.")
+		}
+	})
+
 	refresh := func() bool {
 		data, changed, err := processes.FetchData(url)
 		if err != nil {
@@ -127,9 +134,12 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 
 	refresh()
 
+	// Combine the status label and the watch button in a vertical layout.
+	bottomContent := container.NewVBox(status, watchButton)
+
 	content := container.NewBorder(
 		container.NewVBox(titleLabel), // Top
-		status,                        // Bottom
+		bottomContent,                 // Bottom
 		nil, nil,
 		tableContainer,
 	)
@@ -160,7 +170,7 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 			return false
 		}
 
-		highlightRow := -1
+		// Unmarshal into our struct that now includes lat/long as strings.
 		var schedule models.ScheduleResponse
 		err = json.Unmarshal(data, &schedule)
 		if err != nil {
@@ -169,6 +179,7 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 		}
 
 		now := time.Now()
+		highlightRow := -1
 		for i, race := range schedule.MRData.RaceTable.Races {
 			raceDate, _ := time.Parse("2006-01-02", race.Date)
 			if raceDate.After(now) || raceDate.Equal(now) {
@@ -177,35 +188,63 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 			}
 		}
 
-		table := widget.NewTable(
-			func() (int, int) { return len(rows) + 1, 4 },
-			func() fyne.CanvasObject {
-				bg := canvas.NewRectangle(nil)
-				label := widget.NewLabel("")
-				return container.NewStack(bg, label)
-			},
-			func(id widget.TableCellID, obj fyne.CanvasObject) {
-				wrapper := obj.(*fyne.Container)
-				label := wrapper.Objects[1].(*widget.Label)
-				bg := wrapper.Objects[0].(*canvas.Rectangle)
+		// Factory function returns a container with a background rectangle and a clickable label.
+		factory := func() fyne.CanvasObject {
+			bg := canvas.NewRectangle(nil)
+			cl := NewClickableLabel("", nil)
+			return container.NewStack(bg, cl)
+		}
 
-				if id.Row == 0 {
-					headers := []string{"Round", "Race Name", "Circuit", "Location (Date)"}
-					label.SetText(headers[id.Col])
-					bg.Hide()
-				} else {
-					label.SetText(rows[id.Row-1][id.Col])
-					if id.Row == highlightRow {
-						bg.FillColor = theme.Color(theme.ColorNamePrimary)
-						bg.Show()
-					} else {
-						bg.Hide()
+		// Update function for each cell.
+		update := func(id widget.TableCellID, obj fyne.CanvasObject) {
+			wrapper := obj.(*fyne.Container)
+			bg := wrapper.Objects[0].(*canvas.Rectangle)
+			// The clickable label we defined in ui.
+			cl := wrapper.Objects[1].(*ClickableLabel)
+
+			if id.Row == 0 {
+				// Header row.
+				headers := []string{"Round", "Race Name", "Circuit", "Location (Date)"}
+				cl.SetText(headers[id.Col])
+				cl.OnDoubleTapped = nil // No click action for headers.
+				bg.Hide()
+			} else {
+				// Data rows.
+				cl.SetText(rows[id.Row-1][id.Col])
+				// For the Circuit column (column index 2), set the click callback.
+				if id.Col == 2 {
+					// Get the corresponding race data.
+					race := schedule.MRData.RaceTable.Races[id.Row-1]
+					lat := race.Circuit.Location.Lat
+					lon := race.Circuit.Location.Long
+					// Build the OpenStreetMap URL. We'll use a default zoom level of 15.
+					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
+					cl.OnDoubleTapped = func() {
+						if err := OpenWebPage(mapURL); err != nil {
+							status.SetText("Failed to open map URL")
+						}
 					}
-					bg.Resize(wrapper.Size())
+				} else {
+					// For all other columns, remove any tap handler.
+					cl.OnDoubleTapped = nil
 				}
 
-				wrapper.Refresh()
-			},
+				// Highlight the row if needed.
+				if id.Row == highlightRow {
+					bg.FillColor = theme.Color(theme.ColorNamePrimary)
+					bg.Show()
+				} else {
+					bg.Hide()
+				}
+				bg.Resize(wrapper.Size())
+			}
+			wrapper.Refresh()
+		}
+
+		table := widget.NewTable(
+			func() (int, int) { return len(rows) + 1, 4 },
+			factory,
+			update,
 		)
 
 		table.SetColumnWidth(0, 60)

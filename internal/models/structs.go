@@ -89,6 +89,8 @@ type ScheduleResponse struct {
 					Location    struct {
 						Locality string `json:"locality"`
 						Country  string `json:"country"`
+						Lat      string `json:"lat"`
+						Long     string `json:"long"`
 					} `json:"Location"`
 				} `json:"Circuit"`
 			} `json:"Races"`
