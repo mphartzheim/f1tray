@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// CreateResultsTableTab remains unchanged.
 func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading results...")
 	raceNameLabel := widget.NewLabel("")
@@ -79,9 +80,12 @@ func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]strin
 	}
 }
 
+// CreateUpcomingTab now uses only one clickable label at the top that displays "Next Race: Race Name (Circuit)".
+// Double-clicking the label will open OpenStreetMap at the race's location.
 func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading upcoming races...")
-	titleLabel := widget.NewLabel("")
+	// New double-clickable label for "Next Race"
+	nextRaceLabel := NewClickableLabel("Next Race", nil)
 	tableContainer := container.NewStack()
 
 	// Create the "Watch on F1TV" button.
@@ -101,13 +105,14 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 			return false
 		}
 
-		title, rows, err := parseFunc(data)
+		// We still call the parse function to potentially update other parts of the UI,
+		// but we no longer use its title output.
+		_, rows, err := parseFunc(data)
 		if err != nil {
 			status.SetText("Failed to parse upcoming data.")
 			return false
 		}
 
-		titleLabel.SetText(title)
 		table := widget.NewTable(
 			func() (int, int) {
 				if len(rows) == 0 {
@@ -129,17 +134,57 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 		tableContainer.Objects = []fyne.CanvasObject{table}
 		tableContainer.Refresh()
 		status.SetText("Upcoming race loaded.")
+
+		// Unmarshal into our struct (assuming upcoming data uses similar structure)
+		var schedule models.ScheduleResponse
+		err = json.Unmarshal(data, &schedule)
+		if err != nil {
+			nextRaceLabel.SetText("Next Race (map unavailable)")
+			nextRaceLabel.OnDoubleTapped = nil
+		} else {
+			// Determine the next upcoming race
+			now := time.Now()
+			found := false
+			for _, race := range schedule.MRData.RaceTable.Races {
+				raceDate, err := time.Parse("2006-01-02", race.Date)
+				if err != nil {
+					continue
+				}
+				if raceDate.After(now) || raceDate.Equal(now) {
+					// Update the label to display both the race name and circuit.
+					nextRaceLabel.SetText(fmt.Sprintf("Next Race: %s (%s)", race.RaceName, race.Circuit.CircuitName))
+					lat := race.Circuit.Location.Lat
+					lon := race.Circuit.Location.Long
+					// Build the OpenStreetMap URL with a default zoom level of 15.
+					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
+					nextRaceLabel.OnDoubleTapped = func() {
+						if err := OpenWebPage(mapURL); err != nil {
+							status.SetText("Failed to open map URL")
+						}
+					}
+					found = true
+					break
+				}
+			}
+			if !found {
+				nextRaceLabel.SetText("Next Race: Not available")
+				nextRaceLabel.OnDoubleTapped = nil
+			}
+		}
+
 		return true
 	}
 
 	refresh()
 
-	// Combine the status label and the watch button in a vertical layout.
+	// Use only the clickable label in the top layout.
+	topContent := container.NewVBox(nextRaceLabel)
+	// Combine the status label and the watch button in a vertical layout at the bottom.
 	bottomContent := container.NewVBox(status, watchButton)
 
 	content := container.NewBorder(
-		container.NewVBox(titleLabel), // Top
-		bottomContent,                 // Bottom
+		topContent,    // Top
+		bottomContent, // Bottom
 		nil, nil,
 		tableContainer,
 	)
