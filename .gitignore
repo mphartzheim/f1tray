@@ -16,3 +16,6 @@ Thumbs.db
 
 # Build folder (ignore all build artifacts)
 builds/
+
+# Ignore the built binary
+cmd/f1tray/f1tray
