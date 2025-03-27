@@ -2,8 +2,6 @@ package main
 
 import (
 	_ "embed"
-	"runtime"
-	"time"
 
 	"f1tray/internal/config"
 	"f1tray/internal/models"
@@ -33,47 +31,46 @@ func main() {
 	myApp := app.NewWithID("f1tray")
 	myWindow := myApp.NewWindow("F1 Viewer")
 
-	// Create tab content
+	// Create tab content (data will be lazy-loaded)
 	scheduleTabData := ui.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
 	upcomingTabData := ui.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming)
 	resultsTabData := ui.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
 	qualifyingTabData := ui.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
 	sprintTabData := ui.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
-	preferencesContent := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
-		_ = config.SaveConfig(updated)
-		prefs = updated
-		state.Preferences = updated
-		state.DebugMode = updated.DebugMode
-	})
 
-	// Create floating notification with close button
+	// Notification overlay
 	notificationLabel := widget.NewLabel("")
 	notificationLabel.Alignment = fyne.TextAlignCenter
-	notificationWrapper := container.NewWithoutLayout() // Defined early so we can reference it in the close button
+	notificationWrapper := container.NewWithoutLayout()
 
 	closeButton := widget.NewButton("✕", func() {
 		notificationWrapper.Hide()
 	})
 	closeButton.Importance = widget.LowImportance
 
-	notificationRow := container.NewHBox(
-		notificationLabel,
-		layout.NewSpacer(),
-		closeButton,
-	)
+	popup := container.NewPadded(container.NewHBox(
+		notificationLabel, layout.NewSpacer(), closeButton,
+	))
 
-	popup := container.NewPadded(notificationRow)
-
-	// Background layer
 	popupBG := canvas.NewRectangle(theme.Color(theme.ColorNamePrimary))
 	popupBG.SetMinSize(fyne.NewSize(320, 50))
-
-	// Stack them: border > background > content
 	notificationContainer := container.NewStack(popupBG, popup)
 	notificationWrapper = container.NewCenter(notificationContainer)
 	notificationWrapper.Hide()
 
-	// Create tabs
+	// Preferences tab with save + refresh callback
+	preferencesContent := ui.CreatePreferencesTab(prefs, func(updated config.Preferences) {
+		_ = config.SaveConfig(updated)
+		prefs = updated
+		state.Preferences = updated
+		state.DebugMode = updated.DebugMode
+
+		// Silent refresh for preference update
+		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, true,
+			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+	})
+
+	// Tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Schedule", scheduleTabData.Content),
 		container.NewTabItem("Upcoming", upcomingTabData.Content),
@@ -83,100 +80,32 @@ func main() {
 		container.NewTabItem("Preferences", preferencesContent),
 	)
 
-	// Stack tabs and floating notification
-	stack := container.NewStack(
-		tabs,
-		notificationWrapper,
-	)
+	// Layout stack
+	stack := container.NewStack(tabs, notificationWrapper)
 
-	// Manual refresh button
+	// Manual Refresh
 	refreshButton := widget.NewButton("Refresh All Data", func() {
-		refreshAllData(state, notificationLabel, notificationWrapper,
+		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, false,
 			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 	})
 
-	// Auto-refresh every hour
-	go func() {
-		var refreshInterval time.Duration
-		if state.DebugMode {
-			refreshInterval = 1 * time.Minute
-		} else {
-			refreshInterval = 1 * time.Hour
-		}
-
-		ticker := time.NewTicker(refreshInterval)
-		defer ticker.Stop()
-
-		for range ticker.C {
-			refreshAllData(state, notificationLabel, notificationWrapper,
-				scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
-		}
-	}()
-
-	// Set window content
-	myWindow.SetContent(container.NewBorder(
-		refreshButton, nil, nil, nil, stack,
-	))
+	myWindow.SetContent(container.NewBorder(refreshButton, nil, nil, nil, stack))
 	myWindow.Resize(fyne.NewSize(900, 600))
 
-	// Setup tray
+	// System Tray
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
 	if desk, ok := myApp.(desktop.App); ok {
-		maxAttempts := 5
-		success := false
-
-		if runtime.GOOS == "windows" {
-			for i := 0; i < maxAttempts; i++ {
-				func() {
-					defer func() {
-						if r := recover(); r != nil {
-							// Optionally log panic info
-						}
-					}()
-
-					desk.SetSystemTrayIcon(iconResource)
-					success = true
-				}()
-
-				if success {
-					break
-				}
-
-				println("[F1Tray] Attempt", i+1, "to set system tray icon failed. Retrying...")
-				time.Sleep(2 * time.Second)
-			}
-
-			if !success {
-				println("[F1Tray] Failed to set system tray icon after 5 attempts. Exiting.")
-				myApp.Quit()
-				return
-			}
-		} else {
-			desk.SetSystemTrayIcon(iconResource)
-		}
-
-		// Tray icon was set successfully; now set the menu
-		desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
-			fyne.NewMenuItem("Schedule", func() { tabs.SelectIndex(0); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Upcoming", func() { tabs.SelectIndex(1); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Race Results", func() { tabs.SelectIndex(2); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Qualifying", func() { tabs.SelectIndex(3); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Sprint", func() { tabs.SelectIndex(4); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Preferences", func() { tabs.SelectIndex(5); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItemSeparator(),
-			fyne.NewMenuItem("Show", func() { tabs.SelectIndex(0); myWindow.Show(); myWindow.RequestFocus() }),
-			fyne.NewMenuItem("Quit", myApp.Quit),
-		))
+		processes.SetTrayIcon(desk, iconResource, tabs, myWindow)
 	}
 
-	// Window visibility
+	// Hide or Show
 	if prefs.HideOnOpen {
 		myWindow.Hide()
 	} else {
 		myWindow.Show()
 	}
 
-	// Close intercept
+	// Handle X close
 	myWindow.SetCloseIntercept(func() {
 		if prefs.CloseBehavior == "exit" {
 			myApp.Quit()
@@ -185,25 +114,13 @@ func main() {
 		}
 	})
 
+	// Lazy-load data after UI is ready
+	go processes.RefreshAllData(state, notificationLabel, notificationWrapper, true,
+		scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+
+	// Background auto-refresh
+	go processes.StartAutoRefresh(state, notificationLabel, notificationWrapper,
+		scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+
 	myApp.Run()
-}
-
-func refreshAllData(state models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
-	updated := false
-	for _, tab := range tabs {
-		if state.DebugMode || tab.Refresh() {
-			updated = true
-		}
-	}
-
-	if updated {
-		processes.PlayNotificationSound()
-		processes.ShowInAppNotification(label, wrapper, "Data has been refreshed.")
-		fyne.CurrentApp().SendNotification(&fyne.Notification{
-			Title:   "F1Tray",
-			Content: "New F1 data is available!",
-		})
-	} else {
-		processes.ShowInAppNotification(label, wrapper, "No new data to load.")
-	}
 }

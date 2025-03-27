@@ -2,11 +2,12 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
+	"time"
+
 	"f1tray/internal/config"
 	"f1tray/internal/models"
 	"f1tray/internal/processes"
-	"fmt"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
