@@ -36,7 +36,8 @@ Displays official race results in a simple, scrollable table.
 ![Results Tab](cmd/f1tray/assets/results.png)
 
 ## TODO
-
+ * ???
+ 
 ## Legal Notice
 
 This project is not affiliated with, endorsed by, or associated with Formula One Group or any of its subsidiaries.  
