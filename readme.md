@@ -36,3 +36,11 @@ Displays official race results in a simple, scrollable table.
 ![Results Tab](cmd/f1tray/assets/results.png)
 
 ## TODO
+
+## Legal Notice
+
+This project is not affiliated with, endorsed by, or associated with Formula One Group or any of its subsidiaries.  
+The Formula 1 logo and name are trademarks of Formula One Licensing BV.  
+All trademarks and copyrights belong to their respective owners.
+
+Any use of the F1 name or logo is for educational or placeholder purposes only and will be removed in any public or production release.
