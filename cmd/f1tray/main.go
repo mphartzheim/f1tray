@@ -6,15 +6,13 @@ import (
 	"f1tray/internal/config"
 	"f1tray/internal/models"
 	"f1tray/internal/processes"
+	"f1tray/internal/ui"
 	"f1tray/internal/ui/tabs"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -23,6 +21,7 @@ var trayIconBytes []byte
 
 // main initializes the F1Tray application, builds the UI, and starts background data refresh routines.
 func main() {
+	// Load user preferences and build the application state.
 	prefs := config.LoadConfig()
 	state := models.AppState{
 		DebugMode:   prefs.DebugMode,
@@ -39,40 +38,29 @@ func main() {
 	qualifyingTabData := tabs.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
 	sprintTabData := tabs.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
 
-	// Notification overlay
-	notificationLabel := widget.NewLabel("")
-	notificationLabel.Alignment = fyne.TextAlignCenter
-	notificationWrapper := container.NewWithoutLayout()
+	// Create notification overlay using a dedicated UI function.
+	notificationLabel, notificationWrapper := ui.CreateNotification()
 
-	closeButton := widget.NewButton("✕", func() {
-		notificationWrapper.Hide()
-	})
-	closeButton.Importance = widget.LowImportance
+	// Define a helper function that only takes the silent flag.
+	// It captures state, notificationLabel, notificationWrapper, and all tab data.
+	refreshData := func(silent bool) {
+		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, silent,
+			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+	}
 
-	popup := container.NewPadded(container.NewHBox(
-		notificationLabel, layout.NewSpacer(), closeButton,
-	))
-
-	popupBG := canvas.NewRectangle(theme.Color(theme.ColorNamePrimary))
-	popupBG.SetMinSize(fyne.NewSize(320, 50))
-	notificationContainer := container.NewStack(popupBG, popup)
-	notificationWrapper = container.NewCenter(notificationContainer)
-	notificationWrapper.Hide()
-
-	// Preferences tab with save + refresh callback
+	// Preferences tab with a save callback that triggers a silent refresh.
 	preferencesContent := tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 		_ = config.SaveConfig(updated)
 		prefs = updated
 		state.Preferences = updated
 		state.DebugMode = updated.DebugMode
 
-		// Silent refresh for preference update
-		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, true,
-			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+		// Trigger a silent refresh when preferences change.
+		refreshData(true)
 	})
 
-	// Tabs
-	tabs := container.NewAppTabs(
+	// Set up the tabs container.
+	tabsContainer := container.NewAppTabs(
 		container.NewTabItem("Schedule", scheduleTabData.Content),
 		container.NewTabItem("Upcoming", upcomingTabData.Content),
 		container.NewTabItem("Race Results", resultsTabData.Content),
@@ -81,32 +69,31 @@ func main() {
 		container.NewTabItem("Preferences", preferencesContent),
 	)
 
-	// Layout stack
-	stack := container.NewStack(tabs, notificationWrapper)
+	// Stack the tabs with the notification overlay.
+	stack := container.NewStack(tabsContainer, notificationWrapper)
 
-	// Manual Refresh
+	// Create a manual refresh button that uses the refreshData helper.
 	refreshButton := widget.NewButton("Refresh All Data", func() {
-		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, false,
-			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+		refreshData(false)
 	})
 
 	myWindow.SetContent(container.NewBorder(refreshButton, nil, nil, nil, stack))
 	myWindow.Resize(fyne.NewSize(900, 600))
 
-	// System Tray
+	// System Tray integration (if supported)
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
 	if desk, ok := myApp.(desktop.App); ok {
-		processes.SetTrayIcon(desk, iconResource, tabs, myWindow)
+		processes.SetTrayIcon(desk, iconResource, tabsContainer, myWindow)
 	}
 
-	// Hide or Show
+	// Determine whether to hide or show the main window on startup.
 	if prefs.HideOnOpen {
 		myWindow.Hide()
 	} else {
 		myWindow.Show()
 	}
 
-	// Handle X close
+	// Handle window close events.
 	myWindow.SetCloseIntercept(func() {
 		if prefs.CloseBehavior == "exit" {
 			myApp.Quit()
@@ -115,11 +102,10 @@ func main() {
 		}
 	})
 
-	// Lazy-load data after UI is ready
-	go processes.RefreshAllData(state, notificationLabel, notificationWrapper, true,
-		scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+	// Lazy-load data once the UI is ready.
+	refreshData(true)
 
-	// Background auto-refresh
+	// Start background auto-refresh.
 	go processes.StartAutoRefresh(state, notificationLabel, notificationWrapper,
 		scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 
