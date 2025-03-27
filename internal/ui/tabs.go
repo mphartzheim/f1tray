@@ -347,6 +347,12 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 		testButton,
 	)
 
+	timeFormatCheckbox := widget.NewCheck("Use 24-hour clock? (Requires restart - for now)", func(checked bool) {
+		currentPrefs.Use24HourClock = checked
+		onSave(currentPrefs)
+	})
+	timeFormatCheckbox.SetChecked(currentPrefs.Use24HourClock)
+
 	debugCheckbox := widget.NewCheck("Debug Mode?", func(checked bool) {
 		currentPrefs.DebugMode = checked
 		onSave(currentPrefs)
@@ -357,6 +363,7 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 		closeCheckbox,
 		hideCheckbox,
 		soundRow,
+		timeFormatCheckbox,
 		debugCheckbox,
 	)
 }

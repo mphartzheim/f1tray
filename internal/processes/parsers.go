@@ -3,9 +3,8 @@ package processes
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-	"time"
 
+	"f1tray/internal/config"
 	"f1tray/internal/models"
 )
 
@@ -128,58 +127,38 @@ func ParseUpcoming(body []byte) (string, [][]string, error) {
 		return "", nil, fmt.Errorf("no upcoming race data found")
 	}
 
-	// Use the first race as the "next" race.
+	// Load user preferences to determine the time format.
+	prefs := config.LoadConfig()
+	use24h := prefs.Use24HourClock
+
 	race := races[0]
 	location := fmt.Sprintf("%s, %s", race.Circuit.Location.Locality, race.Circuit.Location.Country)
 	title := fmt.Sprintf("Next Race: %s (%s)", race.RaceName, location)
 
-	// Helper function to convert UTC date/time to local.
-	localize := func(dateStr, timeStr string) (string, string) {
-		// Combine date and time into a RFC3339 string.
-		// Example: dateStr "2023-05-01" and timeStr "14:00:00" become "2023-05-01T14:00:00"
-		combined := fmt.Sprintf("%sT%s", dateStr, timeStr)
-		// Append "Z" only if timeStr doesn't already include a timezone indicator.
-		if len(timeStr) > 0 && timeStr[len(timeStr)-1] != 'Z' && !strings.Contains(timeStr, "+") && !strings.Contains(timeStr, "-") {
-			combined += "Z"
-		}
-
-		t, err := time.Parse(time.RFC3339, combined)
-		if err != nil {
-			fmt.Println("Error parsing datetime:", err)
-			// If parsing fails, return the original values.
-			return dateStr, timeStr
-		}
-		local := t.Local()
-		return local.Format("2006-01-02"), local.Format("15:04 MST")
-	}
-
 	var rows [][]string
 
-	// Append session rows first, converting each session's time.
 	if race.FirstPractice.Date != "" && race.FirstPractice.Time != "" {
-		d, t := localize(race.FirstPractice.Date, race.FirstPractice.Time)
+		d, t := Localize(race.FirstPractice.Date, race.FirstPractice.Time, use24h)
 		rows = append(rows, []string{"Practice 1", d, t})
 	}
 	if race.SecondPractice.Date != "" && race.SecondPractice.Time != "" {
-		d, t := localize(race.SecondPractice.Date, race.SecondPractice.Time)
+		d, t := Localize(race.SecondPractice.Date, race.SecondPractice.Time, use24h)
 		rows = append(rows, []string{"Practice 2", d, t})
 	}
 	if race.ThirdPractice.Date != "" && race.ThirdPractice.Time != "" {
-		d, t := localize(race.ThirdPractice.Date, race.ThirdPractice.Time)
+		d, t := Localize(race.ThirdPractice.Date, race.ThirdPractice.Time, use24h)
 		rows = append(rows, []string{"Practice 3", d, t})
 	}
 	if race.Qualifying.Date != "" && race.Qualifying.Time != "" {
-		d, t := localize(race.Qualifying.Date, race.Qualifying.Time)
+		d, t := Localize(race.Qualifying.Date, race.Qualifying.Time, use24h)
 		rows = append(rows, []string{"Qualifying", d, t})
 	}
 	if race.Sprint.Date != "" && race.Sprint.Time != "" {
-		d, t := localize(race.Sprint.Date, race.Sprint.Time)
+		d, t := Localize(race.Sprint.Date, race.Sprint.Time, use24h)
 		rows = append(rows, []string{"Sprint", d, t})
 	}
-
-	// Append the Race row last.
 	if race.Date != "" && race.Time != "" {
-		d, t := localize(race.Date, race.Time)
+		d, t := Localize(race.Date, race.Time, use24h)
 		rows = append(rows, []string{"Race", d, t})
 	}
 

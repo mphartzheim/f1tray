@@ -7,17 +7,19 @@ import (
 )
 
 type Preferences struct {
-	CloseBehavior string `json:"close_behavior"` // "exit" or "minimize"
-	HideOnOpen    bool   `json:"hide_on_open"`   // if true, the window is hidden on launch
-	DebugMode     bool   `json:"debug_mode"`     // if true, debug mode is enabled
-	EnableSound   bool   `json:"enable_sound"`   // if true, play system sounds
+	CloseBehavior  string `json:"close_behavior"`    // "exit" or "minimize"
+	HideOnOpen     bool   `json:"hide_on_open"`      // if true, the window is hidden on launch
+	DebugMode      bool   `json:"debug_mode"`        // if true, debug mode is enabled
+	EnableSound    bool   `json:"enable_sound"`      // if true, play system sounds
+	Use24HourClock bool   `json:"use_24_hour_clock"` // if true, display time in 24-hour format
 }
 
 var DefaultPreferences = Preferences{
-	CloseBehavior: "minimize",
-	HideOnOpen:    true,
-	DebugMode:     false,
-	EnableSound:   true,
+	CloseBehavior:  "minimize",
+	HideOnOpen:     true,
+	DebugMode:      false,
+	EnableSound:    true,
+	Use24HourClock: false,
 }
 
 func LoadConfig() Preferences {
