@@ -11,8 +11,7 @@ import (
 // hashCache stores computed SHA256 hashes for endpoints to detect changes.
 var hashCache = make(map[string]string)
 
-// FetchData retrieves the raw response body from the given URL, returning an error if the request fails.
-// It does not perform any parsing or hashing checks.
+// FetchData retrieves the response body from a URL and returns whether the content has changed.
 func FetchData(url string) ([]byte, bool, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

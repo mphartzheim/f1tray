@@ -21,6 +21,7 @@ import (
 //go:embed assets/tray_icon.png
 var trayIconBytes []byte
 
+// main initializes the F1Tray application, builds the UI, and starts background data refresh routines.
 func main() {
 	prefs := config.LoadConfig()
 	state := models.AppState{

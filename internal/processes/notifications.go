@@ -20,6 +20,7 @@ func ShowInAppNotification(label *widget.Label, wrapper fyne.CanvasObject, messa
 	})
 }
 
+// PlayNotificationSound plays a simple platform-specific notification sound.
 func PlayNotificationSound() {
 	switch runtime.GOOS {
 	case "linux":

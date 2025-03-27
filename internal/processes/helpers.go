@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// RefreshAllData updates all tab data, plays a notification sound, and optionally shows in-app/system notifications.
 func RefreshAllData(state models.AppState, label *widget.Label, wrapper fyne.CanvasObject, silent bool, tabs ...models.TabData) {
 	updated := false
 	for _, tab := range tabs {
@@ -33,6 +34,7 @@ func RefreshAllData(state models.AppState, label *widget.Label, wrapper fyne.Can
 	}
 }
 
+// StartAutoRefresh periodically refreshes all tab data based on debug mode interval settings.
 func StartAutoRefresh(state models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	interval := time.Hour
 	if state.DebugMode {
@@ -47,6 +49,7 @@ func StartAutoRefresh(state models.AppState, label *widget.Label, wrapper fyne.C
 	}
 }
 
+// SetTrayIcon initializes the system tray icon and menu, with retry logic on Windows.
 func SetTrayIcon(desk desktop.App, icon fyne.Resource, tabs *container.AppTabs, win fyne.Window) {
 	maxAttempts := 5
 	success := false
@@ -86,6 +89,7 @@ func SetTrayIcon(desk desktop.App, icon fyne.Resource, tabs *container.AppTabs, 
 	))
 }
 
+// AppendSessionRow appends a formatted session row to the table if date and time are provided.
 func AppendSessionRow(rows [][]string, label, date, time string, use24h bool) [][]string {
 	if date != "" && time != "" {
 		d, t := Localize(date, time, use24h)

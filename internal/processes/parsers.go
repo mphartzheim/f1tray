@@ -8,6 +8,7 @@ import (
 	"f1tray/internal/models"
 )
 
+// ParseRaceResults extracts race result data into a table-friendly format from raw JSON.
 func ParseRaceResults(body []byte) (string, [][]string, error) {
 	var result models.RaceResultResponse
 	err := json.Unmarshal(body, &result)
@@ -36,6 +37,7 @@ func ParseRaceResults(body []byte) (string, [][]string, error) {
 	return race.RaceName, rows, nil
 }
 
+// ParseSprintResults extracts sprint result data into a table-friendly format from raw JSON.
 func ParseSprintResults(body []byte) (string, [][]string, error) {
 	var result models.SprintResultResponse
 	err := json.Unmarshal(body, &result)
@@ -64,6 +66,7 @@ func ParseSprintResults(body []byte) (string, [][]string, error) {
 	return race.RaceName, rows, nil
 }
 
+// ParseQualifyingResults extracts qualifying result data into a table-friendly format from raw JSON.
 func ParseQualifyingResults(body []byte) (string, [][]string, error) {
 	var result models.QualifyingResultResponse
 	err := json.Unmarshal(body, &result)
@@ -95,6 +98,7 @@ func ParseQualifyingResults(body []byte) (string, [][]string, error) {
 	return race.RaceName, rows, nil
 }
 
+// ParseSchedule extracts the full race schedule into rows for display from raw JSON.
 func ParseSchedule(body []byte) (string, [][]string, error) {
 	var result models.ScheduleResponse
 	err := json.Unmarshal(body, &result)
@@ -115,6 +119,7 @@ func ParseSchedule(body []byte) (string, [][]string, error) {
 	return "Current Season Schedule", rows, nil
 }
 
+// ParseUpcoming extracts session times for the next race into labeled rows using user time preferences.
 func ParseUpcoming(body []byte) (string, [][]string, error) {
 	var result models.UpcomingResponse
 	err := json.Unmarshal(body, &result)

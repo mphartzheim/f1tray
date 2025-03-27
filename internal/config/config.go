@@ -22,6 +22,7 @@ var DefaultPreferences = Preferences{
 	Use24HourClock: false,
 }
 
+// LoadConfig reads the configuration file or returns default preferences if none exist.
 func LoadConfig() Preferences {
 	configPath := getConfigPath()
 
@@ -49,6 +50,7 @@ func LoadConfig() Preferences {
 	return prefs
 }
 
+// SaveConfig writes the given preferences to the configuration file.
 func SaveConfig(prefs Preferences) error {
 	configPath := getConfigPath()
 	data, err := json.MarshalIndent(prefs, "", "  ")
@@ -58,6 +60,7 @@ func SaveConfig(prefs Preferences) error {
 	return os.WriteFile(configPath, data, 0644)
 }
 
+// getConfigPath returns the full path to the user's F1Tray configuration file.
 func getConfigPath() string {
 	dirname, _ := os.UserConfigDir()
 	return filepath.Join(dirname, "f1tray", "config.json")
