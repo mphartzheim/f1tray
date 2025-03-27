@@ -84,3 +84,11 @@ func SetTrayIcon(desk desktop.App, icon fyne.Resource, tabs *container.AppTabs, 
 		fyne.NewMenuItem("Quit", fyne.CurrentApp().Quit),
 	))
 }
+
+func AppendSessionRow(rows [][]string, label, date, time string, use24h bool) [][]string {
+	if date != "" && time != "" {
+		d, t := Localize(date, time, use24h)
+		rows = append(rows, []string{label, d, t})
+	}
+	return rows
+}

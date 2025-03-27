@@ -137,30 +137,12 @@ func ParseUpcoming(body []byte) (string, [][]string, error) {
 
 	var rows [][]string
 
-	if race.FirstPractice.Date != "" && race.FirstPractice.Time != "" {
-		d, t := Localize(race.FirstPractice.Date, race.FirstPractice.Time, use24h)
-		rows = append(rows, []string{"Practice 1", d, t})
-	}
-	if race.SecondPractice.Date != "" && race.SecondPractice.Time != "" {
-		d, t := Localize(race.SecondPractice.Date, race.SecondPractice.Time, use24h)
-		rows = append(rows, []string{"Practice 2", d, t})
-	}
-	if race.ThirdPractice.Date != "" && race.ThirdPractice.Time != "" {
-		d, t := Localize(race.ThirdPractice.Date, race.ThirdPractice.Time, use24h)
-		rows = append(rows, []string{"Practice 3", d, t})
-	}
-	if race.Qualifying.Date != "" && race.Qualifying.Time != "" {
-		d, t := Localize(race.Qualifying.Date, race.Qualifying.Time, use24h)
-		rows = append(rows, []string{"Qualifying", d, t})
-	}
-	if race.Sprint.Date != "" && race.Sprint.Time != "" {
-		d, t := Localize(race.Sprint.Date, race.Sprint.Time, use24h)
-		rows = append(rows, []string{"Sprint", d, t})
-	}
-	if race.Date != "" && race.Time != "" {
-		d, t := Localize(race.Date, race.Time, use24h)
-		rows = append(rows, []string{"Race", d, t})
-	}
+	rows = AppendSessionRow(rows, "Practice 1", race.FirstPractice.Date, race.FirstPractice.Time, use24h)
+	rows = AppendSessionRow(rows, "Practice 2", race.SecondPractice.Date, race.SecondPractice.Time, use24h)
+	rows = AppendSessionRow(rows, "Practice 3", race.ThirdPractice.Date, race.ThirdPractice.Time, use24h)
+	rows = AppendSessionRow(rows, "Qualifying", race.Qualifying.Date, race.Qualifying.Time, use24h)
+	rows = AppendSessionRow(rows, "Sprint", race.Sprint.Date, race.Sprint.Time, use24h)
+	rows = AppendSessionRow(rows, "Race", race.Date, race.Time, use24h)
 
 	return title, rows, nil
 }
