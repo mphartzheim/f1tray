@@ -15,7 +15,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// CreateResultsTableTab remains unchanged.
+// CreateResultsTableTab builds a tab displaying race results fetched from a URL and parsed into a formatted table.
 func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading results...")
 	raceNameLabel := widget.NewLabel("")
@@ -80,8 +80,7 @@ func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]strin
 	}
 }
 
-// CreateUpcomingTab now uses only one clickable label at the top that displays "Next Race: Race Name (Circuit)".
-// Double-clicking the label will open OpenStreetMap at the race's location.
+// CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
 func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading upcoming races...")
 	// New double-clickable label for "Next Race"
@@ -195,6 +194,7 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 	}
 }
 
+// CreateScheduleTableTab builds a tab displaying the full race schedule with interactive circuit links and highlighted upcoming event.
 func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
 	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
@@ -313,6 +313,7 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 	}
 }
 
+// CreatePreferencesTab builds a preferences form for toggling app behavior like close mode, startup visibility, sounds, and debug mode.
 func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences)) fyne.CanvasObject {
 	isExit := currentPrefs.CloseBehavior == "exit"
 	closeCheckbox := widget.NewCheck("Close on exit?", func(checked bool) {
