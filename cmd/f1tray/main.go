@@ -165,7 +165,7 @@ func main() {
 			fyne.NewMenuItem("Sprint", func() { tabs.SelectIndex(4); myWindow.Show(); myWindow.RequestFocus() }),
 			fyne.NewMenuItem("Preferences", func() { tabs.SelectIndex(5); myWindow.Show(); myWindow.RequestFocus() }),
 			fyne.NewMenuItemSeparator(),
-			fyne.NewMenuItem("Show", func() { myWindow.Show(); myWindow.RequestFocus() }),
+			fyne.NewMenuItem("Show", func() { tabs.SelectIndex(0); myWindow.Show(); myWindow.RequestFocus() }),
 			fyne.NewMenuItem("Quit", myApp.Quit),
 		))
 	}
