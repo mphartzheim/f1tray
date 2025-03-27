@@ -2,6 +2,8 @@ package main
 
 import (
 	_ "embed"
+	"strconv"
+	"time"
 
 	"f1tray/internal/config"
 	"f1tray/internal/models"
@@ -19,74 +21,89 @@ import (
 //go:embed assets/tray_icon.png
 var trayIconBytes []byte
 
-// main initializes the F1Tray application, builds the UI, and starts background data refresh routines.
 func main() {
-	// Load user preferences and build the application state.
+	// Create the Fyne app and window.
+	myApp := app.NewWithID("f1tray")
+	myWindow := myApp.NewWindow("F1 Viewer")
+
+	// Load user preferences and create the application state.
 	prefs := config.LoadConfig()
 	state := models.AppState{
 		DebugMode:   prefs.DebugMode,
 		Preferences: prefs,
 	}
 
-	myApp := app.NewWithID("f1tray")
-	myWindow := myApp.NewWindow("F1 Viewer")
-
-	// Create tab content (data will be lazy-loaded)
-	scheduleTabData := tabs.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule)
-	upcomingTabData := tabs.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming)
-	resultsTabData := tabs.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults)
-	qualifyingTabData := tabs.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults)
-	sprintTabData := tabs.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults)
-
-	// Create notification overlay using a dedicated UI function.
-	notificationLabel, notificationWrapper := ui.CreateNotification()
-
-	// Define a helper function that only takes the silent flag.
-	// It captures state, notificationLabel, notificationWrapper, and all tab data.
-	refreshData := func(silent bool) {
-		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, silent,
-			scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+	// Build a slice of years (as strings) from the current year down to 1950.
+	currentYear := time.Now().Year()
+	years := []string{}
+	for y := currentYear; y >= 1950; y-- {
+		years = append(years, strconv.Itoa(y))
 	}
 
-	// Preferences tab with a save callback that triggers a silent refresh.
-	preferencesContent := tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
-		_ = config.SaveConfig(updated)
-		prefs = updated
-		state.Preferences = updated
-		state.DebugMode = updated.DebugMode
+	// Create the drop-down widget for year selection.
+	yearSelect := widget.NewSelect(years, nil)
+	yearSelect.SetSelected(years[0]) // Default to the current year
 
-		// Trigger a silent refresh when preferences change.
-		refreshData(true)
-	})
+	// Create a header container that now only includes the schedule selector.
+	headerContainer := container.NewHBox(widget.NewLabel("Season"), yearSelect)
 
-	// Set up the tabs container.
+	// Create initial schedule table content using the selected year.
+	scheduleTabData := tabs.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule, yearSelect.Selected)
+	scheduleTab := container.NewTabItem("Schedule", scheduleTabData.Content)
+
+	// Create the rest of your tabs using the default year.
+	upcomingTabData := tabs.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming, yearSelect.Selected)
+	resultsTabData := tabs.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults, yearSelect.Selected)
+	qualifyingTabData := tabs.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults, yearSelect.Selected)
+	sprintTabData := tabs.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults, yearSelect.Selected)
+
+	// Create the tabs container.
 	tabsContainer := container.NewAppTabs(
-		container.NewTabItem("Schedule", scheduleTabData.Content),
+		scheduleTab,
 		container.NewTabItem("Upcoming", upcomingTabData.Content),
 		container.NewTabItem("Race Results", resultsTabData.Content),
 		container.NewTabItem("Qualifying", qualifyingTabData.Content),
 		container.NewTabItem("Sprint", sprintTabData.Content),
-		container.NewTabItem("Preferences", preferencesContent),
+		container.NewTabItem("Preferences", tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
+			_ = config.SaveConfig(updated)
+			prefs = updated
+			state.Preferences = updated
+			state.DebugMode = updated.DebugMode
+		})),
 	)
+
+	// When the selected year changes, update the Schedule tab's content.
+	yearSelect.OnChanged = func(selectedYear string) {
+		newScheduleTabData := tabs.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule, selectedYear)
+		// Update the content field of our schedule tab.
+		scheduleTab.Content = newScheduleTabData.Content
+		// Refresh the tab container to show the updated content.
+		tabsContainer.Refresh()
+	}
+
+	// Create notification overlay using your dedicated UI function.
+	notificationLabel, notificationWrapper := ui.CreateNotification()
+
+	// Define a helper function that refreshes all data.
+	refreshData := func(silent bool) {
+		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, silent,
+			upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+	}
 
 	// Stack the tabs with the notification overlay.
 	stack := container.NewStack(tabsContainer, notificationWrapper)
 
-	// Create a manual refresh button that uses the refreshData helper.
-	refreshButton := widget.NewButton("Refresh All Data", func() {
-		refreshData(false)
-	})
-
-	myWindow.SetContent(container.NewBorder(refreshButton, nil, nil, nil, stack))
+	// Use the header container (with the schedule selector) as the top border.
+	myWindow.SetContent(container.NewBorder(headerContainer, nil, nil, nil, stack))
 	myWindow.Resize(fyne.NewSize(900, 600))
 
-	// System Tray integration (if supported)
+	// System Tray integration (if supported).
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
 	if desk, ok := myApp.(desktop.App); ok {
 		processes.SetTrayIcon(desk, iconResource, tabsContainer, myWindow)
 	}
 
-	// Determine whether to hide or show the main window on startup.
+	// Show or hide the window based on user preferences.
 	if prefs.HideOnOpen {
 		myWindow.Hide()
 	} else {
@@ -107,7 +124,7 @@ func main() {
 
 	// Start background auto-refresh.
 	go processes.StartAutoRefresh(state, notificationLabel, notificationWrapper,
-		scheduleTabData, upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+		upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 
 	myApp.Run()
 }

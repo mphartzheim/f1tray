@@ -15,7 +15,7 @@ import (
 )
 
 // CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
-func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
+func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading upcoming races...")
 	// New double-clickable label for "Next Race"
 	nextRaceLabel := ui.NewClickableLabel("Next Race", nil)
@@ -27,6 +27,8 @@ func CreateUpcomingTab(url string, parseFunc func([]byte) (string, [][]string, e
 			status.SetText("Failed to open F1TV URL.")
 		}
 	})
+
+	url = fmt.Sprintf(url, year)
 
 	refresh := func() bool {
 		data, changed, err := processes.FetchData(url)

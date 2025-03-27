@@ -9,7 +9,8 @@ import (
 type QualifyingResultResponse struct {
 	MRData struct {
 		RaceTable struct {
-			Races []struct {
+			Season string `json:"season"`
+			Races  []struct {
 				RaceName          string `json:"raceName"`
 				QualifyingResults []struct {
 					Position string `json:"position"`
@@ -32,7 +33,8 @@ type QualifyingResultResponse struct {
 type SprintResultResponse struct {
 	MRData struct {
 		RaceTable struct {
-			Races []struct {
+			Season string `json:"season"`
+			Races  []struct {
 				RaceName      string `json:"raceName"`
 				SprintResults []struct {
 					Position string `json:"position"`
@@ -56,7 +58,8 @@ type SprintResultResponse struct {
 type RaceResultResponse struct {
 	MRData struct {
 		RaceTable struct {
-			Races []struct {
+			Season string `json:"season"`
+			Races  []struct {
 				RaceName string `json:"raceName"`
 				Results  []struct {
 					Position string `json:"position"`
@@ -80,7 +83,8 @@ type RaceResultResponse struct {
 type ScheduleResponse struct {
 	MRData struct {
 		RaceTable struct {
-			Races []struct {
+			Season string `json:"season"`
+			Races  []struct {
 				Round    string `json:"round"`
 				RaceName string `json:"raceName"`
 				Date     string `json:"date"`
@@ -101,7 +105,8 @@ type ScheduleResponse struct {
 type UpcomingResponse struct {
 	MRData struct {
 		RaceTable struct {
-			Races []struct {
+			Season string `json:"season"`
+			Races  []struct {
 				RaceName string `json:"raceName"`
 				Date     string `json:"date"`
 				Time     string `json:"time"`

@@ -17,17 +17,16 @@ import (
 )
 
 // CreateScheduleTableTab builds a tab displaying the full race schedule with interactive circuit links and highlighted upcoming event.
-func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error)) models.TabData {
+func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
 
+	url = fmt.Sprintf(url, year)
+
 	refresh := func() bool {
-		data, changed, err := processes.FetchData(url)
+		data, _, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch schedule.")
-			return false
-		}
-		if !changed {
 			return false
 		}
 
