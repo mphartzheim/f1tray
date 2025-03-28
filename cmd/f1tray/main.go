@@ -53,9 +53,9 @@ func main() {
 
 	// Create the rest of your tabs using the default year.
 	upcomingTabData := tabs.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming, yearSelect.Selected)
-	resultsTabData := tabs.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults, yearSelect.Selected)
-	qualifyingTabData := tabs.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults, yearSelect.Selected)
-	sprintTabData := tabs.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults, yearSelect.Selected)
+	resultsTabData := tabs.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults, yearSelect.Selected, "last")
+	qualifyingTabData := tabs.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults, yearSelect.Selected, "last")
+	sprintTabData := tabs.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults, yearSelect.Selected, "last")
 
 	// Create the tabs container.
 	tabsContainer := container.NewAppTabs(
@@ -71,6 +71,15 @@ func main() {
 			state.DebugMode = updated.DebugMode
 		})),
 	)
+
+	// Hook up the UpdateTabs callback so that processes.ReloadOtherTabs can update the three tabs.
+	processes.UpdateTabs = func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
+		// tabsContainer.Items[2] = Race Results, [3] = Qualifying, [4] = Sprint.
+		tabsContainer.Items[2].Content = resultsContent
+		tabsContainer.Items[3].Content = qualifyingContent
+		tabsContainer.Items[4].Content = sprintContent
+		tabsContainer.Refresh()
+	}
 
 	// When the selected year changes, update the Schedule tab's content.
 	yearSelect.OnChanged = func(selectedYear string) {

@@ -12,7 +12,7 @@ import (
 )
 
 // CreateResultsTableTab builds a tab displaying race results fetched from a URL and parsed into a formatted table.
-func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
+func CreateResultsTableTab(url string, parseFunc func([]byte) (string, [][]string, error), year string, round string) models.TabData {
 	status := widget.NewLabel("Loading results...")
 	raceNameLabel := widget.NewLabel("")
 	tableContainer := container.NewStack()

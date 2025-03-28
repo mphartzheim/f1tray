@@ -1,39 +1,38 @@
 package ui
 
 import (
-	"time"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 )
 
-// ClickableLabel is a label with a double-click handler.
+// ClickableLabel is a custom widget that supports both single and double taps.
 type ClickableLabel struct {
 	widget.Label
+	// Callback for a single tap event.
+	OnTapped func()
+	// Callback for a double tap event.
 	OnDoubleTapped func()
-	lastTap        time.Time
 }
 
 // NewClickableLabel creates a new ClickableLabel.
-func NewClickableLabel(text string, onDoubleTapped func()) *ClickableLabel {
-	cl := &ClickableLabel{
-		Label:          *widget.NewLabel(text),
-		OnDoubleTapped: onDoubleTapped,
-	}
+func NewClickableLabel(text string, tapped func()) *ClickableLabel {
+	cl := &ClickableLabel{}
+	cl.Text = text
+	cl.OnTapped = tapped
+	cl.ExtendBaseWidget(cl)
 	return cl
 }
 
-// Tapped simulates a double-click.
-func (c *ClickableLabel) Tapped(_ *fyne.PointEvent) {
-	now := time.Now()
-	if now.Sub(c.lastTap) <= 500*time.Millisecond {
-		// Detected double-tap
-		if c.OnDoubleTapped != nil {
-			c.OnDoubleTapped()
-		}
+// Tapped is called when the label is tapped.
+func (cl *ClickableLabel) Tapped(_ *fyne.PointEvent) {
+	if cl.OnTapped != nil {
+		cl.OnTapped()
 	}
-	c.lastTap = now
 }
 
-// TappedSecondary satisfies the Tappable interface.
-func (c *ClickableLabel) TappedSecondary(_ *fyne.PointEvent) {}
+// DoubleTapped is called when the label is double tapped.
+func (cl *ClickableLabel) DoubleTapped(_ *fyne.PointEvent) {
+	if cl.OnDoubleTapped != nil {
+		cl.OnDoubleTapped()
+	}
+}

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"fyne.io/fyne/v2"
 )
 
 // hashCache stores computed SHA256 hashes for endpoints to detect changes.
@@ -38,4 +40,17 @@ func FetchData(url string) ([]byte, bool, error) {
 
 	hashCache[url] = newHash
 	return body, true, nil
+}
+
+// UpdateTabs is a callback function that should be set by the main package.
+// When ReloadOtherTabs is called, UpdateTabs will update the tab container's
+// "Race Results", "Qualifying", and "Sprint" tabs with the new content.
+var UpdateTabs func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject)
+
+// ReloadOtherTabs updates the Race Results, Qualifying, and Sprint tabs with new content.
+// It calls the UpdateTabs callback if it has been set.
+func ReloadOtherTabs(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
+	if UpdateTabs != nil {
+		UpdateTabs(resultsContent, qualifyingContent, sprintContent)
+	}
 }

@@ -21,6 +21,7 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
 
+	// Format URL with the season/year.
 	url = fmt.Sprintf(url, year)
 
 	refresh := func() bool {
@@ -65,25 +66,51 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 		update := func(id widget.TableCellID, obj fyne.CanvasObject) {
 			wrapper := obj.(*fyne.Container)
 			bg := wrapper.Objects[0].(*canvas.Rectangle)
-			// The clickable label we defined in ui.
 			cl := wrapper.Objects[1].(*ui.ClickableLabel)
 
 			if id.Row == 0 {
 				// Header row.
 				headers := []string{"Round", "Race Name", "Circuit", "Location (Date)"}
 				cl.SetText(headers[id.Col])
-				cl.OnDoubleTapped = nil // No click action for headers.
+				cl.OnDoubleTapped = nil
 				bg.Hide()
 			} else {
-				// Data rows.
 				cl.SetText(rows[id.Row-1][id.Col])
-				// For the Circuit column (column index 2), set the click callback.
-				if id.Col == 2 {
-					// Get the corresponding race data.
+				if id.Col == 1 {
+					// For the Race Name column: extract the round from column 0 and reload other tabs.
+					cl.OnDoubleTapped = func() {
+						round := rows[id.Row-1][0]
+						fmt.Printf("Reloading tabs for season %s and round %s\n", year, round)
+
+						// Build new endpoints using both year and round.
+						// (Ensure your URL strings in models are formatted to accept two parameters.)
+						resultsURL := fmt.Sprintf(models.RaceResultsURL, year, round)
+						qualifyingURL := fmt.Sprintf(models.QualifyingURL, year, round)
+						sprintURL := fmt.Sprintf(models.SprintURL, year, round)
+
+						// Debug print the constructed URLs.
+						fmt.Printf("Results URL: %s\n", resultsURL)
+						fmt.Printf("Qualifying URL: %s\n", qualifyingURL)
+						fmt.Printf("Sprint URL: %s\n", sprintURL)
+
+						// Create new tab data for each tab.
+						newResultsTab := CreateResultsTableTab(resultsURL, processes.ParseRaceResults, year, round)
+						newQualifyingTab := CreateResultsTableTab(qualifyingURL, processes.ParseQualifyingResults, year, round)
+						newSprintTab := CreateResultsTableTab(sprintURL, processes.ParseSprintResults, year, round)
+
+						// Optionally trigger the refresh if needed.
+						newResultsTab.Refresh()
+						newQualifyingTab.Refresh()
+						newSprintTab.Refresh()
+
+						// Pass the new content to the UpdateTabs callback.
+						processes.ReloadOtherTabs(newResultsTab.Content, newQualifyingTab.Content, newSprintTab.Content)
+					}
+				} else if id.Col == 2 {
+					// For the Circuit column.
 					race := schedule.MRData.RaceTable.Races[id.Row-1]
 					lat := race.Circuit.Location.Lat
 					lon := race.Circuit.Location.Long
-					// Build the OpenStreetMap URL. We'll use a default zoom level of 15.
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
 					cl.OnDoubleTapped = func() {
 						if err := ui.OpenWebPage(mapURL); err != nil {
@@ -91,11 +118,9 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 						}
 					}
 				} else {
-					// For all other columns, remove any tap handler.
 					cl.OnDoubleTapped = nil
 				}
 
-				// Highlight the row if needed.
 				if id.Row == highlightRow {
 					bg.FillColor = theme.Color(theme.ColorNamePrimary)
 					bg.Show()
