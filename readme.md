@@ -1,14 +1,15 @@
 # F1Tray
 
-F1Tray is a desktop application that provides Formula 1 enthusiasts with up-to-date race schedules and results.  
+F1Tray is a desktop application that provides Formula 1 enthusiasts with up-to-date race schedules and results — and now historical data too.  
 
 Built using the [Fyne](https://fyne.io/) toolkit and powered by the [Jolpica](https://jolpica.com/) API, it offers a sleek and intuitive interface for accessing F1 data directly from your system tray.
 
 ## Features
 
-- **Race Schedule**: Fetches the current season's race schedule, highlighting the next upcoming race.
-- **Race Results**: View the latest Grand Prix results in a clean, readable table format.
-- **Interactive Circuits**: Double-click any circuit name to open its location on an interactive map.
+- **Race Schedule**: Fetches the current season's race calendar, highlighting the next upcoming race.
+- **Historical Race Results**: Instantly view results, qualifying, and sprint data from **any past F1 race** — just double-click a race name in the Schedule tab.
+- **Race Results**: View the latest Grand Prix outcomes in a clean, readable table format.
+- **Interactive Circuits**: Double-click any circuit name to open its location on an interactive OpenStreetMap.
 - **Watch on F1TV**: If you’re a subscriber, one click takes you directly to F1TV to stream sessions.
 - **Cross-Platform**: Runs on Windows, macOS, and Linux.
 - **System Tray Integration**: Quickly access key features from the tray icon.
@@ -17,7 +18,7 @@ Built using the [Fyne](https://fyne.io/) toolkit and powered by the [Jolpica](ht
 ## Screenshots
 
 ### 🗓️ Race Schedule Tab  
-Highlights the current F1 calendar and lets you double-click circuits to open maps.
+Highlights the current F1 calendar and lets you double-click race names for historical results or circuits for maps.
 
 ![Schedule Tab](cmd/f1tray/assets/schedule.png)
 
@@ -31,13 +32,13 @@ Shows upcoming practice, qualifying, sprint, and race times — with a shortcut 
 ---
 
 ### 🏁 Results Tab  
-Displays official race results in a simple, scrollable table.
+Displays official race results in a simple, scrollable table. Now supports historical rounds.
 
 ![Results Tab](cmd/f1tray/assets/results.png)
 
 ## TODO
- * ???
- 
+- ???
+
 ## Legal Notice
 
 This project is not affiliated with, endorsed by, or associated with Formula One Group or any of its subsidiaries.  
