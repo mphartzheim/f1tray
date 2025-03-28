@@ -35,7 +35,7 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 	soundCheckbox.SetChecked(currentPrefs.EnableSound)
 
 	testButton := widget.NewButton("Test", func() {
-		processes.PlayNotificationSound()
+		processes.PlayNotificationSound(currentPrefs)
 	})
 
 	soundRow := container.NewHBox(

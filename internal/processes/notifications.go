@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"time"
 
+	"f1tray/internal/config"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 )
@@ -21,7 +23,11 @@ func ShowInAppNotification(label *widget.Label, wrapper fyne.CanvasObject, messa
 }
 
 // PlayNotificationSound plays a simple platform-specific notification sound.
-func PlayNotificationSound() {
+func PlayNotificationSound(prefs config.Preferences) {
+	if !prefs.EnableSound {
+		return
+	}
+
 	switch runtime.GOOS {
 	case "linux":
 		_ = exec.Command("canberra-gtk-play", "--id", "message").Start()

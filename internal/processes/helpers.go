@@ -21,7 +21,7 @@ func RefreshAllData(state models.AppState, label *widget.Label, wrapper fyne.Can
 		}
 	}
 	if updated {
-		PlayNotificationSound()
+		PlayNotificationSound(state.Preferences)
 		if !silent && label != nil && wrapper != nil {
 			ShowInAppNotification(label, wrapper, "Data has been refreshed.")
 		}
