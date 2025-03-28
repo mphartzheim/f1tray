@@ -48,14 +48,14 @@ func main() {
 	headerContainer := container.NewHBox(widget.NewLabel("Season"), yearSelect)
 
 	// Create initial schedule table content using the selected year.
-	scheduleTabData := tabs.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule, yearSelect.Selected)
+	scheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, yearSelect.Selected)
 	scheduleTab := container.NewTabItem("Schedule", scheduleTabData.Content)
 
 	// Create the rest of your tabs using the default year.
-	upcomingTabData := tabs.CreateUpcomingTab(models.UpcomingURL, processes.ParseUpcoming, yearSelect.Selected)
-	resultsTabData := tabs.CreateResultsTableTab(models.RaceResultsURL, processes.ParseRaceResults, yearSelect.Selected, "last")
-	qualifyingTabData := tabs.CreateResultsTableTab(models.QualifyingURL, processes.ParseQualifyingResults, yearSelect.Selected, "last")
-	sprintTabData := tabs.CreateResultsTableTab(models.SprintURL, processes.ParseSprintResults, yearSelect.Selected, "last")
+	upcomingTabData := tabs.CreateUpcomingTab(processes.ParseUpcoming, yearSelect.Selected)
+	resultsTabData := tabs.CreateResultsTableTab(processes.ParseRaceResults, yearSelect.Selected, "last")
+	qualifyingTabData := tabs.CreateResultsTableTab(processes.ParseQualifyingResults, yearSelect.Selected, "last")
+	sprintTabData := tabs.CreateResultsTableTab(processes.ParseSprintResults, yearSelect.Selected, "last")
 
 	// Create the tabs container.
 	tabsContainer := container.NewAppTabs(
@@ -83,7 +83,7 @@ func main() {
 
 	// When the selected year changes, update the Schedule tab's content.
 	yearSelect.OnChanged = func(selectedYear string) {
-		newScheduleTabData := tabs.CreateScheduleTableTab(models.ScheduleURL, processes.ParseSchedule, selectedYear)
+		newScheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, selectedYear)
 		// Update the content field of our schedule tab.
 		scheduleTab.Content = newScheduleTabData.Content
 		// Refresh the tab container to show the updated content.

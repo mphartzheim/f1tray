@@ -17,12 +17,12 @@ import (
 )
 
 // CreateScheduleTableTab builds a tab displaying the full race schedule with interactive circuit links and highlighted upcoming event.
-func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
+func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
 
 	// Format URL with the season/year.
-	url = fmt.Sprintf(url, year)
+	url := fmt.Sprintf(models.ScheduleURL, year)
 
 	refresh := func() bool {
 		data, _, err := processes.FetchData(url)
@@ -82,21 +82,10 @@ func CreateScheduleTableTab(url string, parseFunc func([]byte) (string, [][]stri
 						round := rows[id.Row-1][0]
 						fmt.Printf("Reloading tabs for season %s and round %s\n", year, round)
 
-						// Build new endpoints using both year and round.
-						// (Ensure your URL strings in models are formatted to accept two parameters.)
-						resultsURL := fmt.Sprintf(models.RaceResultsURL, year, round)
-						qualifyingURL := fmt.Sprintf(models.QualifyingURL, year, round)
-						sprintURL := fmt.Sprintf(models.SprintURL, year, round)
-
-						// Debug print the constructed URLs.
-						fmt.Printf("Results URL: %s\n", resultsURL)
-						fmt.Printf("Qualifying URL: %s\n", qualifyingURL)
-						fmt.Printf("Sprint URL: %s\n", sprintURL)
-
 						// Create new tab data for each tab.
-						newResultsTab := CreateResultsTableTab(resultsURL, processes.ParseRaceResults, year, round)
-						newQualifyingTab := CreateResultsTableTab(qualifyingURL, processes.ParseQualifyingResults, year, round)
-						newSprintTab := CreateResultsTableTab(sprintURL, processes.ParseSprintResults, year, round)
+						newResultsTab := CreateResultsTableTab(processes.ParseRaceResults, year, round)
+						newQualifyingTab := CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
+						newSprintTab := CreateResultsTableTab(processes.ParseSprintResults, year, round)
 
 						// Optionally trigger the refresh if needed.
 						newResultsTab.Refresh()
