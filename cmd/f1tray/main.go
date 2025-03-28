@@ -31,6 +31,7 @@ func main() {
 	state := models.AppState{
 		DebugMode:   prefs.DebugMode,
 		Preferences: prefs,
+		FirstRun:    true,
 	}
 
 	// Build a slice of years (as strings) from the current year down to 1950.
@@ -95,7 +96,7 @@ func main() {
 
 	// Define a helper function that refreshes all data.
 	refreshData := func(silent bool) {
-		go processes.RefreshAllData(state, notificationLabel, notificationWrapper, silent,
+		go processes.RefreshAllData(&state, notificationLabel, notificationWrapper, silent,
 			upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 	}
 
@@ -132,7 +133,7 @@ func main() {
 	refreshData(true)
 
 	// Start background auto-refresh.
-	go processes.StartAutoRefresh(state, notificationLabel, notificationWrapper,
+	go processes.StartAutoRefresh(&state, notificationLabel, notificationWrapper,
 		upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 
 	myApp.Run()

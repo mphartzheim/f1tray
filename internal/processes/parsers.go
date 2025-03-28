@@ -74,8 +74,11 @@ func ParseQualifyingResults(body []byte) (string, [][]string, error) {
 		return "", nil, fmt.Errorf("JSON error: %v", err)
 	}
 
+	// If there are no races returned, provide a default message.
 	if len(result.MRData.RaceTable.Races) == 0 {
-		return "", nil, fmt.Errorf("no qualifying data found")
+		return "No Race", [][]string{
+			{"No data available on Jolpica", "", "", ""},
+		}, nil
 	}
 
 	race := result.MRData.RaceTable.Races[0]

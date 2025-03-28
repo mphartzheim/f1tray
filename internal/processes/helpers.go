@@ -13,7 +13,7 @@ import (
 )
 
 // RefreshAllData updates all tab data, plays a notification sound, and optionally shows in-app/system notifications.
-func RefreshAllData(state models.AppState, label *widget.Label, wrapper fyne.CanvasObject, silent bool, tabs ...models.TabData) {
+func RefreshAllData(state *models.AppState, label *widget.Label, wrapper fyne.CanvasObject, silent bool, tabs ...models.TabData) {
 	updated := false
 	for _, tab := range tabs {
 		if state.DebugMode || tab.Refresh() {
@@ -21,21 +21,29 @@ func RefreshAllData(state models.AppState, label *widget.Label, wrapper fyne.Can
 		}
 	}
 	if updated {
-		PlayNotificationSound(state.Preferences)
-		if !silent && label != nil && wrapper != nil {
-			ShowInAppNotification(label, wrapper, "Data has been refreshed.")
+		// Only send the system notification if it's not the first run.
+		if !state.FirstRun {
+			PlayNotificationSound(state.Preferences)
+			if !silent && label != nil && wrapper != nil {
+				ShowInAppNotification(label, wrapper, "Data has been refreshed.")
+			}
+			fyne.CurrentApp().SendNotification(&fyne.Notification{
+				Title:   "F1Tray",
+				Content: "New F1 data is available!",
+			})
 		}
-		fyne.CurrentApp().SendNotification(&fyne.Notification{
-			Title:   "F1Tray",
-			Content: "New F1 data is available!",
-		})
+		// After handling the first update, mark first run as false.
+		state.FirstRun = false
 	} else if !silent && label != nil && wrapper != nil {
 		ShowInAppNotification(label, wrapper, "No new data to load.")
 	}
+
+	// Clear first run regardless of update result:
+	state.FirstRun = false
 }
 
 // StartAutoRefresh periodically refreshes all tab data based on debug mode interval settings.
-func StartAutoRefresh(state models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
+func StartAutoRefresh(state *models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	interval := time.Hour
 	if state.DebugMode {
 		interval = time.Minute
