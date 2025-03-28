@@ -42,6 +42,12 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 				tableContainer.Refresh()
 				status.SetText("Results loaded.")
 				return true
+			} else if strings.HasSuffix(funcName, "ParseQualifyingResults") && strings.Contains(err.Error(), "no qualifying data found") {
+				raceNameLabel.SetText("No data available on Jolpica API")
+				tableContainer.Objects = nil
+				tableContainer.Refresh()
+				status.SetText("Results loaded.")
+				return true
 			}
 			status.SetText("Failed to parse results.")
 			return false
