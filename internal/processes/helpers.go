@@ -1,6 +1,12 @@
 package processes
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"runtime"
 	"time"
 
@@ -13,37 +19,26 @@ import (
 )
 
 // RefreshAllData updates all tab data, plays a notification sound, and optionally shows in-app/system notifications.
-func RefreshAllData(state *models.AppState, label *widget.Label, wrapper fyne.CanvasObject, silent bool, tabs ...models.TabData) {
-	updated := false
+func RefreshAllData(state *models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	for _, tab := range tabs {
 		if state.DebugMode || tab.Refresh() {
-			updated = true
 		}
 	}
-	if updated {
-		// Only send the system notification if it's not the first run.
-		if !state.FirstRun {
-			PlayNotificationSound(state.Preferences)
-			if !silent && label != nil && wrapper != nil {
-				ShowInAppNotification(label, wrapper, "Data has been refreshed")
-			}
-			fyne.CurrentApp().SendNotification(&fyne.Notification{
-				Title:   "F1Tray",
-				Content: "New F1 data is available!",
-			})
-		}
-		// After handling the first update, mark first run as false.
-		state.FirstRun = false
-	} else if !silent && label != nil && wrapper != nil {
-		ShowInAppNotification(label, wrapper, "No new data to load")
-	}
-
-	// Clear first run regardless of update result:
-	state.FirstRun = false
 }
 
-// StartAutoRefresh periodically refreshes all tab data based on debug mode interval settings.
-func StartAutoRefresh(state *models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
+// StartAutoRefresh periodically checks for changes by comparing endpoint hashes.
+// It downloads an initial hash, then on every interval compares it to a fresh hash.
+// If the hash changes and it's not the first run, it sends a system notification,
+// optionally plays a sound per user preferences, and shows an in-app notification.
+func StartAutoRefresh(state *models.AppState, selectedYear string) {
+	// Download and store the initial aggregated hash from your selected endpoints.
+	prevHash, err := DownloadDataHash(selectedYear) // Assumes this function fetches a combined hash
+	if err != nil {
+		log.Println("Error downloading initial data hash:", err)
+		// Optionally, handle the error (retry or exit)
+	}
+
+	// Determine refresh interval: 1 hour normally, 1 minute in debug mode.
 	interval := time.Hour
 	if state.DebugMode {
 		interval = time.Minute
@@ -53,8 +48,74 @@ func StartAutoRefresh(state *models.AppState, label *widget.Label, wrapper fyne.
 	defer ticker.Stop()
 
 	for range ticker.C {
-		RefreshAllData(state, label, wrapper, false, tabs...)
+		// Download the current aggregated hash.
+		currHash, err := DownloadDataHash(selectedYear)
+		if err != nil {
+			log.Println("Error downloading current data hash:", err)
+			continue // Skip this tick if there's an error
+		}
+
+		// Compare the current hash with the previously stored hash.
+		if currHash != prevHash {
+			// Data has changed.
+			// Only send notifications if it's not the first run.
+			if !state.FirstRun {
+				// Send a system notification via the Fyne framework.
+				fyne.CurrentApp().SendNotification(&fyne.Notification{
+					Title:   "F1Tray",
+					Content: "New F1 data is available!",
+				})
+
+				// Optionally play a sound based on user preferences.
+				PlayNotificationSound(state.Preferences)
+
+			}
+			// Update the stored hash with the new one.
+			prevHash = currHash
+			// After the first update, mark the first run as complete.
+			state.FirstRun = false
+		}
 	}
+}
+
+// DownloadDataHash fetches data from the configured endpoints, combines the results,
+// and returns a SHA-256 hash as a hex string.
+func DownloadDataHash(selectedYear string) (string, error) {
+	// Define your endpoints here; update these URLs as needed for your application.
+	endpoints := []string{
+		fmt.Sprintf(models.RaceResultsURL, selectedYear, "last"),
+		fmt.Sprintf(models.QualifyingURL, selectedYear, "last"),
+		fmt.Sprintf(models.SprintURL, selectedYear, "last"),
+	}
+
+	// Initialize a SHA-256 hash.
+	hasher := sha256.New()
+
+	// Loop through each endpoint, download its data, and write it into the hash.
+	for _, url := range endpoints {
+		resp, err := http.Get(url)
+		if err != nil {
+			return "", fmt.Errorf("error fetching data from %s: %w", url, err)
+		}
+
+		// Read the response body.
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close() // Ensure we close the body immediately.
+		if err != nil {
+			return "", fmt.Errorf("error reading data from %s: %w", url, err)
+		}
+
+		// Write the body into the hasher.
+		_, err = hasher.Write(body)
+		if err != nil {
+			return "", fmt.Errorf("error writing data to hash: %w", err)
+		}
+	}
+
+	// Compute the final hash and convert it to a hex string.
+	hashBytes := hasher.Sum(nil)
+	hashString := hex.EncodeToString(hashBytes)
+	return hashString, nil
 }
 
 // SetTrayIcon initializes the system tray icon and menu, with retry logic on Windows.

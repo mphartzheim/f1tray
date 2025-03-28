@@ -10,7 +10,7 @@ import (
 )
 
 // CreatePreferencesTab builds a preferences form for toggling app behavior like close mode, startup visibility, sounds, and debug mode.
-func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences)) fyne.CanvasObject {
+func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences), refreshUpcomingTab func()) fyne.CanvasObject {
 	isExit := currentPrefs.CloseBehavior == "exit"
 	closeCheckbox := widget.NewCheck("Close on exit?", func(checked bool) {
 		if checked {
@@ -28,24 +28,39 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 	})
 	hideCheckbox.SetChecked(currentPrefs.HideOnOpen)
 
+	// Create the testButton first.
+	testButton := widget.NewButton("Test", func() {
+		processes.PlayNotificationSound(currentPrefs)
+	})
+
+	// Create the soundCheckbox that references the testButton.
 	soundCheckbox := widget.NewCheck("Enable sounds?", func(checked bool) {
 		currentPrefs.EnableSound = checked
+		if checked {
+			testButton.Enable()
+		} else {
+			testButton.Disable()
+		}
 		onSave(currentPrefs)
 	})
 	soundCheckbox.SetChecked(currentPrefs.EnableSound)
 
-	testButton := widget.NewButton("Test", func() {
-		processes.PlayNotificationSound(currentPrefs)
-	})
+	// Set the initial state of testButton.
+	if !currentPrefs.EnableSound {
+		testButton.Disable()
+	}
 
 	soundRow := container.NewHBox(
 		soundCheckbox,
 		testButton,
 	)
 
-	timeFormatCheckbox := widget.NewCheck("Use 24-hour clock? (Requires restart - for now)", func(checked bool) {
+	// Update the time format checkbox callback to trigger the Upcoming Tab's refresh.
+	timeFormatCheckbox := widget.NewCheck("Use 24-hour clock?", func(checked bool) {
 		currentPrefs.Use24HourClock = checked
 		onSave(currentPrefs)
+		// Trigger the Upcoming Tab to refresh so the times are redrawn immediately.
+		refreshUpcomingTab()
 	})
 	timeFormatCheckbox.SetChecked(currentPrefs.Use24HourClock)
 

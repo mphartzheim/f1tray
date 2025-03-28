@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -65,11 +66,15 @@ func main() {
 		container.NewTabItem("Race Results", resultsTabData.Content),
 		container.NewTabItem("Qualifying", qualifyingTabData.Content),
 		container.NewTabItem("Sprint", sprintTabData.Content),
+		// Here we pass a refresh function to the preferences tab. When the time format is changed,
+		// the Upcoming Tab's Refresh() method is called to update the times.
 		container.NewTabItem("Preferences", tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 			_ = config.SaveConfig(updated)
 			prefs = updated
 			state.Preferences = updated
 			state.DebugMode = updated.DebugMode
+		}, func() {
+			upcomingTabData.Refresh()
 		})),
 	)
 
@@ -93,12 +98,6 @@ func main() {
 
 	// Create notification overlay using your dedicated UI function.
 	notificationLabel, notificationWrapper := ui.CreateNotification()
-
-	// Define a helper function that refreshes all data.
-	refreshData := func(silent bool) {
-		go processes.RefreshAllData(&state, notificationLabel, notificationWrapper, silent,
-			upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
-	}
 
 	// Stack the tabs with the notification overlay.
 	stack := container.NewStack(tabsContainer, notificationWrapper)
@@ -130,11 +129,11 @@ func main() {
 	})
 
 	// Lazy-load data once the UI is ready.
-	refreshData(true)
+	go processes.RefreshAllData(&state, notificationLabel, notificationWrapper,
+		upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 
 	// Start background auto-refresh.
-	go processes.StartAutoRefresh(&state, notificationLabel, notificationWrapper,
-		upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+	go processes.StartAutoRefresh(&state, fmt.Sprintf("%d", time.Now().Year()))
 
 	myApp.Run()
 }

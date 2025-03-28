@@ -116,7 +116,7 @@ func ParseSchedule(body []byte) (string, [][]string, error) {
 			fmt.Sprintf("%s, %s (%s)", race.Circuit.Location.Locality, race.Circuit.Location.Country, race.Date),
 		}
 	}
-	return fmt.Sprintf("%s Season Schedule loaded", result.MRData.RaceTable.Season), rows, nil
+	return fmt.Sprintf("%s season schedule loaded", result.MRData.RaceTable.Season), rows, nil
 }
 
 // ParseUpcoming extracts session times for the next race into labeled rows using user time preferences.
