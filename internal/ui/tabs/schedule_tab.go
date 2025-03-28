@@ -25,7 +25,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 	url := fmt.Sprintf(models.ScheduleURL, year)
 
 	refresh := func() bool {
-		data, _, err := processes.FetchData(url)
+		data, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch schedule.")
 			return false
@@ -76,28 +76,35 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 				bg.Hide()
 			} else {
 				cl.SetText(rows[id.Row-1][id.Col])
+
+				race := schedule.MRData.RaceTable.Races[id.Row-1]
+
 				if id.Col == 1 {
-					// For the Race Name column: extract the round from column 0 and reload other tabs.
-					cl.OnDoubleTapped = func() {
-						round := rows[id.Row-1][0]
-						fmt.Printf("Reloading tabs for season %s and round %s\n", year, round)
+					// Parse the race date to determine if it has occurred.
+					raceDate, err := time.Parse("2006-01-02", race.Date)
+					if err != nil {
+						fmt.Printf("Error parsing race date: %v\n", err)
+						cl.OnDoubleTapped = nil
+					} else if raceDate.Before(time.Now()) {
+						// Only enable double-click if the race has already happened.
+						cl.OnDoubleTapped = func() {
+							round := rows[id.Row-1][0]
 
-						// Create new tab data for each tab.
-						newResultsTab := CreateResultsTableTab(processes.ParseRaceResults, year, round)
-						newQualifyingTab := CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
-						newSprintTab := CreateResultsTableTab(processes.ParseSprintResults, year, round)
+							newResultsTab := CreateResultsTableTab(processes.ParseRaceResults, year, round)
+							newQualifyingTab := CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
+							newSprintTab := CreateResultsTableTab(processes.ParseSprintResults, year, round)
 
-						// Optionally trigger the refresh if needed.
-						newResultsTab.Refresh()
-						newQualifyingTab.Refresh()
-						newSprintTab.Refresh()
+							newResultsTab.Refresh()
+							newQualifyingTab.Refresh()
+							newSprintTab.Refresh()
 
-						// Pass the new content to the UpdateTabs callback.
-						processes.ReloadOtherTabs(newResultsTab.Content, newQualifyingTab.Content, newSprintTab.Content)
+							processes.ReloadOtherTabs(newResultsTab.Content, newQualifyingTab.Content, newSprintTab.Content)
+						}
+					} else {
+						// Future races — disable double-click
+						cl.OnDoubleTapped = nil
 					}
 				} else if id.Col == 2 {
-					// For the Circuit column.
-					race := schedule.MRData.RaceTable.Races[id.Row-1]
 					lat := race.Circuit.Location.Lat
 					lon := race.Circuit.Location.Long
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)

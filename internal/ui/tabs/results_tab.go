@@ -23,12 +23,9 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 	url := buildResultsURL(parseFunc, year, round)
 
 	refresh := func() bool {
-		data, changed, err := processes.FetchData(url)
+		data, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch results.")
-			return false
-		}
-		if !changed {
 			return false
 		}
 
@@ -95,10 +92,8 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 
 // buildResultsURL builds the correct URL based on the parse function provided.
 func buildResultsURL(parseFunc func([]byte) (string, [][]string, error), year string, round string) string {
-	// Get the function name using runtime and reflect.
 	funcName := runtime.FuncForPC(reflect.ValueOf(parseFunc).Pointer()).Name()
 
-	// Decide which URL to use based on the function name.
 	if strings.HasSuffix(funcName, "ParseRaceResults") {
 		return fmt.Sprintf(models.RaceResultsURL, year, round)
 	} else if strings.HasSuffix(funcName, "ParseQualifyingResults") {
@@ -106,6 +101,5 @@ func buildResultsURL(parseFunc func([]byte) (string, [][]string, error), year st
 	} else if strings.HasSuffix(funcName, "ParseSprintResults") {
 		return fmt.Sprintf(models.SprintURL, year, round)
 	}
-	// Default to empty string if no match is found.
 	return ""
 }
