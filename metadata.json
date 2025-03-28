@@ -1,5 +1,5 @@
 {
     "name": "F1Tray",
-    "icon": "cmd/f1tray/assets/tray_icon.ico"
+    "icon": "builds/windows/tray_icon.ico"
   }
   
