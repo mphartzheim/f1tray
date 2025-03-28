@@ -27,13 +27,13 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 	refresh := func() bool {
 		data, err := processes.FetchData(url)
 		if err != nil {
-			status.SetText("Failed to fetch schedule.")
+			status.SetText("Failed to fetch schedule")
 			return false
 		}
 
 		title, rows, err := parseFunc(data)
 		if err != nil {
-			status.SetText("Failed to parse schedule.")
+			status.SetText("Failed to parse schedule")
 			return false
 		}
 
@@ -142,7 +142,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 
 		tableContainer.Objects = []fyne.CanvasObject{table}
 		tableContainer.Refresh()
-		status.SetText(fmt.Sprintf("%s loaded", title))
+		status.SetText(title)
 		return true
 	}
 

@@ -40,7 +40,7 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 				raceNameLabel.SetText("Not a sprint race event")
 				tableContainer.Objects = nil
 				tableContainer.Refresh()
-				status.SetText("Results loaded.")
+				status.SetText("Results loaded")
 				return true
 			} else if strings.HasSuffix(funcName, "ParseQualifyingResults") && strings.Contains(err.Error(), "no qualifying data found") {
 				raceNameLabel.SetText("No data available on Jolpica API")
@@ -49,7 +49,7 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 				status.SetText("Results loaded.")
 				return true
 			}
-			status.SetText("Failed to parse results.")
+			status.SetText("Failed to parse results")
 			return false
 		}
 
@@ -77,7 +77,7 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 
 		tableContainer.Objects = []fyne.CanvasObject{table}
 		tableContainer.Refresh()
-		status.SetText("Results loaded.")
+		status.SetText("Results loaded")
 		return true
 	}
 

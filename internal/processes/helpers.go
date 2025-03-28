@@ -25,7 +25,7 @@ func RefreshAllData(state *models.AppState, label *widget.Label, wrapper fyne.Ca
 		if !state.FirstRun {
 			PlayNotificationSound(state.Preferences)
 			if !silent && label != nil && wrapper != nil {
-				ShowInAppNotification(label, wrapper, "Data has been refreshed.")
+				ShowInAppNotification(label, wrapper, "Data has been refreshed")
 			}
 			fyne.CurrentApp().SendNotification(&fyne.Notification{
 				Title:   "F1Tray",
@@ -35,7 +35,7 @@ func RefreshAllData(state *models.AppState, label *widget.Label, wrapper fyne.Ca
 		// After handling the first update, mark first run as false.
 		state.FirstRun = false
 	} else if !silent && label != nil && wrapper != nil {
-		ShowInAppNotification(label, wrapper, "No new data to load.")
+		ShowInAppNotification(label, wrapper, "No new data to load")
 	}
 
 	// Clear first run regardless of update result:
