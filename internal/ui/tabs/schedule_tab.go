@@ -86,6 +86,8 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 						fmt.Printf("Error parsing race date: %v\n", err)
 						cl.OnDoubleTapped = nil
 					} else if raceDate.Before(time.Now()) {
+						// Append the checkered flag emoji "🏁" to the text.
+						cl.SetText(rows[id.Row-1][id.Col] + " 🏁")
 						// Only enable double-click if the race has already happened.
 						cl.OnDoubleTapped = func() {
 							round := rows[id.Row-1][0]
@@ -107,6 +109,8 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 				} else if id.Col == 2 {
 					lat := race.Circuit.Location.Lat
 					lon := race.Circuit.Location.Long
+					// Append the map emoji "🗺️" to the text.
+					cl.SetText(rows[id.Row-1][id.Col] + " 🗺️")
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
 					cl.OnDoubleTapped = func() {
 						if err := ui.OpenWebPage(mapURL); err != nil {
