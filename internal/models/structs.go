@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"fyne.io/fyne/v2"
 )
 
@@ -153,6 +155,13 @@ type TabData struct {
 
 // AppState tracks application state like whether it's the first run.
 type AppState struct {
-	FirstRun bool
-	// Add more things later like logger, user session, etc
+	FirstRun         bool
+	UpcomingSessions []SessionInfo
+}
+
+// SessionInfo holds individual session data for notification purposes.
+type SessionInfo struct {
+	Type      string    // "Practice", "Qualifying", "Race"
+	StartTime time.Time // UTC timestamp of session start
+	Label     string    // Human-readable name (e.g., "Free Practice 1")
 }

@@ -69,7 +69,7 @@ func main() {
 	scheduleTab := container.NewTabItem("Schedule", scheduleTabData.Content)
 
 	// Create the rest of your tabs using the default year.
-	upcomingTabData := tabs.CreateUpcomingTab(processes.ParseUpcoming, yearSelect.Selected)
+	upcomingTabData := tabs.CreateUpcomingTab(&state, processes.ParseUpcoming, yearSelect.Selected)
 	resultsTabData := tabs.CreateResultsTableTab(processes.ParseRaceResults, yearSelect.Selected, "last")
 	qualifyingTabData := tabs.CreateResultsTableTab(processes.ParseQualifyingResults, yearSelect.Selected, "last")
 	sprintTabData := tabs.CreateResultsTableTab(processes.ParseSprintResults, yearSelect.Selected, "last")

@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"f1tray/internal/config"
-	"f1tray/internal/processes"
+	"f1tray/internal/notifications"
 	"f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
@@ -73,7 +73,7 @@ func buildMainPreferences(prefs *config.Preferences, onSave func(config.Preferen
 
 	// Sound settings.
 	testButton := widget.NewButton("Test", func() {
-		processes.PlayNotificationSound()
+		notifications.PlayNotificationSound()
 	})
 	soundCheckbox := widget.NewCheck("Enable sounds?", func(checked bool) {
 		prefs.Sound.Enable = checked

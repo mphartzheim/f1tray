@@ -1,4 +1,4 @@
-package processes
+package notifications
 
 import (
 	"os/exec"

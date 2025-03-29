@@ -13,6 +13,7 @@ import (
 
 	"f1tray/internal/config"
 	"f1tray/internal/models"
+	"f1tray/internal/notifications"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -31,10 +32,9 @@ func RefreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...mode
 // StartAutoRefresh checks an endpoint's hash on intervals and notifies the user if it changes after the first run.
 func StartAutoRefresh(state *models.AppState, selectedYear string) {
 	// Download and store the initial aggregated hash from your selected endpoints.
-	prevHash, err := DownloadDataHash(selectedYear) // Assumes this function fetches a combined hash
+	prevHash, err := DownloadDataHash(selectedYear)
 	if err != nil {
 		log.Println("Error downloading initial data hash:", err)
-		// Optionally, handle the error (retry or exit)
 	}
 
 	// Determine refresh interval: 1 hour normally, 1 minute in debug mode.
@@ -43,38 +43,47 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 		interval = time.Minute
 	}
 
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+	// Start hash monitoring in background
+	go func() {
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
 
-	for range ticker.C {
-		// Download the current aggregated hash.
-		currHash, err := DownloadDataHash(selectedYear)
-		if err != nil {
-			log.Println("Error downloading current data hash:", err)
-			continue // Skip this tick if there's an error
-		}
-
-		// Compare the current hash with the previously stored hash.
-		if currHash != prevHash {
-			// Data has changed.
-			// Only send notifications if it's not the first run.
-			if !state.FirstRun {
-				// Send a system notification via the Fyne framework.
-				fyne.CurrentApp().SendNotification(&fyne.Notification{
-					Title:   "F1Tray",
-					Content: "New F1 data is available!",
-				})
-
-				// Optionally play a sound based on user preferences.
-				PlayNotificationSound()
-
+		for range ticker.C {
+			currHash, err := DownloadDataHash(selectedYear)
+			if err != nil {
+				log.Println("Error downloading current data hash:", err)
+				continue
 			}
-			// Update the stored hash with the new one.
-			prevHash = currHash
-			// After the first update, mark the first run as complete.
-			state.FirstRun = false
+
+			if currHash != prevHash {
+				if !state.FirstRun {
+					fyne.CurrentApp().SendNotification(&fyne.Notification{
+						Title:   "F1Tray",
+						Content: "New F1 data is available!",
+					})
+					notifications.PlayNotificationSound()
+				}
+				prevHash = currHash
+				state.FirstRun = false
+			}
 		}
-	}
+	}()
+
+	// Start session notification monitoring (runs every minute)
+	go func() {
+		ticker := time.NewTicker(1 * time.Minute)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			for _, session := range state.UpcomingSessions {
+				notifications.CheckAndSendNotifications(notifications.SessionInfo{
+					Type:      notifications.ParseSessionType(session.Type),
+					StartTime: session.StartTime,
+					Title:     session.Label,
+				})
+			}
+		}
+	}()
 }
 
 // DownloadDataHash fetches data from endpoints, combines it, and returns a SHA-256 hash as a hex string.
