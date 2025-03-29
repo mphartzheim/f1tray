@@ -38,8 +38,8 @@ Displays official race results in a simple, scrollable table. Now supports histo
 
 ---
 
-### 🎨 Light Theme Preview  
-A sneak peek of the optional Light Theme, available in the Preferences tab.
+### 🎨 Light Theme  
+Theme selection now available in the Preferences tab.
 
 ![Light Theme](cmd/f1tray/assets/light_theme.png)
 
