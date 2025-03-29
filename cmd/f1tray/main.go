@@ -24,11 +24,6 @@ import (
 var trayIconBytes []byte
 
 func main() {
-	// Create the Fyne app and window.
-	myApp := app.NewWithID("f1tray")
-	myApp.Settings().SetTheme(themes.DarkTheme{})
-	myWindow := myApp.NewWindow("F1 Viewer")
-
 	// Load user preferences and create the application state.
 	prefs := config.LoadConfig()
 	state := models.AppState{
@@ -36,6 +31,22 @@ func main() {
 		Preferences: prefs,
 		FirstRun:    true,
 	}
+
+	// Create the Fyne app and window.
+	myApp := app.NewWithID("f1tray")
+
+	// Choose the initial theme based on preferences.
+	var initialTheme fyne.Theme
+	switch prefs.Theme {
+	case "Light":
+		initialTheme = themes.LightTheme{}
+	default:
+		// If no theme is set or any value other than "Light", default to DarkTheme.
+		initialTheme = themes.DarkTheme{}
+	}
+	myApp.Settings().SetTheme(initialTheme)
+
+	myWindow := myApp.NewWindow("F1 Viewer")
 
 	// Build a slice of years (as strings) from the current year down to 1950.
 	currentYear := time.Now().Year()
