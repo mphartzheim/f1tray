@@ -16,7 +16,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// CreateScheduleTableTab builds a tab displaying the full race schedule with interactive circuit links and highlighted upcoming event.
+// CreateScheduleTableTab builds a tab displaying the full race schedule with interactive circuit links
+// and highlighted upcoming event.
 func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
@@ -50,7 +51,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 		for i, race := range schedule.MRData.RaceTable.Races {
 			raceDate, _ := time.Parse("2006-01-02", race.Date)
 			if raceDate.After(now) || raceDate.Equal(now) {
-				highlightRow = i + 1 // +1 because headers take row 0
+				highlightRow = i + 1 // +1 because header is row 0
 				break
 			}
 		}
@@ -58,7 +59,8 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 		// Factory function returns a container with a background rectangle and a clickable label.
 		factory := func() fyne.CanvasObject {
 			bg := canvas.NewRectangle(nil)
-			cl := ui.NewClickableLabel("", nil)
+			// Initialize ClickableLabel with Clickable false.
+			cl := ui.NewClickableLabel("", nil, false)
 			return container.NewStack(bg, cl)
 		}
 
@@ -69,65 +71,69 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 			cl := wrapper.Objects[1].(*ui.ClickableLabel)
 
 			if id.Row == 0 {
-				// Header row.
+				// Header row: set header text, disable click, and hide background.
 				headers := []string{"Round", "Race Name", "Circuit", "Location (Date)"}
 				cl.SetText(headers[id.Col])
 				cl.OnDoubleTapped = nil
+				cl.Clickable = false
 				bg.Hide()
 			} else {
-				cl.SetText(rows[id.Row-1][id.Col])
+				// Set base text from the row data.
+				baseText := rows[id.Row-1][id.Col]
+				cl.SetText(baseText)
+				// By default, disable clickability.
+				cl.OnDoubleTapped = nil
+				cl.Clickable = false
+				// Hide background initially.
+				bg.Hide()
 
 				race := schedule.MRData.RaceTable.Races[id.Row-1]
-
 				if id.Col == 1 {
-					// Parse the race date to determine if it has occurred.
+					// Column 1: Race Name. Enable double-click for past races.
 					raceDate, err := time.Parse("2006-01-02", race.Date)
 					if err != nil {
 						fmt.Printf("Error parsing race date: %v\n", err)
-						cl.OnDoubleTapped = nil
-					} else if raceDate.Before(time.Now()) {
-						// Append the checkered flag emoji "🏁" to the text.
-						cl.SetText(rows[id.Row-1][id.Col] + " 🏁")
-						// Only enable double-click if the race has already happened.
+					} else if raceDate.Before(now) {
+						// Append checkered flag emoji.
+						cl.SetText(baseText + " 🏁")
+						// Set callback for double-click.
 						cl.OnDoubleTapped = func() {
 							round := rows[id.Row-1][0]
-
 							newResultsTab := CreateResultsTableTab(processes.ParseRaceResults, year, round)
 							newQualifyingTab := CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
 							newSprintTab := CreateResultsTableTab(processes.ParseSprintResults, year, round)
-
 							newResultsTab.Refresh()
 							newQualifyingTab.Refresh()
 							newSprintTab.Refresh()
-
 							processes.ReloadOtherTabs(newResultsTab.Content, newQualifyingTab.Content, newSprintTab.Content)
 						}
-					} else {
-						// Future races — disable double-click
-						cl.OnDoubleTapped = nil
+						cl.Clickable = true
 					}
 				} else if id.Col == 2 {
+					// Column 2: Circuit name. Append map emoji and enable double-click.
+					cl.SetText(baseText + " 🗺️")
 					lat := race.Circuit.Location.Lat
 					lon := race.Circuit.Location.Long
-					// Append the map emoji "🗺️" to the text.
-					cl.SetText(rows[id.Row-1][id.Col] + " 🗺️")
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
 					cl.OnDoubleTapped = func() {
 						if err := ui.OpenWebPage(mapURL); err != nil {
 							status.SetText("Failed to open map URL")
 						}
 					}
-				} else {
-					cl.OnDoubleTapped = nil
+					cl.Clickable = true
 				}
+				// For other columns, leave as non-clickable.
 
+				// Additionally, if this row is the highlighted row, add a red border.
 				if id.Row == highlightRow {
-					bg.StrokeColor = color.NRGBA{R: 0xFF, G: 0x18, B: 0x01, A: 0xFF} // Red border.
+					bg.StrokeColor = color.NRGBA{R: 0xFF, G: 0x18, B: 0x01, A: 0xFF}
 					bg.StrokeWidth = 2
 					bg.Show()
 				} else {
-					bg.Hide()
+					// Remove border for non-highlighted rows.
+					bg.StrokeWidth = 0
 				}
+
 				bg.Resize(wrapper.Size())
 			}
 			wrapper.Refresh()
