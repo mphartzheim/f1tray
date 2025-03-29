@@ -20,7 +20,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// RefreshAllData updates all tab data, plays a notification sound, and optionally shows in-app/system notifications.
+// RefreshAllData refreshes all provided tabs and respects debug mode for forced refresh.
 func RefreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	for _, tab := range tabs {
 		if config.Get().DebugMode || tab.Refresh() {

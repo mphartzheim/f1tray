@@ -9,8 +9,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// CreateNotification creates and returns a notification label and its wrapper container.
-// It encapsulates the notification overlay creation.
+// CreateNotification returns a label and centered overlay container for in-app notifications.
 func CreateNotification() (*widget.Label, fyne.CanvasObject) {
 	notificationLabel := widget.NewLabel("")
 	notificationLabel.Alignment = fyne.TextAlignCenter

@@ -29,13 +29,10 @@ func FetchData(url string) ([]byte, error) {
 	return body, nil
 }
 
-// UpdateTabs is a callback function that should be set by the main package.
-// When ReloadOtherTabs is called, UpdateTabs will update the tab container's
-// "Race Results", "Qualifying", and "Sprint" tabs with the new content.
+// UpdateTabs updates the Race Results, Qualifying, and Sprint tabs via callback from main.
 var UpdateTabs func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject)
 
-// ReloadOtherTabs updates the Race Results, Qualifying, and Sprint tabs with new content.
-// It calls the UpdateTabs callback if it has been set.
+// ReloadOtherTabs refreshes the Race Results, Qualifying, and Sprint tabs using UpdateTabs.
 func ReloadOtherTabs(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
 	if UpdateTabs != nil {
 		UpdateTabs(resultsContent, qualifyingContent, sprintContent)

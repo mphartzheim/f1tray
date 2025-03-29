@@ -156,8 +156,7 @@ func updateTableCell(cell fyne.CanvasObject, rows [][]string, id widget.TableCel
 	bg.Refresh()
 }
 
-// formatFullDate converts a date string in "2006-01-02" format to a full date string
-// like "Friday, April 4th 2025".
+// formatFullDate converts a YYYY-MM-DD string to a full date like "Friday, April 4th 2025".
 func formatFullDate(dateStr string) string {
 	t, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {

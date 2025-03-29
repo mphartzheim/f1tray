@@ -13,8 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// CreatePreferencesTab builds a preferences form for toggling app behavior like close mode,
-// startup visibility, sounds, and debug mode. It reads and writes the global configuration via config.Get()/Set().
+// CreatePreferencesTab builds the Preferences tab UI for updating user settings live.
 func CreatePreferencesTab(onSave func(config.Preferences), refreshUpcomingTab func()) fyne.CanvasObject {
 	// Get the current global preferences.
 	prefs := config.Get()

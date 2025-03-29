@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// Preferences defines user-configurable application settings.
 type Preferences struct {
 	CloseBehavior  string `json:"close_behavior"`    // "exit" or "minimize"
 	HideOnOpen     bool   `json:"hide_on_open"`      // if true, the window is hidden on launch
@@ -16,6 +17,7 @@ type Preferences struct {
 	Theme          string `json:"theme"`             // selected theme (e.g., "Dark", "Light", etc.)
 }
 
+// DefaultPreferences provides fallback settings when no config file is present.
 var DefaultPreferences = Preferences{
 	CloseBehavior:  "minimize",
 	HideOnOpen:     true,

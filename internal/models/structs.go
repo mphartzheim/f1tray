@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 )
 
+// QualifyingResultResponse represents the parsed JSON response for qualifying results.
 type QualifyingResultResponse struct {
 	MRData struct {
 		RaceTable struct {
@@ -28,6 +29,7 @@ type QualifyingResultResponse struct {
 	} `json:"MRData"`
 }
 
+// SprintResultResponse represents the parsed JSON response for sprint results.
 type SprintResultResponse struct {
 	MRData struct {
 		RaceTable struct {
@@ -53,6 +55,7 @@ type SprintResultResponse struct {
 	} `json:"MRData"`
 }
 
+// RaceResultResponse represents the parsed JSON response for race results.
 type RaceResultResponse struct {
 	MRData struct {
 		RaceTable struct {
@@ -78,6 +81,7 @@ type RaceResultResponse struct {
 	} `json:"MRData"`
 }
 
+// ScheduleResponse represents the parsed JSON response for the full race schedule.
 type ScheduleResponse struct {
 	MRData struct {
 		RaceTable struct {
@@ -100,6 +104,7 @@ type ScheduleResponse struct {
 	} `json:"MRData"`
 }
 
+// UpcomingResponse represents the parsed JSON response for the next upcoming race and sessions.
 type UpcomingResponse struct {
 	MRData struct {
 		RaceTable struct {
@@ -140,11 +145,13 @@ type UpcomingResponse struct {
 	} `json:"MRData"`
 }
 
+// TabData contains the content and refresh logic for a UI tab.
 type TabData struct {
 	Content fyne.CanvasObject
 	Refresh func() bool
 }
 
+// AppState tracks application state like whether it's the first run.
 type AppState struct {
 	FirstRun bool
 	// Add more things later like logger, user session, etc
