@@ -8,8 +8,10 @@ import (
 	"log"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
+	"f1tray/internal/config"
 	"f1tray/internal/models"
 
 	"fyne.io/fyne/v2"
@@ -20,17 +22,16 @@ import (
 
 // RefreshAllData updates all tab data, plays a notification sound, and optionally shows in-app/system notifications.
 func RefreshAllData(state *models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
+	prefs := config.LoadConfig()
 	for _, tab := range tabs {
-		if state.DebugMode || tab.Refresh() {
+		if prefs.DebugMode || tab.Refresh() {
 		}
 	}
 }
 
-// StartAutoRefresh periodically checks for changes by comparing endpoint hashes.
-// It downloads an initial hash, then on every interval compares it to a fresh hash.
-// If the hash changes and it's not the first run, it sends a system notification,
-// optionally plays a sound per user preferences, and shows an in-app notification.
+// StartAutoRefresh checks an endpoint's hash on intervals and notifies the user if it changes after the first run.
 func StartAutoRefresh(state *models.AppState, selectedYear string) {
+	prefs := config.LoadConfig()
 	// Download and store the initial aggregated hash from your selected endpoints.
 	prevHash, err := DownloadDataHash(selectedYear) // Assumes this function fetches a combined hash
 	if err != nil {
@@ -40,7 +41,7 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 
 	// Determine refresh interval: 1 hour normally, 1 minute in debug mode.
 	interval := time.Hour
-	if state.DebugMode {
+	if prefs.DebugMode {
 		interval = time.Minute
 	}
 
@@ -67,7 +68,7 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 				})
 
 				// Optionally play a sound based on user preferences.
-				PlayNotificationSound(state.Preferences)
+				PlayNotificationSound()
 
 			}
 			// Update the stored hash with the new one.
@@ -78,8 +79,7 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 	}
 }
 
-// DownloadDataHash fetches data from the configured endpoints, combines the results,
-// and returns a SHA-256 hash as a hex string.
+// DownloadDataHash fetches data from endpoints, combines it, and returns a SHA-256 hash as a hex string.
 func DownloadDataHash(selectedYear string) (string, error) {
 	// Define your endpoints here; update these URLs as needed for your application.
 	endpoints := []string{
@@ -165,4 +165,27 @@ func AppendSessionRow(rows [][]string, label, date, time string, use24h bool) []
 		rows = append(rows, []string{label, d, t})
 	}
 	return rows
+}
+
+// IsSessionInProgress returns true if the given session time is currently active.
+func IsSessionInProgress(dateStr, timeStr string) bool {
+	prefs := config.LoadConfig()
+	if prefs.DebugMode {
+		return true
+	}
+
+	start, err := time.Parse("2006-01-02 15:04", dateStr+" "+timeStr)
+	if err != nil {
+		return false
+	}
+
+	now := time.Now().UTC()
+	duration := 1 * time.Hour
+
+	lower := strings.ToLower(dateStr + " " + timeStr)
+	if strings.Contains(lower, "race") {
+		duration = 2 * time.Hour
+	}
+
+	return now.After(start) && now.Before(start.Add(duration))
 }

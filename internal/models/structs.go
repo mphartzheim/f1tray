@@ -1,8 +1,6 @@
 package models
 
 import (
-	"f1tray/internal/config"
-
 	"fyne.io/fyne/v2"
 )
 
@@ -148,8 +146,6 @@ type TabData struct {
 }
 
 type AppState struct {
-	DebugMode   bool
-	Preferences config.Preferences
-	FirstRun    bool
+	FirstRun bool
 	// Add more things later like logger, user session, etc
 }

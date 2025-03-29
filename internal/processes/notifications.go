@@ -23,7 +23,8 @@ func ShowInAppNotification(label *widget.Label, wrapper fyne.CanvasObject, messa
 }
 
 // PlayNotificationSound plays a simple platform-specific notification sound.
-func PlayNotificationSound(prefs config.Preferences) {
+func PlayNotificationSound() {
+	prefs := config.LoadConfig()
 	if !prefs.EnableSound {
 		return
 	}

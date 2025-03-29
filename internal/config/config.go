@@ -12,7 +12,7 @@ type Preferences struct {
 	DebugMode      bool   `json:"debug_mode"`        // if true, debug mode is enabled
 	EnableSound    bool   `json:"enable_sound"`      // if true, play system sounds
 	Use24HourClock bool   `json:"use_24_hour_clock"` // if true, display time in 24-hour format
-	Theme          string `json:"theme"`             // selected theme (e.g., "Default", "CustomTheme", etc.)
+	Theme          string `json:"theme"`             // selected theme (e.g., "Dark", "Light", etc.)
 }
 
 var DefaultPreferences = Preferences{
@@ -21,7 +21,7 @@ var DefaultPreferences = Preferences{
 	DebugMode:      false,
 	EnableSound:    true,
 	Use24HourClock: false,
-	Theme:          "System",
+	Theme:          "Dark",
 }
 
 // LoadConfig reads the configuration file or returns default preferences if none exist.

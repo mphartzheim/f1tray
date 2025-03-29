@@ -64,7 +64,7 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 
 	// Create the testButton first.
 	testButton := widget.NewButton("Test", func() {
-		processes.PlayNotificationSound(currentPrefs)
+		processes.PlayNotificationSound()
 	})
 
 	// Create the soundCheckbox that references the testButton.

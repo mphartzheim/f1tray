@@ -3,6 +3,7 @@ package tabs
 import (
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"time"
 
 	"f1tray/internal/models"
@@ -10,7 +11,9 @@ import (
 	"f1tray/internal/ui"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -48,11 +51,9 @@ func CreateUpcomingTab(parseFunc func([]byte) (string, [][]string, error), year 
 				}
 				return len(rows), len(rows[0])
 			},
-			func() fyne.CanvasObject {
-				return widget.NewLabel("")
-			},
+			createTableCell,
 			func(id widget.TableCellID, cell fyne.CanvasObject) {
-				cell.(*widget.Label).SetText(rows[id.Row][id.Col])
+				updateTableCell(cell, rows, id)
 			},
 		)
 
@@ -117,4 +118,34 @@ func CreateUpcomingTab(parseFunc func([]byte) (string, [][]string, error), year 
 		Content: content,
 		Refresh: refresh,
 	}
+}
+
+// createTableCell returns a cell that is a stack containing a background rectangle and a label.
+func createTableCell() fyne.CanvasObject {
+	bg := canvas.NewRectangle(color.Transparent)
+	lbl := widget.NewLabel("")
+	return container.NewStack(bg, lbl)
+}
+
+// updateTableCell sets the cell text and highlights the Time cell (column 1) if the session is active.
+func updateTableCell(cell fyne.CanvasObject, rows [][]string, id widget.TableCellID) {
+	cont := cell.(*fyne.Container)
+	bg := cont.Objects[0].(*canvas.Rectangle)
+	lbl := cont.Objects[1].(*widget.Label)
+
+	text := rows[id.Row][id.Col]
+
+	// If this is the Time cell and the session is active, highlight it and add the 🔴 icon
+	if id.Col == 2 && processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
+		text += " 🔴"
+		bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
+		bg.StrokeWidth = 2
+		bg.Show()
+	} else {
+		bg.StrokeWidth = 0
+		bg.Hide()
+	}
+
+	lbl.SetText(text)
+	bg.Refresh()
 }

@@ -27,9 +27,7 @@ func main() {
 	// Load user preferences and create the application state.
 	prefs := config.LoadConfig()
 	state := models.AppState{
-		DebugMode:   prefs.DebugMode,
-		Preferences: prefs,
-		FirstRun:    true,
+		FirstRun: true,
 	}
 
 	// Create the Fyne app.
@@ -83,8 +81,6 @@ func main() {
 		container.NewTabItem("Preferences", tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 			_ = config.SaveConfig(updated)
 			prefs = updated
-			state.Preferences = updated
-			state.DebugMode = updated.DebugMode
 		}, func() {
 			upcomingTabData.Refresh()
 		})),
