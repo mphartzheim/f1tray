@@ -13,15 +13,19 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// CreatePreferencesTab builds a preferences form for toggling app behavior like close mode, startup visibility, sounds, and debug mode.
-func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences), refreshUpcomingTab func()) fyne.CanvasObject {
+// CreatePreferencesTab builds a preferences form for toggling app behavior like close mode,
+// startup visibility, sounds, and debug mode. It reads and writes the global configuration via config.Get()/Set().
+func CreatePreferencesTab(onSave func(config.Preferences), refreshUpcomingTab func()) fyne.CanvasObject {
+	// Get the current global preferences.
+	prefs := config.Get()
+
 	// Dynamically build theme options from the AvailableThemes registry.
 	availableThemes := themes.AvailableThemes()
 	themeOptions := make([]string, 0, len(availableThemes))
 	for name := range availableThemes {
 		themeOptions = append(themeOptions, name)
 	}
-	sort.Strings(themeOptions) // optional: sort alphabetically
+	sort.Strings(themeOptions) // sort options alphabetically
 
 	// Map the selected string to a theme instance.
 	mapTheme := func(selected string) fyne.Theme {
@@ -33,76 +37,74 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 
 	// Create the theme drop-down with label "Theme:".
 	selectTheme := widget.NewSelect(themeOptions, func(selected string) {
-		currentPrefs.Theme = selected
-		onSave(currentPrefs)
-		// Update the app theme immediately.
+		prefs.Theme = selected
+		_ = config.Set(prefs) // update global preferences
+		onSave(*prefs)        // trigger onSave callback with updated prefs
 		fyne.CurrentApp().Settings().SetTheme(mapTheme(selected))
 	})
-	// Ensure the drop-down always shows the currently set theme.
-	selectTheme.SetSelected(currentPrefs.Theme)
+	selectTheme.SetSelected(prefs.Theme)
 	themeRow := container.NewHBox(widget.NewLabel("Theme:"), selectTheme)
 
-	isExit := currentPrefs.CloseBehavior == "exit"
+	// Close on exit checkbox.
 	closeCheckbox := widget.NewCheck("Close on exit?", func(checked bool) {
 		if checked {
-			currentPrefs.CloseBehavior = "exit"
+			prefs.CloseBehavior = "exit"
 		} else {
-			currentPrefs.CloseBehavior = "minimize"
+			prefs.CloseBehavior = "minimize"
 		}
-		onSave(currentPrefs)
+		_ = config.Set(prefs)
+		onSave(*prefs)
 	})
-	closeCheckbox.SetChecked(isExit)
+	closeCheckbox.SetChecked(prefs.CloseBehavior == "exit")
 
+	// Hide on open checkbox.
 	hideCheckbox := widget.NewCheck("Hide on open?", func(checked bool) {
-		currentPrefs.HideOnOpen = checked
-		onSave(currentPrefs)
+		prefs.HideOnOpen = checked
+		_ = config.Set(prefs)
+		onSave(*prefs)
 	})
-	hideCheckbox.SetChecked(currentPrefs.HideOnOpen)
+	hideCheckbox.SetChecked(prefs.HideOnOpen)
 
-	// Create the testButton first.
+	// Sound settings.
 	testButton := widget.NewButton("Test", func() {
 		processes.PlayNotificationSound()
 	})
-
-	// Create the soundCheckbox that references the testButton.
 	soundCheckbox := widget.NewCheck("Enable sounds?", func(checked bool) {
-		currentPrefs.EnableSound = checked
+		prefs.EnableSound = checked
 		if checked {
 			testButton.Enable()
 		} else {
 			testButton.Disable()
 		}
-		onSave(currentPrefs)
+		_ = config.Set(prefs)
+		onSave(*prefs)
 	})
-	soundCheckbox.SetChecked(currentPrefs.EnableSound)
-
-	// Set the initial state of testButton.
-	if !currentPrefs.EnableSound {
+	soundCheckbox.SetChecked(prefs.EnableSound)
+	if !prefs.EnableSound {
 		testButton.Disable()
 	}
+	soundRow := container.NewHBox(soundCheckbox, testButton)
 
-	soundRow := container.NewHBox(
-		soundCheckbox,
-		testButton,
-	)
-
-	// Update the time format checkbox callback to trigger the Upcoming Tab's refresh.
+	// 24-hour clock checkbox.
 	timeFormatCheckbox := widget.NewCheck("Use 24-hour clock?", func(checked bool) {
-		currentPrefs.Use24HourClock = checked
-		onSave(currentPrefs)
+		prefs.Use24HourClock = checked
+		_ = config.Set(prefs)
+		onSave(*prefs)
 		// Trigger the Upcoming Tab to refresh so the times are redrawn immediately.
 		refreshUpcomingTab()
 	})
-	timeFormatCheckbox.SetChecked(currentPrefs.Use24HourClock)
+	timeFormatCheckbox.SetChecked(prefs.Use24HourClock)
 
+	// Debug mode checkbox.
 	debugCheckbox := widget.NewCheck("Debug Mode?", func(checked bool) {
-		currentPrefs.DebugMode = checked
-		onSave(currentPrefs)
+		prefs.DebugMode = checked
+		_ = config.Set(prefs)
+		onSave(*prefs)
 	})
-	debugCheckbox.SetChecked(currentPrefs.DebugMode)
+	debugCheckbox.SetChecked(prefs.DebugMode)
 
 	return container.NewVBox(
-		themeRow, // Theme selection drop-down and label at the top.
+		themeRow,
 		closeCheckbox,
 		hideCheckbox,
 		soundRow,

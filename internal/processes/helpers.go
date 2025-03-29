@@ -22,16 +22,14 @@ import (
 
 // RefreshAllData updates all tab data, plays a notification sound, and optionally shows in-app/system notifications.
 func RefreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
-	prefs := config.LoadConfig()
 	for _, tab := range tabs {
-		if prefs.DebugMode || tab.Refresh() {
+		if config.Get().DebugMode || tab.Refresh() {
 		}
 	}
 }
 
 // StartAutoRefresh checks an endpoint's hash on intervals and notifies the user if it changes after the first run.
 func StartAutoRefresh(state *models.AppState, selectedYear string) {
-	prefs := config.LoadConfig()
 	// Download and store the initial aggregated hash from your selected endpoints.
 	prevHash, err := DownloadDataHash(selectedYear) // Assumes this function fetches a combined hash
 	if err != nil {
@@ -41,7 +39,7 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 
 	// Determine refresh interval: 1 hour normally, 1 minute in debug mode.
 	interval := time.Hour
-	if prefs.DebugMode {
+	if config.Get().DebugMode {
 		interval = time.Minute
 	}
 
@@ -169,9 +167,8 @@ func AppendSessionRow(rows [][]string, label, date, time string, use24h bool) []
 
 // IsSessionInProgress returns true if the given session time is currently active.
 func IsSessionInProgress(dateStr, timeStr string) bool {
-	prefs := config.LoadConfig()
 	lower := strings.ToLower(dateStr + " " + timeStr)
-	if prefs.DebugMode && strings.Contains(lower, "race") {
+	if config.Get().DebugMode && strings.Contains(lower, "race") {
 		return true
 	}
 

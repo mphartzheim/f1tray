@@ -25,8 +25,6 @@ import (
 var trayIconBytes []byte
 
 func main() {
-	// Load user preferences and create the application state.
-	prefs := config.LoadConfig()
 	state := models.AppState{
 		FirstRun: true,
 	}
@@ -36,7 +34,7 @@ func main() {
 
 	// Choose the initial theme based on preferences.
 	var initialTheme fyne.Theme
-	switch prefs.Theme {
+	switch config.Get().Theme {
 	case "Light":
 		initialTheme = themes.LightTheme{}
 	case "Dark":
@@ -45,7 +43,10 @@ func main() {
 		initialTheme = themes.SystemTheme{}
 	}
 	myApp.Settings().SetTheme(initialTheme)
-	fmt.Printf("Theme: %T\n", theme.Current())
+
+	if config.Get().DebugMode {
+		fmt.Printf("Theme: %T\n", theme.Current())
+	}
 
 	myWindow := myApp.NewWindow("F1 Viewer")
 
@@ -80,9 +81,8 @@ func main() {
 		container.NewTabItem("Race Results", resultsTabData.Content),
 		container.NewTabItem("Qualifying", qualifyingTabData.Content),
 		container.NewTabItem("Sprint", sprintTabData.Content),
-		container.NewTabItem("Preferences", tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
+		container.NewTabItem("Preferences", tabs.CreatePreferencesTab(func(updated config.Preferences) {
 			_ = config.SaveConfig(updated)
-			prefs = updated
 		}, func() {
 			upcomingTabData.Refresh()
 		})),
@@ -145,7 +145,7 @@ func main() {
 	}
 
 	// Show or hide the window based on user preferences.
-	if prefs.HideOnOpen {
+	if config.Get().HideOnOpen {
 		myWindow.Hide()
 	} else {
 		myWindow.Show()
@@ -153,7 +153,7 @@ func main() {
 
 	// Handle window close events.
 	myWindow.SetCloseIntercept(func() {
-		if prefs.CloseBehavior == "exit" {
+		if config.Get().CloseBehavior == "exit" {
 			myApp.Quit()
 		} else {
 			myWindow.Hide()
