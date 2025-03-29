@@ -1,0 +1,15 @@
+F1Tray
+
+This product includes software developed by the F1Tray project contributors.
+
+Third-party components used:
+
+- **Fyne Toolkit**
+  - License: BSD 3-Clause License
+  - Source: https://github.com/fyne-io/fyne
+  - See: third_party_licenses/fyne_LICENSE.txt
+
+- **Jolpica F1 API**
+  - License: Apache License 2.0
+  - Source: https://github.com/jolpica/jolpica-f1
+  - See: third_party_licenses/jolpica_LICENSE.txt

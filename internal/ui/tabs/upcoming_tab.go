@@ -17,7 +17,7 @@ import (
 // CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
 func CreateUpcomingTab(parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading upcoming races...")
-	nextRaceLabel := ui.NewClickableLabel("Next Race", nil)
+	nextRaceLabel := ui.NewClickableLabel("Next Race", nil, false)
 	tableContainer := container.NewStack()
 
 	url := fmt.Sprintf(models.UpcomingURL, year)
@@ -77,7 +77,7 @@ func CreateUpcomingTab(parseFunc func([]byte) (string, [][]string, error), year 
 					continue
 				}
 				if raceDate.After(now) || raceDate.Equal(now) {
-					nextRaceLabel.SetText(fmt.Sprintf("Next Race: %s (%s)", race.RaceName, race.Circuit.CircuitName))
+					nextRaceLabel.SetText(fmt.Sprintf("Next Race: %s (%s 🗺️)", race.RaceName, race.Circuit.CircuitName))
 					lat := race.Circuit.Location.Lat
 					lon := race.Circuit.Location.Long
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
@@ -86,6 +86,7 @@ func CreateUpcomingTab(parseFunc func([]byte) (string, [][]string, error), year 
 							status.SetText("Failed to open map URL")
 						}
 					}
+					nextRaceLabel.Clickable = true
 					found = true
 					break
 				}
@@ -93,6 +94,7 @@ func CreateUpcomingTab(parseFunc func([]byte) (string, [][]string, error), year 
 			if !found {
 				nextRaceLabel.SetText("Next Race: Not available")
 				nextRaceLabel.OnDoubleTapped = nil
+				nextRaceLabel.Clickable = false
 			}
 		}
 

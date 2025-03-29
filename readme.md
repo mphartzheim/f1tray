@@ -38,15 +38,25 @@ Displays official race results in a simple, scrollable table. Now supports histo
 
 ---
 
-### 🌞 Light Theme  
-F1Tray now supports a Light Theme, offering a bright, modern interface for users who prefer a lighter user experience.
+### 🎨 Light Theme Preview  
+A sneak peek of the optional Light Theme, available in the Preferences tab.
 
 ![Light Theme](cmd/f1tray/assets/light_theme.png)
 
----
-
 ## TODO
 - ???
+
+## License
+
+This project is licensed under the [Prosperity Public License 3.0.0](https://polyformproject.org/licenses/prosperity/3.0.0/).
+
+You are free to:
+- Use, modify, and share the software for **non-commercial** purposes.
+
+You may not:
+- Sell, license, or profit from this software without express permission from the author.
+
+See the [LICENSE](LICENSE) file for full terms.
 
 ## Legal Notice
 
