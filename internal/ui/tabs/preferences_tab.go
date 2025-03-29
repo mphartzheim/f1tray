@@ -15,8 +15,9 @@ import (
 
 // themeMap maps our theme option strings to actual theme instances.
 var themeMap = map[string]fyne.Theme{
-	"Dark":  themes.DarkTheme{},  // our default dark theme
-	"Light": themes.LightTheme{}, // using the light theme
+	"System": themes.SystemTheme{}, // using the system theme
+	"Dark":   themes.DarkTheme{},   // our default dark theme
+	"Light":  themes.LightTheme{},  // using the light theme
 }
 
 // mapTheme returns the theme instance based on the selected string.
