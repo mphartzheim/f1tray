@@ -15,7 +15,7 @@ func (c DarkTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Co
 	}
 	// Return a transparent color for the separator to remove grid lines.
 	if name == theme.ColorNameSeparator {
-		return color.NRGBA{R: 0, G: 0, B: 0, A: 0}
+		return color.Transparent
 	}
 	// Always force dark variant
 	return theme.DefaultTheme().Color(name, fyne.ThemeVariant(0))
