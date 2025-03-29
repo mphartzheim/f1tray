@@ -23,7 +23,7 @@ import (
 // RefreshAllData refreshes all provided tabs and respects debug mode for forced refresh.
 func RefreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	for _, tab := range tabs {
-		if config.Get().DebugMode || tab.Refresh() {
+		if config.Get().Debug.Enabled || tab.Refresh() {
 		}
 	}
 }
@@ -39,7 +39,7 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 
 	// Determine refresh interval: 1 hour normally, 1 minute in debug mode.
 	interval := time.Hour
-	if config.Get().DebugMode {
+	if config.Get().Debug.Enabled {
 		interval = time.Minute
 	}
 
@@ -168,7 +168,7 @@ func AppendSessionRow(rows [][]string, label, date, time string, use24h bool) []
 // IsSessionInProgress returns true if the given session time is currently active.
 func IsSessionInProgress(dateStr, timeStr string) bool {
 	lower := strings.ToLower(dateStr + " " + timeStr)
-	if config.Get().DebugMode && strings.Contains(lower, "race") {
+	if config.Get().Debug.Enabled && strings.Contains(lower, "race") {
 		return true
 	}
 

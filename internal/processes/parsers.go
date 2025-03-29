@@ -133,7 +133,7 @@ func ParseUpcoming(body []byte) (string, [][]string, error) {
 	}
 
 	// Load user preferences to determine the time format.
-	use24h := config.Get().Use24HourClock
+	use24h := config.Get().Clock.Use24Hour
 
 	race := races[0]
 	location := fmt.Sprintf("%s, %s", race.Circuit.Location.Locality, race.Circuit.Location.Country)

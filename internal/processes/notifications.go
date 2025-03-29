@@ -24,7 +24,7 @@ func ShowInAppNotification(label *widget.Label, wrapper fyne.CanvasObject, messa
 
 // PlayNotificationSound plays a simple platform-specific notification sound.
 func PlayNotificationSound() {
-	if !config.Get().EnableSound {
+	if !config.Get().Sound.Enable {
 		return
 	}
 

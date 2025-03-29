@@ -9,30 +9,102 @@ import (
 
 // Preferences defines user-configurable application settings.
 type Preferences struct {
-	CloseBehavior  string `json:"close_behavior"`    // "exit" or "minimize"
-	HideOnOpen     bool   `json:"hide_on_open"`      // if true, the window is hidden on launch
-	DebugMode      bool   `json:"debug_mode"`        // if true, debug mode is enabled
-	EnableSound    bool   `json:"enable_sound"`      // if true, play system sounds
-	Use24HourClock bool   `json:"use_24_hour_clock"` // if true, display time in 24-hour format
-	Theme          string `json:"theme"`             // selected theme (e.g., "Dark", "Light", etc.)
+	Window        WindowPreferences       `json:"window"`
+	Themes        ThemesPreferences       `json:"theme"`
+	Clock         ClockPreferences        `json:"clock"`
+	Sound         SoundPreferences        `json:"sound"`
+	Debug         DebugPreferences        `json:"debug"`
+	Notifications NotificationPreferences `json:"notifications"`
+}
+
+// WindowPreferences groups window-related settings.
+type WindowPreferences struct {
+	CloseBehavior string `json:"close_behavior"` // "exit" or "minimize"
+	HideOnOpen    bool   `json:"hide_on_open"`   // if true, the window is hidden on launch
+}
+
+// ThemesPreferences groups theme-related settings.
+type ThemesPreferences struct {
+	Theme string `json:"theme"` // e.g., "Dark", "Light", etc.
+}
+
+// ClockPreferences groups clock-related settings.
+type ClockPreferences struct {
+	Use24Hour bool `json:"use_24_hour_clock"` // if true, display time in 24-hour format
+}
+
+// SoundPreferences groups sound-related settings.
+type SoundPreferences struct {
+	Enable bool `json:"enable_sound"` // if true, play system sounds
+}
+
+// DebugPreferences groups debug-related settings.
+type DebugPreferences struct {
+	Enabled bool `json:"debug_mode"` // if true, debug mode is enabled
+}
+
+// NotificationPreferences groups notification-related settings.
+type NotificationPreferences struct {
+	Practice   *SessionNotificationSettings `json:"practice"`
+	Qualifying *SessionNotificationSettings `json:"qualifying"`
+	Race       *SessionNotificationSettings `json:"race"`
+}
+
+// SessionNotificationSettings defines notification settings for a session.
+type SessionNotificationSettings struct {
+	NotifyOnStart    bool   `json:"notify_on_start"`     // notify at session start
+	PlaySoundOnStart bool   `json:"play_sound_on_start"` // play sound at session start
+	NotifyBefore     bool   `json:"notify_before"`       // notify before session
+	BeforeValue      int    `json:"before_value"`        // numeric value for before notification
+	BeforeUnit       string `json:"before_unit"`         // "minutes" or "hours"
+	PlaySoundBefore  bool   `json:"play_sound_before"`   // play sound before session
+}
+
+// defaultSessionNotificationSettings returns default settings for a session.
+func defaultSessionNotificationSettings() *SessionNotificationSettings {
+	return &SessionNotificationSettings{
+		NotifyOnStart:    false,
+		PlaySoundOnStart: false,
+		NotifyBefore:     false,
+		BeforeValue:      10,
+		BeforeUnit:       "minutes",
+		PlaySoundBefore:  false,
+	}
 }
 
 // DefaultPreferences provides fallback settings when no config file is present.
 var DefaultPreferences = Preferences{
-	CloseBehavior:  "minimize",
-	HideOnOpen:     true,
-	DebugMode:      false,
-	EnableSound:    true,
-	Use24HourClock: false,
-	Theme:          "Dark",
+	Window: WindowPreferences{
+		CloseBehavior: "minimize",
+		HideOnOpen:    true,
+	},
+	Themes: ThemesPreferences{
+		Theme: "Dark",
+	},
+	Clock: ClockPreferences{
+		Use24Hour: false,
+	},
+	Sound: SoundPreferences{
+		Enable: true,
+	},
+	Debug: DebugPreferences{
+		Enabled: false,
+	},
+	Notifications: NotificationPreferences{
+		Practice:   defaultSessionNotificationSettings(),
+		Qualifying: defaultSessionNotificationSettings(),
+		Race:       defaultSessionNotificationSettings(),
+	},
 }
 
+// Global singleton instance and one-time initializer for application preferences.
 var (
 	instance *Preferences
 	once     sync.Once
 )
 
 // loadConfig loads the configuration from disk (or returns default if none exists).
+// It validates the structure and attempts to migrate legacy settings if necessary.
 func loadConfig() *Preferences {
 	configPath := getConfigPath()
 
@@ -50,8 +122,18 @@ func loadConfig() *Preferences {
 
 	var prefs Preferences
 	if err := json.Unmarshal(data, &prefs); err != nil {
+		// Attempt to load legacy config.
+		var legacy legacyPreferences
+		if err := json.Unmarshal(data, &legacy); err == nil {
+			prefs = migrateLegacy(legacy)
+			_ = SaveConfig(prefs)
+			return &prefs
+		}
 		return &DefaultPreferences
 	}
+
+	// Validate the loaded config.
+	prefs = validatePreferences(prefs)
 	return &prefs
 }
 
@@ -89,4 +171,65 @@ func SaveConfig(prefs Preferences) error {
 func getConfigPath() string {
 	dirname, _ := os.UserConfigDir()
 	return filepath.Join(dirname, "f1tray", "config.json")
+}
+
+// validatePreferences ensures that all nested preference values have sane defaults.
+func validatePreferences(prefs Preferences) Preferences {
+	// Validate Window settings.
+	if prefs.Window.CloseBehavior == "" {
+		prefs.Window.CloseBehavior = DefaultPreferences.Window.CloseBehavior
+	}
+	// Validate Themes settings.
+	if prefs.Themes.Theme == "" {
+		prefs.Themes.Theme = DefaultPreferences.Themes.Theme
+	}
+	// For Notifications, if any session settings are nil, replace with defaults.
+	if prefs.Notifications.Practice == nil {
+		prefs.Notifications.Practice = defaultSessionNotificationSettings()
+	}
+	if prefs.Notifications.Qualifying == nil {
+		prefs.Notifications.Qualifying = defaultSessionNotificationSettings()
+	}
+	if prefs.Notifications.Race == nil {
+		prefs.Notifications.Race = defaultSessionNotificationSettings()
+	}
+	// No further validation needed for Clock, Sound, or Debug.
+	return prefs
+}
+
+// legacyPreferences represents the old flat configuration structure.
+type legacyPreferences struct {
+	CloseBehavior  string `json:"close_behavior"`
+	HideOnOpen     bool   `json:"hide_on_open"`
+	DebugMode      bool   `json:"debug_mode"`
+	EnableSound    bool   `json:"enable_sound"`
+	Use24HourClock bool   `json:"use_24_hour_clock"`
+	Theme          string `json:"theme"`
+}
+
+// migrateLegacy migrates a legacyPreferences struct to the new Preferences struct.
+func migrateLegacy(old legacyPreferences) Preferences {
+	return Preferences{
+		Window: WindowPreferences{
+			CloseBehavior: old.CloseBehavior,
+			HideOnOpen:    old.HideOnOpen,
+		},
+		Themes: ThemesPreferences{
+			Theme: old.Theme,
+		},
+		Clock: ClockPreferences{
+			Use24Hour: old.Use24HourClock,
+		},
+		Sound: SoundPreferences{
+			Enable: old.EnableSound,
+		},
+		Debug: DebugPreferences{
+			Enabled: old.DebugMode,
+		},
+		Notifications: NotificationPreferences{
+			Practice:   defaultSessionNotificationSettings(),
+			Qualifying: defaultSessionNotificationSettings(),
+			Race:       defaultSessionNotificationSettings(),
+		},
+	}
 }

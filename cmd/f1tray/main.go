@@ -34,7 +34,7 @@ func main() {
 
 	// Choose the initial theme based on preferences.
 	var initialTheme fyne.Theme
-	switch config.Get().Theme {
+	switch config.Get().Themes.Theme {
 	case "Light":
 		initialTheme = themes.LightTheme{}
 	case "Dark":
@@ -44,7 +44,7 @@ func main() {
 	}
 	myApp.Settings().SetTheme(initialTheme)
 
-	if config.Get().DebugMode {
+	if config.Get().Debug.Enabled {
 		fmt.Printf("Theme: %T\n", theme.Current())
 	}
 
@@ -145,7 +145,7 @@ func main() {
 	}
 
 	// Show or hide the window based on user preferences.
-	if config.Get().HideOnOpen {
+	if config.Get().Window.HideOnOpen {
 		myWindow.Hide()
 	} else {
 		myWindow.Show()
@@ -153,7 +153,7 @@ func main() {
 
 	// Handle window close events.
 	myWindow.SetCloseIntercept(func() {
-		if config.Get().CloseBehavior == "exit" {
+		if config.Get().Window.CloseBehavior == "exit" {
 			myApp.Quit()
 		} else {
 			myWindow.Hide()
