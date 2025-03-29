@@ -36,6 +36,15 @@ Displays official race results in a simple, scrollable table. Now supports histo
 
 ![Results Tab](cmd/f1tray/assets/results.png)
 
+---
+
+### 🌞 Light Theme  
+F1Tray now supports a Light Theme, offering a bright, modern interface for users who prefer a lighter user experience.
+
+![Light Theme](cmd/f1tray/assets/light_theme.png)
+
+---
+
 ## TODO
 - ???
 
