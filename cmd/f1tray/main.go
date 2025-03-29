@@ -11,6 +11,7 @@ import (
 	"f1tray/internal/processes"
 	"f1tray/internal/ui"
 	"f1tray/internal/ui/tabs"
+	"f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -25,6 +26,7 @@ var trayIconBytes []byte
 func main() {
 	// Create the Fyne app and window.
 	myApp := app.NewWithID("f1tray")
+	myApp.Settings().SetTheme(themes.CustomTheme{})
 	myWindow := myApp.NewWindow("F1 Viewer")
 
 	// Load user preferences and create the application state.
