@@ -12,7 +12,6 @@ type Preferences struct {
 	Window        WindowPreferences       `json:"window"`
 	Themes        ThemesPreferences       `json:"theme"`
 	Clock         ClockPreferences        `json:"clock"`
-	Sound         SoundPreferences        `json:"sound"`
 	Debug         DebugPreferences        `json:"debug"`
 	Notifications NotificationPreferences `json:"notifications"`
 }
@@ -31,11 +30,6 @@ type ThemesPreferences struct {
 // ClockPreferences groups clock-related settings.
 type ClockPreferences struct {
 	Use24Hour bool `json:"use_24_hour_clock"` // if true, display time in 24-hour format
-}
-
-// SoundPreferences groups sound-related settings.
-type SoundPreferences struct {
-	Enable bool `json:"enable_sound"` // if true, play system sounds
 }
 
 // DebugPreferences groups debug-related settings.
@@ -84,9 +78,6 @@ var DefaultPreferences = Preferences{
 	Clock: ClockPreferences{
 		Use24Hour: false,
 	},
-	Sound: SoundPreferences{
-		Enable: true,
-	},
 	Debug: DebugPreferences{
 		Enabled: false,
 	},
@@ -97,14 +88,12 @@ var DefaultPreferences = Preferences{
 	},
 }
 
-// Global singleton instance and one-time initializer for application preferences.
 var (
 	instance *Preferences
 	once     sync.Once
 )
 
-// loadConfig loads the configuration from disk (or returns default if none exists).
-// It validates the structure and attempts to migrate legacy settings if necessary.
+// loadConfig loads config from disk (or defaults) and validates/migrates legacy settings.
 func loadConfig() *Preferences {
 	configPath := getConfigPath()
 
@@ -193,7 +182,7 @@ func validatePreferences(prefs Preferences) Preferences {
 	if prefs.Notifications.Race == nil {
 		prefs.Notifications.Race = defaultSessionNotificationSettings()
 	}
-	// No further validation needed for Clock, Sound, or Debug.
+	// No further validation needed for Clock or Debug.
 	return prefs
 }
 
@@ -202,7 +191,7 @@ type legacyPreferences struct {
 	CloseBehavior  string `json:"close_behavior"`
 	HideOnOpen     bool   `json:"hide_on_open"`
 	DebugMode      bool   `json:"debug_mode"`
-	EnableSound    bool   `json:"enable_sound"`
+	EnableSound    bool   `json:"enable_sound"` // Removed in new version
 	Use24HourClock bool   `json:"use_24_hour_clock"`
 	Theme          string `json:"theme"`
 }
@@ -219,9 +208,6 @@ func migrateLegacy(old legacyPreferences) Preferences {
 		},
 		Clock: ClockPreferences{
 			Use24Hour: old.Use24HourClock,
-		},
-		Sound: SoundPreferences{
-			Enable: old.EnableSound,
 		},
 		Debug: DebugPreferences{
 			Enabled: old.DebugMode,

@@ -5,8 +5,6 @@ import (
 	"runtime"
 	"time"
 
-	"f1tray/internal/config"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 )
@@ -24,10 +22,6 @@ func ShowInAppNotification(label *widget.Label, wrapper fyne.CanvasObject, messa
 
 // PlayNotificationSound plays a simple platform-specific notification sound.
 func PlayNotificationSound() {
-	if !config.Get().Sound.Enable {
-		return
-	}
-
 	switch runtime.GOOS {
 	case "linux":
 		_ = exec.Command("canberra-gtk-play", "--id", "message").Start()
@@ -35,5 +29,16 @@ func PlayNotificationSound() {
 		_ = exec.Command("afplay", "/System/Library/Sounds/Glass.aiff").Start()
 	case "windows":
 		_ = exec.Command("powershell", "-c", `[console]::beep(1000,300)`).Start()
+	}
+}
+
+// SendTestNotification sends a test notification and plays a sound if requested.
+func SendTestNotification(title, message string, withSound bool) {
+	fyne.CurrentApp().SendNotification(&fyne.Notification{
+		Title:   title,
+		Content: message,
+	})
+	if withSound {
+		PlayNotificationSound()
 	}
 }

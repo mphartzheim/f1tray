@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"time"
 
 	"f1tray/internal/config"
+	"f1tray/internal/models"
 	"f1tray/internal/notifications"
 	"f1tray/internal/ui/themes"
 
@@ -14,6 +16,23 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
+
+// setWidgetsEnabled sets the enabled state for all widgets passed in.
+func setWidgetsEnabled(enabled bool, widgets ...interface{}) {
+	for _, w := range widgets {
+		// Check if the widget implements both Enable and Disable.
+		if d, ok := w.(interface {
+			Enable()
+			Disable()
+		}); ok {
+			if enabled {
+				d.Enable()
+			} else {
+				d.Disable()
+			}
+		}
+	}
+}
 
 // CreatePreferencesTab builds the Preferences tab UI with sub-tabs for Main and Notifications.
 func CreatePreferencesTab(onSave func(config.Preferences), refreshUpcomingTab func()) fyne.CanvasObject {
@@ -71,26 +90,6 @@ func buildMainPreferences(prefs *config.Preferences, onSave func(config.Preferen
 	})
 	hideCheckbox.SetChecked(prefs.Window.HideOnOpen)
 
-	// Sound settings.
-	testButton := widget.NewButton("Test", func() {
-		notifications.PlayNotificationSound()
-	})
-	soundCheckbox := widget.NewCheck("Enable sounds?", func(checked bool) {
-		prefs.Sound.Enable = checked
-		if checked {
-			testButton.Enable()
-		} else {
-			testButton.Disable()
-		}
-		_ = config.Set(prefs)
-		onSave(*prefs)
-	})
-	soundCheckbox.SetChecked(prefs.Sound.Enable)
-	if !prefs.Sound.Enable {
-		testButton.Disable()
-	}
-	soundRow := container.NewHBox(soundCheckbox, testButton)
-
 	// 24-hour clock checkbox.
 	timeFormatCheckbox := widget.NewCheck("Use 24-hour clock?", func(checked bool) {
 		prefs.Clock.Use24Hour = checked
@@ -112,7 +111,6 @@ func buildMainPreferences(prefs *config.Preferences, onSave func(config.Preferen
 		themeRow,
 		closeCheckbox,
 		hideCheckbox,
-		soundRow,
 		timeFormatCheckbox,
 		debugCheckbox,
 	)
@@ -130,13 +128,6 @@ func buildNotificationPreferences(prefs *config.Preferences, onSave func(config.
 // buildSessionNotificationSection builds a section for session-specific notification settings.
 func buildSessionNotificationSection(title string, sessionPrefs *config.SessionNotificationSettings, onSave func(config.Preferences)) fyne.CanvasObject {
 	// --- Row for "At Session Start" ---
-	notifyStartCheck := widget.NewCheck("Notify at session start", func(checked bool) {
-		sessionPrefs.NotifyOnStart = checked
-		_ = config.Set(config.Get())
-		onSave(*config.Get())
-	})
-	notifyStartCheck.SetChecked(sessionPrefs.NotifyOnStart)
-
 	playSoundStartCheck := widget.NewCheck("Play sound", func(checked bool) {
 		sessionPrefs.PlaySoundOnStart = checked
 		_ = config.Set(config.Get())
@@ -146,8 +137,25 @@ func buildSessionNotificationSection(title string, sessionPrefs *config.SessionN
 
 	testStartButton := widget.NewButton("Test", func() {
 		fmt.Printf("Testing %s session start notification\n", title)
-		// Insert test logic here.
+		// Simulate a dummy session event for "At Session Start"
+		dummySession := models.SessionInfo{
+			Type:      title,
+			StartTime: time.Now().Add(-30 * time.Second), // Assume session started 30 seconds ago
+			Label:     fmt.Sprintf("%s - Test Start", title),
+		}
+		notifications.CheckAndSendNotifications(dummySession)
 	})
+
+	notifyStartCheck := widget.NewCheck("Notify at session start", func(checked bool) {
+		sessionPrefs.NotifyOnStart = checked
+		setWidgetsEnabled(checked, playSoundStartCheck, testStartButton)
+		_ = config.Set(config.Get())
+		onSave(*config.Get())
+	})
+	notifyStartCheck.SetChecked(sessionPrefs.NotifyOnStart)
+
+	// Set initial enable/disable state.
+	setWidgetsEnabled(sessionPrefs.NotifyOnStart, playSoundStartCheck, testStartButton)
 
 	startRow := container.NewHBox(
 		widget.NewLabelWithStyle("At Session Start:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -157,13 +165,6 @@ func buildSessionNotificationSection(title string, sessionPrefs *config.SessionN
 	)
 
 	// --- Row for "Before Session" ---
-	notifyBeforeCheck := widget.NewCheck("Notify before session", func(checked bool) {
-		sessionPrefs.NotifyBefore = checked
-		_ = config.Set(config.Get())
-		onSave(*config.Get())
-	})
-	notifyBeforeCheck.SetChecked(sessionPrefs.NotifyBefore)
-
 	beforeValueEntry := widget.NewEntry()
 	beforeValueEntry.SetText(strconv.Itoa(sessionPrefs.BeforeValue))
 	beforeValueEntry.OnChanged = func(val string) {
@@ -190,8 +191,25 @@ func buildSessionNotificationSection(title string, sessionPrefs *config.SessionN
 
 	testBeforeButton := widget.NewButton("Test", func() {
 		fmt.Printf("Testing %s before session notification\n", title)
-		// Insert test logic here.
+		// Simulate a dummy session event for "Before Session"
+		dummySession := models.SessionInfo{
+			Type:      title,
+			StartTime: time.Now().Add(10 * time.Minute), // Assume session starts in 10 minutes
+			Label:     fmt.Sprintf("%s - Test Before", title),
+		}
+		notifications.CheckAndSendNotifications(dummySession)
 	})
+
+	notifyBeforeCheck := widget.NewCheck("Notify before session", func(checked bool) {
+		sessionPrefs.NotifyBefore = checked
+		setWidgetsEnabled(checked, beforeValueEntry, beforeUnitSelect, playSoundBeforeCheck, testBeforeButton)
+		_ = config.Set(config.Get())
+		onSave(*config.Get())
+	})
+	notifyBeforeCheck.SetChecked(sessionPrefs.NotifyBefore)
+
+	// Set initial enable/disable state.
+	setWidgetsEnabled(sessionPrefs.NotifyBefore, beforeValueEntry, beforeUnitSelect, playSoundBeforeCheck, testBeforeButton)
 
 	beforeRow := container.NewHBox(
 		widget.NewLabelWithStyle("Before Session:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -202,7 +220,6 @@ func buildSessionNotificationSection(title string, sessionPrefs *config.SessionN
 		testBeforeButton,
 	)
 
-	// --- Combine with a header ---
 	header := widget.NewLabelWithStyle(title+" Notifications", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	return container.NewVBox(
 		header,

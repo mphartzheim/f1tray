@@ -30,6 +30,7 @@ func RefreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...mode
 }
 
 // StartAutoRefresh checks an endpoint's hash on intervals and notifies the user if it changes after the first run.
+// It also starts a background loop that iterates over upcoming sessions to check and send notifications.
 func StartAutoRefresh(state *models.AppState, selectedYear string) {
 	// Download and store the initial aggregated hash from your selected endpoints.
 	prevHash, err := DownloadDataHash(selectedYear)
@@ -43,7 +44,7 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 		interval = time.Minute
 	}
 
-	// Start hash monitoring in background
+	// Start hash monitoring in background.
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -69,18 +70,14 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 		}
 	}()
 
-	// Start session notification monitoring (runs every minute)
+	// Start session notification monitoring (runs every minute).
 	go func() {
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
 
 		for range ticker.C {
 			for _, session := range state.UpcomingSessions {
-				notifications.CheckAndSendNotifications(notifications.SessionInfo{
-					Type:      notifications.ParseSessionType(session.Type),
-					StartTime: session.StartTime,
-					Title:     session.Label,
-				})
+				notifications.CheckAndSendNotifications(session)
 			}
 		}
 	}()
@@ -166,9 +163,9 @@ func SetTrayIcon(desk desktop.App, icon fyne.Resource, tabs *container.AppTabs, 
 }
 
 // AppendSessionRow appends a formatted session row to the table if date and time are provided.
-func AppendSessionRow(rows [][]string, label, date, time string, use24h bool) [][]string {
-	if date != "" && time != "" {
-		d, t := Localize(date, time, use24h)
+func AppendSessionRow(rows [][]string, label, date, timeStr string, use24h bool) [][]string {
+	if date != "" && timeStr != "" {
+		d, t := Localize(date, timeStr, use24h)
 		rows = append(rows, []string{label, d, t})
 	}
 	return rows
