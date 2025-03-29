@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -44,6 +45,7 @@ func main() {
 		initialTheme = themes.SystemTheme{}
 	}
 	myApp.Settings().SetTheme(initialTheme)
+	fmt.Printf("Theme: %T\n", theme.Current())
 
 	myWindow := myApp.NewWindow("F1 Viewer")
 
