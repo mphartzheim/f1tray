@@ -58,7 +58,7 @@ func CreateUpcomingTab(parseFunc func([]byte) (string, [][]string, error), year 
 		)
 
 		table.SetColumnWidth(0, 150)
-		table.SetColumnWidth(1, 150)
+		table.SetColumnWidth(1, 200)
 		table.SetColumnWidth(2, 150)
 		tableContainer.Objects = []fyne.CanvasObject{table}
 		tableContainer.Refresh()
@@ -127,25 +127,52 @@ func createTableCell() fyne.CanvasObject {
 	return container.NewStack(bg, lbl)
 }
 
-// updateTableCell sets the cell text and highlights the Time cell (column 1) if the session is active.
+// updateTableCell sets the cell text and, for the date cell (column 2), reformats the date.
 func updateTableCell(cell fyne.CanvasObject, rows [][]string, id widget.TableCellID) {
 	cont := cell.(*fyne.Container)
 	bg := cont.Objects[0].(*canvas.Rectangle)
 	lbl := cont.Objects[1].(*widget.Label)
 
+	// Get the original text from the row.
 	text := rows[id.Row][id.Col]
 
-	// If this is the Time cell and the session is active, highlight it and add the 🔴 icon
-	if id.Col == 2 && processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
-		text += " 🔴"
-		bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
-		bg.StrokeWidth = 2
-		bg.Show()
-	} else {
-		bg.StrokeWidth = 0
-		bg.Hide()
+	// For Column 2, reformat the date to a full format.
+	if id.Col == 1 {
+		text = formatFullDate(text)
+	} else if id.Col == 2 {
+		// If the session is active, add the 🔴 icon.
+		if processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
+			text += " 🔴"
+			bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
+			bg.StrokeWidth = 2
+			bg.Show()
+		} else {
+			bg.StrokeWidth = 0
+			bg.Hide()
+		}
 	}
 
 	lbl.SetText(text)
 	bg.Refresh()
+}
+
+// formatFullDate converts a date string in "2006-01-02" format to a full date string
+// like "Friday, April 4th 2025".
+func formatFullDate(dateStr string) string {
+	t, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return dateStr // fallback to original if parsing fails
+	}
+
+	day := t.Day()
+	suffix := "th"
+	if day%10 == 1 && day != 11 {
+		suffix = "st"
+	} else if day%10 == 2 && day != 12 {
+		suffix = "nd"
+	} else if day%10 == 3 && day != 13 {
+		suffix = "rd"
+	}
+
+	return fmt.Sprintf("%s, %s %d%s %d", t.Weekday(), t.Format("January"), day, suffix, t.Year())
 }

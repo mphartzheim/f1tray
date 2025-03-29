@@ -170,7 +170,8 @@ func AppendSessionRow(rows [][]string, label, date, time string, use24h bool) []
 // IsSessionInProgress returns true if the given session time is currently active.
 func IsSessionInProgress(dateStr, timeStr string) bool {
 	prefs := config.LoadConfig()
-	if prefs.DebugMode {
+	lower := strings.ToLower(dateStr + " " + timeStr)
+	if prefs.DebugMode && strings.Contains(lower, "race") {
 		return true
 	}
 
@@ -178,14 +179,10 @@ func IsSessionInProgress(dateStr, timeStr string) bool {
 	if err != nil {
 		return false
 	}
-
 	now := time.Now().UTC()
 	duration := 1 * time.Hour
-
-	lower := strings.ToLower(dateStr + " " + timeStr)
 	if strings.Contains(lower, "race") {
 		duration = 2 * time.Hour
 	}
-
 	return now.After(start) && now.Before(start.Add(duration))
 }
