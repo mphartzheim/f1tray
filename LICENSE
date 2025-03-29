@@ -1,21 +1,41 @@
-MIT License
+Prosperity Public License 3.0.0
 
-Copyright (c) 2025 mphartzheim
+Copyright © 2025 mphartzheim
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person or entity
+obtaining a copy of this software (the “Software”) to use, copy,
+modify, and share it, in each case for noncommercial purposes, subject
+to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+1. Noncommercial Use Only
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+All rights are reserved for commercial use. You may not use the Software,
+or any part of it, for commercial purposes. A commercial purpose is one
+intended for or directed toward commercial advantage or monetary compensation.
+
+2. Notices
+
+You must ensure that anyone who receives a copy of any part of the Software,
+with or without changes, receives the above copyright notice and this license.
+
+3. Warranty Disclaimer
+
+THE SOFTWARE IS PROVIDED “AS IS” AND WITHOUT WARRANTY. TO THE EXTENT PERMITTED
+BY LAW, THE AUTHORS DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+4. Liability Disclaimer
+
+IN NO EVENT WILL THE AUTHORS BE LIABLE FOR ANY DAMAGES RELATED TO THE SOFTWARE,
+INCLUDING DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+EVEN IF THEY HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+5. Duration
+
+This license applies for as long as you do not use the Software for commercial
+purposes. If you use the Software for commercial purposes, the license is
+terminated and you must remove all copies and derivatives of the Software in
+your possession.
+
+For more information and full license text, visit:
+https://polyformproject.org/licenses/prosperity/3.0.0/

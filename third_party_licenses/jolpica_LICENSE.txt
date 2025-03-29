@@ -1,7 +1,7 @@
 ## Third-Party Licenses
 
 ### Jolpica API
-Race data provided by the [Jolpica API](https://github.com/jolpica/api), licensed under the MIT License.
+Race data provided by the [Jolpica API](https://github.com/jolpica/jolpica-f1/blob/main/LICENSE), licensed under the MIT License.
 
                                  Apache License
                            Version 2.0, January 2004

@@ -16,8 +16,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// CreateScheduleTableTab builds a tab displaying the full race schedule with interactive circuit links
-// and highlighted upcoming event.
+// CreateScheduleTableTab builds a race schedule tab with interactive circuit links and highlights the upcoming event.
 func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading schedule...")
 	tableContainer := container.NewStack()
