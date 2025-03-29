@@ -1,67 +1,81 @@
 # F1Tray
 
-F1Tray is a desktop application that provides Formula 1 enthusiasts with up-to-date race schedules and results — and now historical data too.  
+**F1Tray** is a minimal, cross-platform desktop tray application that shows live and upcoming Formula 1 session information. It features quick access to race results, qualifying times, and weekend schedules—right from your system tray.
 
-Built using the [Fyne](https://fyne.io/) toolkit and powered by the [Jolpica](https://jolpica.com/) API, it offers a sleek and intuitive interface for accessing F1 data directly from your system tray.
+<br/>
+
+<p align="center">
+  <img src="cmd/f1tray/assets/light_theme.png" alt="Light Theme Screenshot" width="600"/>
+</p>
+
+---
 
 ## Features
 
-- **Race Schedule**: Fetches the current season's race calendar, highlighting the next upcoming race.
-- **Historical Race Results**: Instantly view results, qualifying, and sprint data from **any past F1 race** — just double-click a race name in the Schedule tab.
-- **Race Results**: View the latest Grand Prix outcomes in a clean, readable table format.
-- **Interactive Circuits**: Double-click any circuit name to open its location on an interactive OpenStreetMap.
-- **Watch on F1TV**: If you’re a subscriber, one click takes you directly to F1TV to stream sessions.
-- **Cross-Platform**: Runs on Windows, macOS, and Linux.
-- **System Tray Integration**: Quickly access key features from the tray icon.
-- **Lightweight and Fast**: Optimized for minimal resource usage with efficient background data updates.
+### 🏁 Upcoming Sessions at a Glance
+See a list of upcoming F1 sessions with the current session highlighted in real-time.
 
-## Screenshots
+- Session start times adjusted to your local time zone.
+- Highlights any session that is currently in progress.
+- Support for session notifications based on your preferences.
 
-### 🗓️ Race Schedule Tab  
-Highlights the current F1 calendar and lets you double-click race names for historical results or circuits for maps.
-
-![Schedule Tab](cmd/f1tray/assets/schedule.png)
+<p align="center">
+  <img src="cmd/f1tray/assets/upcoming.png" alt="Upcoming Tab" width="600"/>
+</p>
 
 ---
 
-### ⏱️ Upcoming Sessions Tab  
-Shows upcoming practice, qualifying, sprint, and race times — with a shortcut to F1TV.
+### 🗓 Full Weekend Schedule
+Browse the full session schedule for each race weekend, organized by event.
 
-![Upcoming Tab](cmd/f1tray/assets/upcoming.png)
+- Scrollable list of all sessions for a selected race.
+- Includes Practice, Qualifying, Sprint, and Race sessions.
 
----
-
-### 🏁 Results Tab  
-Displays official race results in a simple, scrollable table. Now supports historical rounds.
-
-![Results Tab](cmd/f1tray/assets/results.png)
+<p align="center">
+  <img src="cmd/f1tray/assets/schedule.png" alt="Schedule Tab" width="600"/>
+</p>
 
 ---
 
-### 🎨 Light Theme  
-Theme selection now available in the Preferences tab.
+### 🏆 Race Results & Qualifying
+Quickly check the final standings for races, sprints, and qualifying rounds.
 
-![Light Theme](cmd/f1tray/assets/light_theme.png)
+- Driver positions, time gaps, and status.
+- Differentiates between Race, Sprint, Qualifying, and Sprint Qualifying.
 
-## TODO
-- ???
+<p align="center">
+  <img src="cmd/f1tray/assets/results.png" alt="Results Tab" width="600"/>
+</p>
+
+---
+
+### 🔔 Custom Notifications
+Receive notifications at the start of each session, or configure alerts for minutes/hours beforehand.
+
+- Configurable for each session type (e.g., Practice, Qualifying, Race).
+- Integrates cleanly with your desktop notification system.
+
+<p align="center">
+  <img src="cmd/f1tray/assets/notifications.png" alt="Notifications UI" width="600"/>
+</p>
+
+---
+
+## Design Highlights
+
+- Built with [Fyne](https://fyne.io/) for a native look and feel.
+- Uses data from the [Jolpica API](https://github.com/jolpica/api) (Apache 2.0).
+- Auto-refreshes data in the background.
+- Configurable options include light/dark theme, session alert timing, and window behavior on close.
+
+---
 
 ## License
 
-This project is licensed under the [Prosperity Public License 3.0.0](https://polyformproject.org/licenses/prosperity/3.0.0/).
+This project is licensed under the [Prosperity Public License 3.0.0](LICENSE).  
+You may use this software for **noncommercial purposes** only.
 
-You are free to:
-- Use, modify, and share the software for **non-commercial** purposes.
+Third-party licenses:
 
-You may not:
-- Sell, license, or profit from this software without express permission from the author.
-
-See the [LICENSE](LICENSE) file for full terms.
-
-## Legal Notice
-
-This project is not affiliated with, endorsed by, or associated with Formula One Group or any of its subsidiaries.  
-The Formula 1 logo and name are trademarks of Formula One Licensing BV.  
-All trademarks and copyrights belong to their respective owners.
-
-Any use of the F1 name or logo is for educational or placeholder purposes only and will be removed in any public or production release.
+- [Fyne (Apache 2.0)](third_party_licenses/fyne_LICENSE.txt)  
+- [Jolpica API (Apache 2.0)](third_party_licenses/jolpica_LICENSE.txt)
