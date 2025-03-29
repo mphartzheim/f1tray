@@ -3,6 +3,7 @@ package tabs
 import (
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"time"
 
 	"f1tray/internal/models"
@@ -12,7 +13,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -118,7 +118,8 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 				}
 
 				if id.Row == highlightRow {
-					bg.FillColor = theme.Color(theme.ColorNamePrimary)
+					bg.StrokeColor = color.NRGBA{R: 0xFF, G: 0x18, B: 0x01, A: 0xFF} // Red border.
+					bg.StrokeWidth = 2
 					bg.Show()
 				} else {
 					bg.Hide()

@@ -31,7 +31,7 @@ func mapTheme(selected string) fyne.Theme {
 // CreatePreferencesTab builds a preferences form for toggling app behavior like close mode, startup visibility, sounds, and debug mode.
 func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Preferences), refreshUpcomingTab func()) fyne.CanvasObject {
 	// Define theme options (update these to match your available themes)
-	themeOptions := []string{"Dark", "Light"}
+	themeOptions := []string{"System", "Dark", "Light"}
 
 	// Create the theme drop-down with label "Theme:".
 	selectTheme := widget.NewSelect(themeOptions, func(selected string) {
@@ -43,8 +43,7 @@ func CreatePreferencesTab(currentPrefs config.Preferences, onSave func(config.Pr
 	// Ensure the drop-down always shows the currently set theme.
 	selectTheme.SetSelected(currentPrefs.Theme)
 	// Add a label to the right indicating light theme is unsupported.
-	themeInfo := widget.NewLabel("(Light theme is currently unsupported. Some text may be hard to read.)")
-	themeRow := container.NewHBox(widget.NewLabel("Theme:"), selectTheme, themeInfo)
+	themeRow := container.NewHBox(widget.NewLabel("Theme:"), selectTheme)
 
 	isExit := currentPrefs.CloseBehavior == "exit"
 	closeCheckbox := widget.NewCheck("Close on exit?", func(checked bool) {

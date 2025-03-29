@@ -32,7 +32,7 @@ func main() {
 		FirstRun:    true,
 	}
 
-	// Create the Fyne app and window.
+	// Create the Fyne app.
 	myApp := app.NewWithID("f1tray")
 
 	// Choose the initial theme based on preferences.
@@ -40,9 +40,10 @@ func main() {
 	switch prefs.Theme {
 	case "Light":
 		initialTheme = themes.LightTheme{}
-	default:
-		// If no theme is set or any value other than "Light", default to DarkTheme.
+	case "Dark":
 		initialTheme = themes.DarkTheme{}
+	default:
+		initialTheme = themes.SystemTheme{}
 	}
 	myApp.Settings().SetTheme(initialTheme)
 
@@ -79,8 +80,6 @@ func main() {
 		container.NewTabItem("Race Results", resultsTabData.Content),
 		container.NewTabItem("Qualifying", qualifyingTabData.Content),
 		container.NewTabItem("Sprint", sprintTabData.Content),
-		// Here we pass a refresh function to the preferences tab. When the time format is changed,
-		// the Upcoming Tab's Refresh() method is called to update the times.
 		container.NewTabItem("Preferences", tabs.CreatePreferencesTab(prefs, func(updated config.Preferences) {
 			_ = config.SaveConfig(updated)
 			prefs = updated
@@ -93,19 +92,41 @@ func main() {
 
 	// Hook up the UpdateTabs callback so that processes.ReloadOtherTabs can update the three tabs.
 	processes.UpdateTabs = func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
-		// tabsContainer.Items[2] = Race Results, [3] = Qualifying, [4] = Sprint.
 		tabsContainer.Items[2].Content = resultsContent
 		tabsContainer.Items[3].Content = qualifyingContent
 		tabsContainer.Items[4].Content = sprintContent
+
+		// Mark updated tabs with an asterisk if they are not currently selected.
+		if tabsContainer.Selected() != tabsContainer.Items[2] {
+			if len(tabsContainer.Items[2].Text) == 0 || tabsContainer.Items[2].Text[len(tabsContainer.Items[2].Text)-1] != '*' {
+				tabsContainer.Items[2].Text += "*"
+			}
+		}
+		if tabsContainer.Selected() != tabsContainer.Items[3] {
+			if len(tabsContainer.Items[3].Text) == 0 || tabsContainer.Items[3].Text[len(tabsContainer.Items[3].Text)-1] != '*' {
+				tabsContainer.Items[3].Text += "*"
+			}
+		}
+		if tabsContainer.Selected() != tabsContainer.Items[4] {
+			if len(tabsContainer.Items[4].Text) == 0 || tabsContainer.Items[4].Text[len(tabsContainer.Items[4].Text)-1] != '*' {
+				tabsContainer.Items[4].Text += "*"
+			}
+		}
 		tabsContainer.Refresh()
+	}
+
+	// Remove a trailing asterisk when a tab is selected.
+	tabsContainer.OnSelected = func(selectedTab *container.TabItem) {
+		if len(selectedTab.Text) > 0 && selectedTab.Text[len(selectedTab.Text)-1] == '*' {
+			selectedTab.Text = selectedTab.Text[:len(selectedTab.Text)-1]
+			tabsContainer.Refresh()
+		}
 	}
 
 	// When the selected year changes, update the Schedule tab's content.
 	yearSelect.OnChanged = func(selectedYear string) {
 		newScheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, selectedYear)
-		// Update the content field of our schedule tab.
 		scheduleTab.Content = newScheduleTabData.Content
-		// Refresh the tab container to show the updated content.
 		tabsContainer.Refresh()
 	}
 

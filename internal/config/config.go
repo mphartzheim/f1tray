@@ -21,7 +21,7 @@ var DefaultPreferences = Preferences{
 	DebugMode:      false,
 	EnableSound:    true,
 	Use24HourClock: false,
-	Theme:          "Dark",
+	Theme:          "System",
 }
 
 // LoadConfig reads the configuration file or returns default preferences if none exist.
