@@ -5,7 +5,7 @@
 <br/>
 
 <p align="center">
-  <img src="cmd/f1tray/assets/light_theme.png" alt="Light Theme Screenshot" width="600"/>
+  <img src="cmd/f1tray/assets/schedule.png" alt="Schedule Tab" width="600"/>
 </p>
 
 ---
@@ -21,18 +21,6 @@ See a list of upcoming F1 sessions with the current session highlighted in real-
 
 <p align="center">
   <img src="cmd/f1tray/assets/upcoming.png" alt="Upcoming Tab" width="600"/>
-</p>
-
----
-
-### 🗓 Full Weekend Schedule
-Browse the full session schedule for each race weekend, organized by event.
-
-- Scrollable list of all sessions for a selected race.
-- Includes Practice, Qualifying, Sprint, and Race sessions.
-
-<p align="center">
-  <img src="cmd/f1tray/assets/schedule.png" alt="Schedule Tab" width="600"/>
 </p>
 
 ---
@@ -57,6 +45,15 @@ Receive notifications at the start of each session, or configure alerts for minu
 
 <p align="center">
   <img src="cmd/f1tray/assets/notifications.png" alt="Notifications UI" width="600"/>
+</p>
+
+---
+
+### 🎨 Theming & UI
+F1Tray offers both light and dark themes to match your desktop environment.
+
+<p align="center">
+  <img src="cmd/f1tray/assets/light_theme.png" alt="Light Theme Screenshot" width="600"/>
 </p>
 
 ---
