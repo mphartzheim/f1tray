@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"f1tray/internal/config"
-	"f1tray/internal/models"
+	"github.com/mphartzheim/f1tray/internal/config"
+	"github.com/mphartzheim/f1tray/internal/models"
 
 	"fyne.io/fyne/v2"
 )

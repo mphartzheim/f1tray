@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"strings"
 
-	"f1tray/internal/models"
-	"f1tray/internal/processes"
+	"github.com/mphartzheim/f1tray/internal/models"
+	"github.com/mphartzheim/f1tray/internal/processes"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
-	"f1tray/internal/config"
-	"f1tray/internal/models"
-	"f1tray/internal/notifications"
-	"f1tray/internal/ui/themes"
+	"github.com/mphartzheim/f1tray/internal/config"
+	"github.com/mphartzheim/f1tray/internal/models"
+	"github.com/mphartzheim/f1tray/internal/notifications"
+	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

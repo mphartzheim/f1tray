@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"f1tray/internal/config"
-	"f1tray/internal/models"
-	"f1tray/internal/notifications"
+	"github.com/mphartzheim/f1tray/internal/config"
+	"github.com/mphartzheim/f1tray/internal/models"
+	"github.com/mphartzheim/f1tray/internal/notifications"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

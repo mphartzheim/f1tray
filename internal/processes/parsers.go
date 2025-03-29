@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"f1tray/internal/config"
-	"f1tray/internal/models"
+	"github.com/mphartzheim/f1tray/internal/config"
+	"github.com/mphartzheim/f1tray/internal/models"
 )
 
 // ParseRaceResults extracts race result data into a table-friendly format from raw JSON.

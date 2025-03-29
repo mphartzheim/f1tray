@@ -6,9 +6,9 @@ import (
 	"image/color"
 	"time"
 
-	"f1tray/internal/models"
-	"f1tray/internal/processes"
-	"f1tray/internal/ui"
+	"github.com/mphartzheim/f1tray/internal/models"
+	"github.com/mphartzheim/f1tray/internal/processes"
+	"github.com/mphartzheim/f1tray/internal/ui"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
