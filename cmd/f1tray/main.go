@@ -26,7 +26,7 @@ var trayIconBytes []byte
 func main() {
 	// Create the Fyne app and window.
 	myApp := app.NewWithID("f1tray")
-	myApp.Settings().SetTheme(themes.CustomTheme{})
+	myApp.Settings().SetTheme(themes.DarkTheme{})
 	myWindow := myApp.NewWindow("F1 Viewer")
 
 	// Load user preferences and create the application state.
