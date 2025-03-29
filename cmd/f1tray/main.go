@@ -159,7 +159,7 @@ func main() {
 	})
 
 	// Lazy-load data once the UI is ready.
-	go processes.RefreshAllData(&state, notificationLabel, notificationWrapper,
+	go processes.RefreshAllData(notificationLabel, notificationWrapper,
 		upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
 
 	// Start background auto-refresh.

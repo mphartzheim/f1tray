@@ -21,7 +21,7 @@ import (
 )
 
 // RefreshAllData updates all tab data, plays a notification sound, and optionally shows in-app/system notifications.
-func RefreshAllData(state *models.AppState, label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
+func RefreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...models.TabData) {
 	prefs := config.LoadConfig()
 	for _, tab := range tabs {
 		if prefs.DebugMode || tab.Refresh() {
