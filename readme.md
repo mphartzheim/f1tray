@@ -4,13 +4,49 @@
 [![GitHub release](https://img.shields.io/github/v/release/mphartzheim/f1tray?include_prereleases)](https://github.com/mphartzheim/f1tray/releases)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/mphartzheim/f1tray)](https://golang.org/dl/)
 
-**F1Tray** is a minimal, cross-platform desktop tray application that shows live and upcoming Formula 1 session information. It features quick access to race results, qualifying times, and weekend schedules—right from your system tray.
+**F1Tray** is a minimal, cross-platform desktop tray application that shows live and upcoming Formula 1 session information. It features quick access to race results, qualifying times, championship standings, and weekend schedules—right from your system tray.
 
-<br/>
+---
+
+## 📸 Screenshots
 
 <p align="center">
-  <img src="cmd/f1tray/assets/schedule.png" alt="Schedule Tab" width="600"/>
+  <img src="screenshots/schedule.png" alt="Schedule Tab" width="600"/>
+  <br/>
+  <em>Weekend Schedule</em>
 </p>
+
+<p align="center">
+  <img src="screenshots/upcoming.png" alt="Upcoming Tab" width="600"/>
+  <br/>
+  <em>Upcoming Sessions – Local Time, with Live Highlighting</em>
+</p>
+
+<p align="center">
+  <img src="screenshots/results.png" alt="Results Tab" width="600"/>
+  <br/>
+  <em>Race Results – Final Standings and Gaps</em>
+</p>
+
+<p align="center">
+  <img src="screenshots/standings.png" alt="Standings Tab" width="600"/>
+  <br/>
+  <em>Driver & Constructor Standings – Updated After Every Race</em>
+</p>
+
+<p align="center">
+  <img src="screenshots/notifications.png" alt="Notifications UI" width="600"/>
+  <br/>
+  <em>Configurable Notifications</em>
+</p>
+
+<p align="center">
+  <img src="screenshots/light_theme.png" alt="Light Theme Screenshot" width="600"/>
+  <br/>
+  <em>Light Theme (Dark Mode Also Available)</em>
+</p>
+
+> 💡 More screenshots available in the [`/screenshots`](./screenshots) folder.
 
 ---
 
@@ -23,23 +59,18 @@ See a list of upcoming F1 sessions with the current session highlighted in real-
 - Highlights any session that is currently in progress.
 - Support for session notifications based on your preferences.
 
-<p align="center">
-  <img src="cmd/f1tray/assets/upcoming.png" alt="Upcoming Tab" width="600"/>
-</p>
-
----
-
 ### 🏆 Race Results & Qualifying
 Quickly check the final standings for races, sprints, and qualifying rounds.
 
 - Driver positions, time gaps, and status.
 - Differentiates between Race, Sprint, Qualifying, and Sprint Qualifying.
 
-<p align="center">
-  <img src="cmd/f1tray/assets/results.png" alt="Results Tab" width="600"/>
-</p>
+### 🧮 Driver & Constructor Standings
+Stay up-to-date on the championship battle.
 
----
+- Full season standings for drivers and constructors.
+- Highlights current leaders and team points.
+- Auto-updates after each race.
 
 ### 🔔 Custom Notifications
 Receive notifications at the start of each session, or configure alerts for minutes/hours beforehand.
@@ -47,18 +78,8 @@ Receive notifications at the start of each session, or configure alerts for minu
 - Configurable for each session type (e.g., Practice, Qualifying, Race).
 - Integrates cleanly with your desktop notification system.
 
-<p align="center">
-  <img src="cmd/f1tray/assets/notifications.png" alt="Notifications UI" width="600"/>
-</p>
-
----
-
 ### 🎨 Theming & UI
 F1Tray offers both light and dark themes to match your desktop environment.
-
-<p align="center">
-  <img src="cmd/f1tray/assets/light_theme.png" alt="Light Theme Screenshot" width="600"/>
-</p>
 
 ---
 
