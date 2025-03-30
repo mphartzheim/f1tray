@@ -2,6 +2,17 @@
 
 set -e
 
+# --- Safety check: Must be on main branch ---
+REQUIRED_BRANCH="main"
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [[ "$CURRENT_BRANCH" != "$REQUIRED_BRANCH" ]]; then
+  echo "❌ You must be on the '$REQUIRED_BRANCH' branch to run this script (currently on '$CURRENT_BRANCH')"
+  echo "💡 Finish merging your release PR into '$REQUIRED_BRANCH' and run:"
+  echo "   git checkout $REQUIRED_BRANCH && git pull origin $REQUIRED_BRANCH"
+  exit 1
+fi
+
 # --- Parse arguments ---
 VERSION=$1
 shift
@@ -9,7 +20,6 @@ shift
 CLEAN_FLAG=""
 DEBUG_FLAG=""
 
-# Parse remaining flags
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --clean)
@@ -20,7 +30,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "❌ Unknown option: $1"
-      echo "Usage: ./release.sh vX.Y.Z [--clean] [--debug]"
+      echo "Usage: ./builds/release.sh vX.Y.Z [--clean] [--debug]"
       exit 1
       ;;
   esac
@@ -28,12 +38,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$VERSION" ]]; then
-  echo "Usage: ./release.sh vX.Y.Z [--clean] [--debug]"
+  echo "Usage: ./builds/release.sh vX.Y.Z [--clean] [--debug]"
   exit 1
 fi
 
 if [[ "$VERSION" != v* ]]; then
-  echo "Error: Version must start with 'v' (e.g., v0.2.1)"
+  echo "❌ Version must start with 'v' (e.g., v0.2.1)"
   exit 1
 fi
 
@@ -43,31 +53,30 @@ if ! grep -q "$VERSION" RELEASE_NOTES.md; then
   exit 1
 fi
 
-# --- Git commit ---
+# --- Commit release notes ---
 echo "📦 Committing release notes..."
 git add RELEASE_NOTES.md
 git commit -m "Release $VERSION"
 
-# --- Tag early so builds see it ---
-echo "🏷️ Tagging as $VERSION (before build)"
+# --- Tag BEFORE building ---
+echo "🏷️ Tagging as $VERSION"
 git tag "$VERSION"
 
-# --- Run build ---
+# --- Run builds ---
 echo "🔧 Starting cross-platform build..."
 
-# Build Linux AppImage
 echo "🐧 Building Linux AppImage..."
 bash "$(dirname "$0")/build-appimage.sh" $CLEAN_FLAG $DEBUG_FLAG
 
-# Build Windows Zip
 echo "🪟 Building Windows zip..."
 bash "$(dirname "$0")/build-windows.sh" $CLEAN_FLAG $DEBUG_FLAG
 
 echo "✅ All builds completed successfully."
 
-# --- Push after build ---
+# --- Push everything ---
 echo "🚀 Pushing code and tag to origin..."
 git push origin main
 git push origin "$VERSION"
 
-echo "✅ Release $VERSION is complete and pushed."
+echo ""
+echo "🎉 Release $VERSION is complete and live!"
