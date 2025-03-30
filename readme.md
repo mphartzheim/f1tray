@@ -8,28 +8,6 @@
 
 ---
 
-## 📸 Screenshots
-
-<p align="center">
-  <img src="screenshots/schedule.png" alt="Schedule Tab" width="300"/>
-  <img src="screenshots/upcoming.png" alt="Upcoming Tab" width="300"/>
-  <img src="screenshots/results.png" alt="Results Tab" width="300"/>
-</p>
-
-<p align="center">
-  <img src="screenshots/standings.png" alt="Standings Tab" width="300"/>
-  <img src="screenshots/notifications.png" alt="Notifications UI" width="300"/>
-  <img src="screenshots/light_theme.png" alt="Light Theme Screenshot" width="300"/>
-</p>
-
-<p align="center">
-  <em>Weekend schedule, session list, race results, standings, notifications, and theme preview.</em>
-</p>
-
-> 💡 More screenshots available in the [`/screenshots`](./screenshots) folder.
-
----
-
 ## Features
 
 ### 🏁 Upcoming Sessions at a Glance
@@ -60,6 +38,31 @@ Receive notifications at the start of each session, or configure alerts for minu
 
 ### 🎨 Theming & UI
 F1Tray offers both light and dark themes to match your desktop environment.
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="screenshots/schedule.png" alt="Schedule Tab" width="400"/>
+  <img src="screenshots/upcoming.png" alt="Upcoming Tab" width="400"/>
+</p>
+
+<p align="center">
+  <img src="screenshots/results.png" alt="Results Tab" width="400"/>
+  <img src="screenshots/standings.png" alt="Standings Tab" width="400"/>
+</p>
+
+<p align="center">
+  <img src="screenshots/notifications.png" alt="Notifications UI" width="400"/>
+  <img src="screenshots/light_theme.png" alt="Light Theme Screenshot" width="400"/>
+</p>
+
+<p align="center">
+  <em>Schedule, sessions, results, standings, notifications, and theming – all at a glance.</em>
+</p>
+
+> 💡 More screenshots available in the [`/screenshots`](./screenshots) folder.
 
 ---
 
