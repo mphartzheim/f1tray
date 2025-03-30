@@ -22,6 +22,15 @@ jobs:
           echo "📁 Listing full workspace contents:"
           find . -type f      
 
+      - name: Debug - List Linux output directory
+        run: |
+          echo "🔍 Checking contents of builds/output/linux:"
+          if [ -d builds/output/linux ]; then
+            ls -alh builds/output/linux
+          else
+            echo "⚠️ builds/output/linux does not exist"
+          fi
+
       - name: Ensure build artifacts exist
         run: |
           ls builds/output/linux/*.AppImage || (echo "❌ Linux AppImage not found!" && exit 1)
