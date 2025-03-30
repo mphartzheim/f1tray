@@ -1,0 +1,22 @@
+name: Release
+
+on:
+  workflow_dispatch:  # Manual run button
+  push:
+    tags:
+      - 'v*'          # Auto-run on version tag
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate GitHub Release from CHANGELOG
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
