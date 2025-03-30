@@ -31,8 +31,7 @@ func RefreshAllData(label *widget.Label, wrapper fyne.CanvasObject, tabs ...mode
 	}
 }
 
-// StartAutoRefresh checks an endpoint's hash on intervals and notifies the user if it changes after the first run.
-// It also starts a background loop that iterates over upcoming sessions to check and send notifications.
+// StartAutoRefresh monitors an endpoint's hash for changes and notifies the user after the initial run while concurrently checking upcoming sessions for notifications.
 func StartAutoRefresh(state *models.AppState, selectedYear string) {
 	// Download and store the initial aggregated hash from your selected endpoints.
 	prevHash, err := DownloadDataHash(selectedYear)
