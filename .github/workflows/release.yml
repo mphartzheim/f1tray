@@ -1,10 +1,13 @@
 name: Release
 
 on:
-  workflow_dispatch:  # Optional manual trigger
+  workflow_dispatch:
   push:
     tags:
-      - 'v*'          # Auto-trigger on version tags
+      - 'v*'
+
+permissions:
+  contents: write
 
 jobs:
   release:

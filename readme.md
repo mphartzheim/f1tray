@@ -3,7 +3,6 @@
 [![Build Status](https://github.com/mphartzheim/f1tray/actions/workflows/release.yml/badge.svg)](https://github.com/mphartzheim/f1tray/actions/workflows/release.yml)
 [![GitHub release](https://img.shields.io/github/v/release/mphartzheim/f1tray?include_prereleases)](https://github.com/mphartzheim/f1tray/releases)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/mphartzheim/f1tray)](https://golang.org/dl/)
-[![License](https://img.shields.io/github/license/mphartzheim/f1tray)](./LICENSE)
 
 **F1Tray** is a minimal, cross-platform desktop tray application that shows live and upcoming Formula 1 session information. It features quick access to race results, qualifying times, and weekend schedules—right from your system tray.
 
