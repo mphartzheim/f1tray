@@ -1,6 +1,7 @@
-## 🚀 Release Notes – v0.2.1 (2025-03-30)
+## 🚀 Release Notes – v0.2.1-test (2025-03-30)
 
-This release introduces several enhancements to driver interactivity, code maintainability, and visual consistency—especially for custom team themes.
+### Testing
+- Testing release scripts
 
 ### ✨ New Features
 - **Clickable Driver Names**: Driver names in both standings and results now include a 👤 icon and can be clicked to open the driver’s biography. If a custom URL is available, it will be used—otherwise, it falls back to a Wikipedia link provided by the API.

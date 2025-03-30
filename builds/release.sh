@@ -38,8 +38,17 @@ if [[ "$VERSION" != v* ]]; then
 fi
 
 # --- Run build ---
-echo "🔧 Running build script with flags: $CLEAN_FLAG $DEBUG_FLAG"
-./builds/build-all.sh $CLEAN_FLAG $DEBUG_FLAG
+echo "🔧 Starting cross-platform build..."
+
+# Build Linux AppImage
+echo "🐧 Building Linux AppImage..."
+bash "$(dirname "$0")/build-appimage.sh" $CLEAN_FLAG $DEBUG_FLAG
+
+# Build Windows Zip
+echo "🪟 Building Windows zip..."
+bash "$(dirname "$0")/build-windows.sh" $CLEAN_FLAG $DEBUG_FLAG
+
+echo "✅ All builds completed successfully."
 
 # --- Validate release notes ---
 if ! grep -q "$VERSION" RELEASE_NOTES.md; then
