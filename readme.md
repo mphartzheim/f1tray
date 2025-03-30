@@ -11,39 +11,19 @@
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="screenshots/schedule.png" alt="Schedule Tab" width="600"/>
-  <br/>
-  <em>Weekend Schedule</em>
+  <img src="screenshots/schedule.png" alt="Schedule Tab" width="300"/>
+  <img src="screenshots/upcoming.png" alt="Upcoming Tab" width="300"/>
+  <img src="screenshots/results.png" alt="Results Tab" width="300"/>
 </p>
 
 <p align="center">
-  <img src="screenshots/upcoming.png" alt="Upcoming Tab" width="600"/>
-  <br/>
-  <em>Upcoming Sessions – Local Time, with Live Highlighting</em>
+  <img src="screenshots/standings.png" alt="Standings Tab" width="300"/>
+  <img src="screenshots/notifications.png" alt="Notifications UI" width="300"/>
+  <img src="screenshots/light_theme.png" alt="Light Theme Screenshot" width="300"/>
 </p>
 
 <p align="center">
-  <img src="screenshots/results.png" alt="Results Tab" width="600"/>
-  <br/>
-  <em>Race Results – Final Standings and Gaps</em>
-</p>
-
-<p align="center">
-  <img src="screenshots/standings.png" alt="Standings Tab" width="600"/>
-  <br/>
-  <em>Driver & Constructor Standings – Updated After Every Race</em>
-</p>
-
-<p align="center">
-  <img src="screenshots/notifications.png" alt="Notifications UI" width="600"/>
-  <br/>
-  <em>Configurable Notifications</em>
-</p>
-
-<p align="center">
-  <img src="screenshots/light_theme.png" alt="Light Theme Screenshot" width="600"/>
-  <br/>
-  <em>Light Theme (Dark Mode Also Available)</em>
+  <em>Weekend schedule, session list, race results, standings, notifications, and theme preview.</em>
 </p>
 
 > 💡 More screenshots available in the [`/screenshots`](./screenshots) folder.
