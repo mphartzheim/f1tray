@@ -123,7 +123,13 @@ func DownloadDataHash(selectedYear string) (string, error) {
 }
 
 // SetTrayIcon initializes the system tray icon and menu, with retry logic on Windows.
-func SetTrayIcon(desk desktop.App, icon fyne.Resource, tabs *container.AppTabs, win fyne.Window) {
+func SetTrayIcon(
+	desk desktop.App,
+	icon fyne.Resource,
+	tabs *container.AppTabs,
+	win fyne.Window,
+	scheduleTab, upcomingTab, resultsTab, standingsTab, preferencesTab *container.TabItem,
+) {
 	maxAttempts := 5
 	success := false
 
@@ -150,14 +156,13 @@ func SetTrayIcon(desk desktop.App, icon fyne.Resource, tabs *container.AppTabs, 
 	}
 
 	desk.SetSystemTrayMenu(fyne.NewMenu("F1 Tray",
-		fyne.NewMenuItem("Schedule", func() { tabs.SelectIndex(0); win.Show(); win.RequestFocus() }),
-		fyne.NewMenuItem("Upcoming", func() { tabs.SelectIndex(1); win.Show(); win.RequestFocus() }),
-		fyne.NewMenuItem("Race Results", func() { tabs.SelectIndex(2); win.Show(); win.RequestFocus() }),
-		fyne.NewMenuItem("Qualifying", func() { tabs.SelectIndex(3); win.Show(); win.RequestFocus() }),
-		fyne.NewMenuItem("Sprint", func() { tabs.SelectIndex(4); win.Show(); win.RequestFocus() }),
-		fyne.NewMenuItem("Preferences", func() { tabs.SelectIndex(5); win.Show(); win.RequestFocus() }),
+		fyne.NewMenuItem("Schedule", func() { tabs.Select(scheduleTab); win.Show(); win.RequestFocus() }),
+		fyne.NewMenuItem("Upcoming", func() { tabs.Select(upcomingTab); win.Show(); win.RequestFocus() }),
+		fyne.NewMenuItem("Results", func() { tabs.Select(resultsTab); win.Show(); win.RequestFocus() }),
+		fyne.NewMenuItem("Standings", func() { tabs.Select(standingsTab); win.Show(); win.RequestFocus() }),
+		fyne.NewMenuItem("Preferences", func() { tabs.Select(preferencesTab); win.Show(); win.RequestFocus() }),
 		fyne.NewMenuItemSeparator(),
-		fyne.NewMenuItem("Show", func() { tabs.SelectIndex(0); win.Show(); win.RequestFocus() }),
+		fyne.NewMenuItem("Show", func() { tabs.Select(scheduleTab); win.Show(); win.RequestFocus() }),
 		fyne.NewMenuItem("Quit", fyne.CurrentApp().Quit),
 	))
 }

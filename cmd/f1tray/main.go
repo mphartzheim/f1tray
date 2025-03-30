@@ -20,7 +20,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/theme"
+	fyneTheme "fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -48,7 +48,7 @@ func main() {
 	myApp.Settings().SetTheme(initialTheme)
 
 	if config.Get().Debug.Enabled {
-		fmt.Printf("Theme: %T\n", theme.Current())
+		fmt.Printf("Theme: %T\n", fyneTheme.Current())
 	}
 
 	myWindow := myApp.NewWindow("F1 Viewer")
@@ -64,53 +64,58 @@ func main() {
 	yearSelect := widget.NewSelect(years, nil)
 	yearSelect.SetSelected(years[0]) // Default to the current year
 
-	// Create a header container that now only includes the schedule selector.
+	// Create a header container that includes the season selector.
 	headerContainer := container.NewHBox(widget.NewLabel("Season"), yearSelect)
 
-	// Create initial schedule table content using the selected year.
+	// Create initial Schedule tab.
 	scheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, yearSelect.Selected)
 	scheduleTab := container.NewTabItem("Schedule", scheduleTabData.Content)
 
-	// Create the rest of your tabs using the default year.
+	// Create Upcoming tab.
 	upcomingTabData := tabs.CreateUpcomingTab(&state, processes.ParseUpcoming, yearSelect.Selected)
-	resultsTabData, resultsInnerTabs := results.CreateResultsTab(yearSelect.Selected, "last")
-	standingsTabData, standingsInnerTabs := standings.CreateStandingsTab(yearSelect.Selected, yearSelect.Selected)
+	upcomingTab := container.NewTabItem("Upcoming", upcomingTabData.Content)
 
-	// Hold onto Results and Standings outer tab items so we can rename them with an asterisk later.
+	// Create Results tab.
+	resultsTabData, resultsInnerTabs := results.CreateResultsTab(yearSelect.Selected, "last")
 	resultsOuterTab := container.NewTabItem("Results", resultsTabData.Content)
+
+	// Create Standings tab.
+	standingsTabData, standingsInnerTabs := standings.CreateStandingsTab(yearSelect.Selected, yearSelect.Selected)
 	standingsOuterTab := container.NewTabItem("Standings", standingsTabData.Content)
 
-	// Create the tabs container.
+	// Create Preferences tab.
+	preferencesTab := container.NewTabItem("Preferences", preferences.CreatePreferencesTab(
+		func(updated config.Preferences) {
+			_ = config.SaveConfig(updated)
+		},
+		func() {
+			upcomingTabData.Refresh()
+		},
+	))
+
+	// Create the AppTabs container with all tabs.
 	tabsContainer := container.NewAppTabs(
 		scheduleTab,
-		container.NewTabItem("Upcoming", upcomingTabData.Content),
+		upcomingTab,
 		resultsOuterTab,
 		standingsOuterTab,
-		container.NewTabItem("Preferences", preferences.CreatePreferencesTab(func(updated config.Preferences) {
-			_ = config.SaveConfig(updated)
-		}, func() {
-			upcomingTabData.Refresh()
-		})),
+		preferencesTab,
 	)
 
-	// Hook up the UpdateTabs callback so that processes.ReloadOtherTabs can update the three inner tabs.
+	// Hook up callbacks for updating inner tab content.
 	processes.UpdateTabs = func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
-		// Replace the content of each internal sub-tab.
 		resultsInnerTabs.Items[0].Content = resultsContent
 		resultsInnerTabs.Items[1].Content = qualifyingContent
 		resultsInnerTabs.Items[2].Content = sprintContent
 		resultsInnerTabs.Refresh()
 
-		// Asterisk logic for the outer "Results" tab using its known index (e.g., 2)
 		if tabsContainer.SelectedIndex() != 2 {
 			if len(resultsOuterTab.Text) == 0 || resultsOuterTab.Text[len(resultsOuterTab.Text)-1] != '*' {
 				resultsOuterTab.Text += "*"
 			}
 		}
-		// Refresh the tabs container so the updated text appears.
 		tabsContainer.Refresh()
 	}
-	// Add this to handle asterisks for standings tab too
 	processes.UpdateStandingsTabs = func(driversContent, constructorsContent fyne.CanvasObject) {
 		standingsInnerTabs.Items[0].Content = driversContent
 		standingsInnerTabs.Items[1].Content = constructorsContent
@@ -144,25 +149,20 @@ func main() {
 		}
 	}
 
-	// When the selected year changes, update the Schedule tab's content.
+	// Update content when the selected year changes.
 	yearSelect.OnChanged = func(selectedYear string) {
 		newScheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, selectedYear)
 		scheduleTab.Content = newScheduleTabData.Content
 
-		// Remember which inner tab was selected (Drivers = 0, Constructors = 1)
 		selectedStandingsIndex := standingsInnerTabs.SelectedIndex()
-
-		// Rebuild Standings tab content with the new year
 		newStandingsTabData, newStandingsInnerTabs := standings.CreateStandingsTab(selectedYear, "last")
 		standingsOuterTab.Content = newStandingsTabData.Content
 		standingsInnerTabs = newStandingsInnerTabs
 
-		// Restore previously selected tab index
 		if selectedStandingsIndex >= 0 && selectedStandingsIndex < len(standingsInnerTabs.Items) {
 			standingsInnerTabs.SelectIndex(selectedStandingsIndex)
 		}
 
-		// Add asterisk if Standings tab isn't selected
 		if tabsContainer.SelectedIndex() != 3 {
 			if len(standingsOuterTab.Text) == 0 || standingsOuterTab.Text[len(standingsOuterTab.Text)-1] != '*' {
 				standingsOuterTab.Text += "*"
@@ -172,20 +172,23 @@ func main() {
 		tabsContainer.Refresh()
 	}
 
-	// Create notification overlay using your dedicated UI function.
+	// Create a notification overlay.
 	notificationLabel, notificationWrapper := ui.CreateNotification()
 
-	// Stack the tabs with the notification overlay.
+	// Stack the tabs and the notification overlay.
 	stack := container.NewStack(tabsContainer, notificationWrapper)
 
-	// Use the header container (with the schedule selector) as the top border.
+	// Set the window content.
 	myWindow.SetContent(container.NewBorder(headerContainer, nil, nil, nil, stack))
 	myWindow.Resize(fyne.NewSize(900, 600))
 
-	// System Tray integration (if supported).
+	// System tray integration.
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
 	if desk, ok := myApp.(desktop.App); ok {
-		processes.SetTrayIcon(desk, iconResource, tabsContainer, myWindow)
+		// Pass the full TabItems directly.
+		processes.SetTrayIcon(desk, iconResource, tabsContainer, myWindow,
+			scheduleTab, upcomingTab, resultsOuterTab, standingsOuterTab, preferencesTab,
+		)
 	}
 
 	// Show or hide the window based on user preferences.
@@ -205,8 +208,7 @@ func main() {
 	})
 
 	// Lazy-load data once the UI is ready.
-	go processes.RefreshAllData(notificationLabel, notificationWrapper,
-		upcomingTabData, resultsTabData)
+	go processes.RefreshAllData(notificationLabel, notificationWrapper, upcomingTabData, resultsTabData)
 
 	// Start background auto-refresh.
 	go processes.StartAutoRefresh(&state, fmt.Sprintf("%d", time.Now().Year()))
