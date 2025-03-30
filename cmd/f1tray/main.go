@@ -30,6 +30,7 @@ func main() {
 	state := models.AppState{
 		FirstRun: true,
 	}
+	// Test2
 
 	// Create the Fyne app.
 	myApp := app.NewWithID("f1tray")
