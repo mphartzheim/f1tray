@@ -37,6 +37,21 @@ if [[ "$VERSION" != v* ]]; then
   exit 1
 fi
 
+# --- Validate release notes ---
+if ! grep -q "$VERSION" RELEASE_NOTES.md; then
+  echo "❌ RELEASE_NOTES.md does not mention version $VERSION"
+  exit 1
+fi
+
+# --- Git commit ---
+echo "📦 Committing release notes..."
+git add RELEASE_NOTES.md
+git commit -m "Release $VERSION"
+
+# --- Tag early so builds see it ---
+echo "🏷️ Tagging as $VERSION (before build)"
+git tag "$VERSION"
+
 # --- Run build ---
 echo "🔧 Starting cross-platform build..."
 
@@ -50,21 +65,7 @@ bash "$(dirname "$0")/build-windows.sh" $CLEAN_FLAG $DEBUG_FLAG
 
 echo "✅ All builds completed successfully."
 
-# --- Validate release notes ---
-if ! grep -q "$VERSION" RELEASE_NOTES.md; then
-  echo "❌ RELEASE_NOTES.md does not mention version $VERSION"
-  exit 1
-fi
-
-# --- Git commit ---
-echo "📦 Committing release notes..."
-git add RELEASE_NOTES.md
-git commit -m "Release $VERSION"
-
-# --- Tag and push ---
-echo "🏷️ Tagging as $VERSION"
-git tag "$VERSION"
-
+# --- Push after build ---
 echo "🚀 Pushing code and tag to origin..."
 git push origin main
 git push origin "$VERSION"
