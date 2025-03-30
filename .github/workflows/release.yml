@@ -16,33 +16,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Show workspace contents
-        run: |
-          echo "📁 Listing full workspace contents:"
-          find . -type f      
-
-      - name: Debug - List Linux output directory
-        run: |
-          echo "🔍 Checking contents of builds/output/linux:"
-          if [ -d builds/output/linux ]; then
-            ls -alh builds/output/linux
-          else
-            echo "⚠️ builds/output/linux does not exist"
-          fi
-
-      - name: Ensure build artifacts exist
-        run: |
-          ls builds/output/linux/*.AppImage || (echo "❌ Linux AppImage not found!" && exit 1)
-          ls builds/output/windows/*.zip || (echo "❌ Windows ZIP not found!" && exit 1)
-
+        
       - name: Publish GitHub Release with assets and changelog
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           body_path: CHANGELOG.md
-          files: |
-            builds/output/linux/*.AppImage
-            builds/output/windows/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
