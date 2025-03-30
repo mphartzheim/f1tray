@@ -2,7 +2,6 @@ package preferences
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"time"
 
@@ -47,15 +46,10 @@ func CreatePreferencesTab(onSave func(config.Preferences), refreshUpcomingTab fu
 // buildMainPreferences returns the main preferences UI.
 func buildMainPreferences(prefs *config.Preferences, onSave func(config.Preferences), refreshUpcomingTab func()) fyne.CanvasObject {
 	// Theme selector.
-	availableThemes := themes.AvailableThemes()
-	themeOptions := make([]string, 0, len(availableThemes))
-	for name := range availableThemes {
-		themeOptions = append(themeOptions, name)
-	}
-	sort.Strings(themeOptions)
+	themeOptions := themes.SortedThemeList()
 
 	mapTheme := func(selected string) fyne.Theme {
-		if t, ok := availableThemes[selected]; ok {
+		if t, ok := themes.AvailableThemes()[selected]; ok {
 			return t
 		}
 		return theme.DefaultTheme()

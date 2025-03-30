@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New "Standings" tab displaying live Driver and Constructor championship standings.
 - Configurable session notifications with custom timing.
 - Light and dark theme support.
+- Team-based themes for all 10 constructors!
 - Screenshots section added to the README and `/screenshots/` directory.
 
 ### Changed
 - Refactored UI layout for better consistency and theming.
+- Theme selection dropdown now prioritizes "System", "Dark", and "Light", followed by teams alphabetically.
 - Lazy-loaded data refresh to optimize performance on startup.
 - README reorganized: Screenshots moved below Features; image layout updated.
 
@@ -33,4 +35,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Upcoming tab with live session info.
 - Schedule and Results views.
 - Early support for Jolpica API integration.
-
