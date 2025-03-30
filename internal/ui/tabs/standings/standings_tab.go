@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/mphartzheim/f1tray/internal/config"
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/processes"
 	"github.com/mphartzheim/f1tray/internal/ui"
@@ -23,7 +24,62 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 
 	url := buildStandingsURL(parseFunc, year)
 
-	refresh := func() bool {
+	// Helper function to check whether a driver is a favorite.
+	isFavorite := func(favs []string, driverName string) bool {
+		for _, fav := range favs {
+			if fav == driverName {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Declare refresh as a variable so it can be referenced by toggleFavorite.
+	var refresh func() bool
+
+	// toggleFavorite updates the favorites in the config.
+	toggleFavorite := func(driverName string) {
+		prefs := config.Get() // retrieve current preferences
+		favs := prefs.FavoriteDrivers
+		alreadyFav := false
+		for _, fav := range favs {
+			if fav == driverName {
+				alreadyFav = true
+				break
+			}
+		}
+		if alreadyFav {
+			// Remove from favorites.
+			newFavs := []string{}
+			for _, fav := range favs {
+				if fav != driverName {
+					newFavs = append(newFavs, fav)
+				}
+			}
+			prefs.FavoriteDrivers = newFavs
+		} else {
+			// Only add if there are fewer than 2 favorites.
+			if len(favs) < 2 {
+				prefs.FavoriteDrivers = append(favs, driverName)
+			} else {
+				// Create and show a notification if already 2 favorites.
+				notiLabel, notiOverlay := ui.CreateNotification()
+				notiLabel.SetText("You can only select up to two favorite drivers.")
+				notiOverlay.Show()
+				return
+			}
+		}
+		// Save the updated config.
+		if err := config.SaveConfig(*prefs); err != nil {
+			notiLabel, notiOverlay := ui.CreateNotification()
+			notiLabel.SetText("Failed to save config.")
+			notiOverlay.Show()
+		}
+		// Refresh the table UI.
+		refresh()
+	}
+
+	refresh = func() bool {
 		data, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch standings.")
@@ -43,6 +99,7 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 				if len(rows) == 0 {
 					return 0, 0
 				}
+				// Now rows have 5 columns.
 				return len(rows), len(rows[0])
 			},
 			// Create each cell as a container that we can update later.
@@ -57,28 +114,39 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 				}
 				cont.Objects = nil
 
-				text := rows[id.Row][id.Col]
 				var cellWidget fyne.CanvasObject
-
-				// Check if this cell is in the Driver Name column (index 1).
+				// Column 1 is the Favorite column.
 				if id.Col == 1 {
-					// Look for the delimiter indicating a clickable cell.
+					// The driver name is in column 2.
+					driverNameRaw := rows[id.Row][2]
+					driverName := driverNameRaw
+					if strings.Contains(driverNameRaw, "|||") {
+						parts := strings.SplitN(driverNameRaw, "|||", 2)
+						driverName = parts[0]
+					}
+					star := "☆"
+					if isFavorite(config.Get().FavoriteDrivers, driverName) {
+						star = "★"
+					}
+					cellWidget = ui.NewClickableLabel(star, func() {
+						toggleFavorite(driverName)
+					}, true)
+				} else if id.Col == 2 {
+					// Driver Name column.
+					text := rows[id.Row][2]
+					// Check for clickable driver URL indicator.
 					if strings.Contains(text, "|||") {
 						parts := strings.SplitN(text, "|||", 2)
 						displayName := parts[0]
 						fallback := parts[1]
-						// Remove the trailing emoji from the fallback URL.
 						fallback = strings.TrimSuffix(fallback, " 👤")
-						// Rebuild the clickable display text.
 						clickableText := fmt.Sprintf("%s 👤", displayName)
-						// If the driver exists in our custom mapping, use that URL.
 						if slug, ok := models.DriverURLMap[displayName]; ok {
 							url := fmt.Sprintf(models.F1DriverBioURL, slug)
 							cellWidget = ui.NewClickableLabel(clickableText, func() {
 								processes.OpenWebPage(url)
 							}, true)
 						} else {
-							// Otherwise, fallback to the API-provided URL.
 							cellWidget = ui.NewClickableLabel(clickableText, func() {
 								processes.OpenWebPage(fallback)
 							}, true)
@@ -87,7 +155,8 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 						cellWidget = widget.NewLabel(text)
 					}
 				} else {
-					cellWidget = widget.NewLabel(text)
+					// For other columns, simply create a label.
+					cellWidget = widget.NewLabel(rows[id.Row][id.Col])
 				}
 
 				cont.Add(cellWidget)
@@ -95,12 +164,12 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 			},
 		)
 
-		table.SetColumnWidth(0, 50)
-		table.SetColumnWidth(1, 180)
-		table.SetColumnWidth(2, 100)
-		if len(rows) > 0 && len(rows[0]) > 3 {
-			table.SetColumnWidth(3, 180)
-		}
+		// Set updated column widths.
+		table.SetColumnWidth(0, 50)  // Position
+		table.SetColumnWidth(1, 50)  // Favorite
+		table.SetColumnWidth(2, 180) // Driver Name
+		table.SetColumnWidth(3, 100) // Team
+		table.SetColumnWidth(4, 80)  // Points
 
 		tableContainer.Objects = []fyne.CanvasObject{table}
 		tableContainer.Refresh()

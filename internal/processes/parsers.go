@@ -165,8 +165,10 @@ func ParseDriverStandings(body []byte) (string, [][]string, error) {
 		if s.Driver.URL != "" {
 			driverName = fmt.Sprintf("%s|||%s%s", driverName, s.Driver.URL, " 👤")
 		}
+		// Build row with 5 columns: Position, (Favorite placeholder), Driver Name, Team, Points.
 		rows[i] = []string{
 			s.Position,
+			"", // Favorite column placeholder; the clickable label will be created in the table update function.
 			driverName,
 			s.Constructors[0].Name, // usually only one constructor per driver
 			s.Points,
