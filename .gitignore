@@ -18,14 +18,17 @@ cmd/f1tray/f1tray
 .DS_Store
 Thumbs.db
 
-# Ignore build artifacts but keep build scripts
-builds/output/
+# Ignore build outputs but keep folder and build scripts
+/builds/output/*
+!/builds/output/
+!/builds/output/.gitkeep
+
+# Ignore common build output formats
 *.AppImage
 *.zip
 *.exe
 
-# Keep build scripts and structure
+# Keep your build scripts
 !builds/build-all.sh
 !builds/build-appimage.sh
 !builds/build-windows.sh
-!builds/output/.gitkeep
