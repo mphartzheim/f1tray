@@ -1,5 +1,19 @@
 # Changelog
 
+<!-- Only the latest version entry will appear in the GitHub Release -->
+
+## [v0.1.2-dev.2] - 2025-03-29
+
+### Added
+- GitHub Actions workflow to automatically generate GitHub Releases
+- Uploads Linux `.AppImage` and Windows `.zip` from versioned build folders
+- Supports wildcard filenames and manual triggers
+
+### Tested
+- First automated release run using tag `v0.1.2-dev.2`
+
+---
+
 ## [v0.1.2-dev.1] - 2025-03-29
 
 ### Added

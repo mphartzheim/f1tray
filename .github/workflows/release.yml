@@ -1,10 +1,10 @@
 name: Release
 
 on:
-  workflow_dispatch:  # Manual run button
+  workflow_dispatch:  # Optional manual trigger
   push:
     tags:
-      - 'v*'          # Auto-run on version tag
+      - 'v*'          # Auto-trigger on version tags
 
 jobs:
   release:
@@ -14,10 +14,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Generate GitHub Release from CHANGELOG
+      # Upload Linux AppImage
+      - name: Upload Linux build (.AppImage)
+        uses: softprops/action-gh-release@v1
+        with:
+          files: builds/output/linux/*.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload Windows build (.zip)
+      - name: Upload Windows build (.zip)
+        uses: softprops/action-gh-release@v1
+        with:
+          files: builds/output/windows/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publish the GitHub Release with changelog notes
+      - name: Publish GitHub Release with changelog
         uses: softprops/action-gh-release@v1
         with:
           body_path: CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-# test
