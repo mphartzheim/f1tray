@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "❌ Unknown option: $1"
-      echo "Usage: ./release.sh vX.Y.Z [--clean] [--debug]"
+      echo "Usage: ./builds/release.sh vX.Y.Z [--clean] [--debug]"
       exit 1
       ;;
   esac
@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$VERSION" ]]; then
-  echo "Usage: ./release.sh vX.Y.Z [--clean] [--debug]"
+  echo "Usage: ./builds/release.sh vX.Y.Z [--clean] [--debug]"
   exit 1
 fi
 
