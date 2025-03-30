@@ -27,9 +27,14 @@ func ParseRaceResults(body []byte) (string, [][]string, error) {
 		if res.Time.Time != "" {
 			timeOrStatus = res.Time.Time
 		}
+		// Build the driver name with the fallback URL embedded using "|||"
+		driverName := fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName)
+		if res.Driver.URL != "" {
+			driverName = fmt.Sprintf("%s|||%s%s", driverName, res.Driver.URL, " 👤")
+		}
 		rows[i] = []string{
 			res.Position,
-			fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName),
+			driverName,
 			res.Constructor.Name,
 			timeOrStatus,
 		}
@@ -56,9 +61,14 @@ func ParseSprintResults(body []byte) (string, [][]string, error) {
 		if res.Time.Time != "" {
 			timeOrStatus = res.Time.Time
 		}
+		// Build the driver name with fallback URL if available.
+		driverName := fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName)
+		if res.Driver.URL != "" {
+			driverName = fmt.Sprintf("%s|||%s%s", driverName, res.Driver.URL, " 👤")
+		}
 		rows[i] = []string{
 			res.Position,
-			fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName),
+			driverName,
 			res.Constructor.Name,
 			timeOrStatus,
 		}
@@ -88,9 +98,14 @@ func ParseQualifyingResults(body []byte) (string, [][]string, error) {
 		if bestTime == "" {
 			bestTime = res.Q1
 		}
+		// Build the driver name with fallback URL if available.
+		driverName := fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName)
+		if res.Driver.URL != "" {
+			driverName = fmt.Sprintf("%s|||%s%s", driverName, res.Driver.URL, " 👤")
+		}
 		rows[i] = []string{
 			res.Position,
-			fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName),
+			driverName,
 			res.Constructor.Name,
 			bestTime,
 		}

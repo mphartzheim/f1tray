@@ -17,8 +17,12 @@ type QualifyingResultResponse struct {
 				QualifyingResults []struct {
 					Position string `json:"position"`
 					Driver   struct {
-						FamilyName string `json:"familyName"`
-						GivenName  string `json:"givenName"`
+						DriverID        string `json:"driverId"`
+						PermanentNumber string `json:"permanentNumber"`
+						Code            string `json:"code"`
+						URL             string `json:"url"`
+						GivenName       string `json:"givenName"`
+						FamilyName      string `json:"familyName"`
 					} `json:"Driver"`
 					Constructor struct {
 						Name string `json:"name"`
@@ -42,8 +46,12 @@ type SprintResultResponse struct {
 				SprintResults []struct {
 					Position string `json:"position"`
 					Driver   struct {
-						FamilyName string `json:"familyName"`
-						GivenName  string `json:"givenName"`
+						DriverID        string `json:"driverId"`
+						PermanentNumber string `json:"permanentNumber"`
+						Code            string `json:"code"`
+						URL             string `json:"url"`
+						GivenName       string `json:"givenName"`
+						FamilyName      string `json:"familyName"`
 					} `json:"Driver"`
 					Constructor struct {
 						Name string `json:"name"`
@@ -68,8 +76,14 @@ type RaceResultResponse struct {
 				Results  []struct {
 					Position string `json:"position"`
 					Driver   struct {
-						FamilyName string `json:"familyName"`
-						GivenName  string `json:"givenName"`
+						DriverID        string `json:"driverId"`
+						PermanentNumber string `json:"permanentNumber"`
+						Code            string `json:"code"`
+						URL             string `json:"url"`
+						GivenName       string `json:"givenName"`
+						FamilyName      string `json:"familyName"`
+						DateOfBirth     string `json:"dateOfBirth"`
+						Nationality     string `json:"nationality"`
 					} `json:"Driver"`
 					Constructor struct {
 						Name string `json:"name"`
