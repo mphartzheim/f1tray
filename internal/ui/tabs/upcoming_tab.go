@@ -21,7 +21,6 @@ import (
 const dtLayout = "2006-01-02 15:04:05"
 
 // CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
-// CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
 func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 
 	status := widget.NewLabel("Loading upcoming races...")
