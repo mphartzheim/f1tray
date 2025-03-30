@@ -74,5 +74,5 @@ You may use this software for **noncommercial purposes** only.
 
 Third-party licenses:
 
-- [Fyne (Apache 2.0)](third_party_licenses/fyne_LICENSE.txt)  
+- [Fyne (BSD 3-Clause)](third_party_licenses/fyne_LICENSE.txt)  
 - [Jolpica API (Apache 2.0)](third_party_licenses/jolpica_LICENSE.txt)

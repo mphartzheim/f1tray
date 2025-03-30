@@ -73,7 +73,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 		err = json.Unmarshal(data, &upcomingResp)
 		if err != nil {
 			nextRaceLabel.SetText("Next Race (map unavailable)")
-			nextRaceLabel.OnDoubleTapped = nil
+			nextRaceLabel.OnTapped = nil
 		} else {
 			// Populate upcoming sessions from UpcomingResponse.
 			var upcoming []models.SessionInfo
@@ -131,7 +131,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 					locality := race.Circuit.Location.Locality
 					country := race.Circuit.Location.Country
 					mapURL := fmt.Sprintf("%s?locality=%s&country=%s", models.MapBaseURL, locality, country)
-					nextRaceLabel.OnDoubleTapped = func() {
+					nextRaceLabel.OnTapped = func() {
 						if err := ui.OpenWebPage(mapURL); err != nil {
 							status.SetText("Failed to open map URL")
 						}
@@ -143,7 +143,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 			}
 			if !found {
 				nextRaceLabel.SetText("Next Race: Not available")
-				nextRaceLabel.OnDoubleTapped = nil
+				nextRaceLabel.OnTapped = nil
 				nextRaceLabel.Clickable = false
 			}
 		}

@@ -73,7 +73,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 				// Header row: set header text, disable click, and hide background.
 				headers := []string{"Round", "Race Name", "Circuit", "Location (Date)"}
 				cl.SetText(headers[id.Col])
-				cl.OnDoubleTapped = nil
+				cl.OnTapped = nil
 				cl.Clickable = false
 				bg.Hide()
 			} else {
@@ -81,22 +81,22 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 				baseText := rows[id.Row-1][id.Col]
 				cl.SetText(baseText)
 				// By default, disable clickability.
-				cl.OnDoubleTapped = nil
+				cl.OnTapped = nil
 				cl.Clickable = false
 				// Hide background initially.
 				bg.Hide()
 
 				race := schedule.MRData.RaceTable.Races[id.Row-1]
 				if id.Col == 1 {
-					// Column 1: Race Name. Enable double-click for past races.
+					// Column 1: Race Name. Enable single-click for past races.
 					raceDate, err := time.Parse("2006-01-02", race.Date)
 					if err != nil {
 						fmt.Printf("Error parsing race date: %v\n", err)
 					} else if raceDate.Before(now) {
 						// Append checkered flag emoji.
 						cl.SetText(baseText + " 🏁")
-						// Set callback for double-click.
-						cl.OnDoubleTapped = func() {
+						// Set callback for single-click.
+						cl.OnTapped = func() {
 							round := rows[id.Row-1][0]
 							newResultsTab := CreateResultsTableTab(processes.ParseRaceResults, year, round)
 							newQualifyingTab := CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
@@ -109,12 +109,12 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 						cl.Clickable = true
 					}
 				} else if id.Col == 2 {
-					// Column 2: Circuit name. Append map emoji and enable double-click.
+					// Column 2: Circuit name. Append map emoji and enable single-click.
 					cl.SetText(baseText + " 🗺️")
 					lat := race.Circuit.Location.Lat
 					lon := race.Circuit.Location.Long
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
-					cl.OnDoubleTapped = func() {
+					cl.OnTapped = func() {
 						if err := ui.OpenWebPage(mapURL); err != nil {
 							status.SetText("Failed to open map URL")
 						}
