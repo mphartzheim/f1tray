@@ -5,6 +5,8 @@ const (
 	ScheduleURL = "https://api.jolpi.ca/ergast/f1/%s.json"
 	// UpcomingURL is the API endpoint for the next upcoming F1 race.
 	UpcomingURL = "https://api.jolpi.ca/ergast/f1/%s/next.json"
+	// UpcomingURL is the API endpoint for the next upcoming F1 race.
+	StandingsURL = "https://api.jolpi.ca/ergast/f1/%s/driverstandings.json"
 	// RaceResultsURL is the API endpoint for race results by year and round.
 	RaceResultsURL = "https://api.jolpi.ca/ergast/f1/%s/%s/results.json"
 	// QualifyingURL is the API endpoint for qualifying results by year and round.

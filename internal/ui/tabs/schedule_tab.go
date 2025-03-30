@@ -121,18 +121,16 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 					}
 					cl.Clickable = true
 				}
-				// For other columns, leave as non-clickable.
 
-				// Additionally, if this row is the highlighted row, add a red border.
 				if id.Row == highlightRow {
 					bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
 					bg.StrokeWidth = 2
-					bg.Show()
 				} else {
 					// Remove border for non-highlighted rows.
 					bg.StrokeWidth = 0
 				}
 
+				bg.Show()
 				bg.Resize(wrapper.Size())
 			}
 			wrapper.Refresh()

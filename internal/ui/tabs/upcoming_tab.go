@@ -13,14 +13,14 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-// Define a custom datetime layout matching the expected format.
-// Adjust this layout string if your API returns a different format.
 const dtLayout = "2006-01-02 15:04:05"
 
+// CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
 // CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
 func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 
@@ -75,7 +75,6 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 			nextRaceLabel.SetText("Next Race (map unavailable)")
 			nextRaceLabel.OnTapped = nil
 		} else {
-			// Populate upcoming sessions from UpcomingResponse.
 			var upcoming []models.SessionInfo
 			now := time.Now()
 
@@ -153,14 +152,20 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 
 	refresh()
 
-	topContent := container.NewVBox(nextRaceLabel)
-	bottomContent := container.NewVBox(status, watchButton)
+	// Create a horizontal container for the top row.
+	// The spacer pushes the button to the far right.
+	topRow := container.NewHBox(nextRaceLabel, layout.NewSpacer(), watchButton)
 
+	// Place the status label in a separate container at the bottom.
+	bottomContent := container.NewVBox(status)
+
+	// Set up the main content with the table in the center.
 	content := container.NewBorder(
-		topContent,
-		bottomContent,
-		nil, nil,
-		tableContainer,
+		topRow,         // top
+		bottomContent,  // bottom
+		nil,            // left
+		nil,            // right
+		tableContainer, // center
 	)
 
 	return models.TabData{
