@@ -2,7 +2,6 @@
 
 set -e
 
-# --- Smarter branch detection ---
 REQUIRED_BRANCH="main"
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
 
@@ -13,7 +12,6 @@ if [[ "$CURRENT_BRANCH" != "$REQUIRED_BRANCH" ]]; then
   exit 1
 fi
 
-# --- Parse arguments ---
 VERSION=$1
 shift
 
@@ -53,25 +51,25 @@ if ! grep -q "$VERSION" RELEASE_NOTES.md; then
   exit 1
 fi
 
-# --- Commit release notes if needed ---
+# --- Commit if not already committed ---
 LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
 if [[ "$LAST_COMMIT_MSG" == "Release $VERSION" ]]; then
-  echo "ℹ️ Release commit already exists. Skipping commit step."
+  echo "ℹ️ Release commit for $VERSION already exists. Skipping commit."
 else
   echo "📦 Committing release notes..."
   git add RELEASE_NOTES.md
   git commit -m "Release $VERSION"
 fi
 
-# --- Tag if it doesn't already exist ---
+# --- Tag if not already tagged ---
 if git rev-parse "$VERSION" >/dev/null 2>&1; then
-  echo "ℹ️ Tag '$VERSION' already exists. Skipping tag creation."
+  echo "ℹ️ Tag '$VERSION' already exists. Skipping tag."
 else
   echo "🏷️ Tagging as $VERSION"
   git tag "$VERSION"
 fi
 
-# --- Run builds ---
+# --- Always build, even if commit/tag already exist ---
 echo "🔧 Starting cross-platform build..."
 
 echo "🐧 Building Linux AppImage..."
@@ -82,15 +80,10 @@ bash "$(dirname "$0")/build-windows.sh" $CLEAN_FLAG $DEBUG_FLAG
 
 echo "✅ All builds completed successfully."
 
-# --- Push if needed ---
+# --- Push code and tag ---
 echo "🚀 Pushing code and tag to origin..."
-
-if [[ $(git status --porcelain) ]]; then
-  echo "⚠️ Working directory is dirty. Skipping push to avoid conflict."
-else
-  git push origin main || echo "⚠️ Failed to push main. Handle manually if needed."
-  git push origin "$VERSION" || echo "⚠️ Failed to push tag '$VERSION'. It may already be pushed."
-fi
+git push origin main || echo "⚠️ Could not push main (may already be up to date)"
+git push origin "$VERSION" || echo "⚠️ Could not push tag (may already be pushed)"
 
 echo ""
-echo "🎉 Release $VERSION complete (or already finished)."
+echo "🎉 Release $VERSION is complete!"
