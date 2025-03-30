@@ -167,9 +167,16 @@ func ParseDriverStandings(body []byte) (string, [][]string, error) {
 	standings := standingsLists[0].DriverStandings
 	rows := make([][]string, len(standings))
 	for i, s := range standings {
+		// Build the driver name.
+		// If an API URL is provided, embed it using "|||" as a delimiter,
+		// then append the clickable emoji.
+		driverName := fmt.Sprintf("%s %s", s.Driver.GivenName, s.Driver.FamilyName)
+		if s.Driver.URL != "" {
+			driverName = fmt.Sprintf("%s|||%s%s", driverName, s.Driver.URL, " 👤")
+		}
 		rows[i] = []string{
 			s.Position,
-			fmt.Sprintf("%s %s", s.Driver.GivenName, s.Driver.FamilyName),
+			driverName,
 			s.Constructors[0].Name, // usually only one constructor per driver
 			s.Points,
 		}

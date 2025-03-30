@@ -8,6 +8,7 @@ import (
 
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/processes"
+	"github.com/mphartzheim/f1tray/internal/ui"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -18,7 +19,7 @@ import (
 func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading standings...")
 	headerLabel := widget.NewLabel("")
-	tableContainer := container.NewStack()
+	tableContainer := container.NewStack() // Use a container that fills available space
 
 	url := buildStandingsURL(parseFunc, year)
 
@@ -36,6 +37,7 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 		}
 
 		headerLabel.SetText(fmt.Sprintf("Standings for: %s", standingsTitle))
+
 		table := widget.NewTable(
 			func() (int, int) {
 				if len(rows) == 0 {
@@ -43,15 +45,56 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 				}
 				return len(rows), len(rows[0])
 			},
+			// Create each cell as a container that we can update later.
 			func() fyne.CanvasObject {
-				return widget.NewLabel("")
+				return container.NewStack(widget.NewLabel(""))
 			},
-			func(id widget.TableCellID, cell fyne.CanvasObject) {
-				cell.(*widget.Label).SetText(rows[id.Row][id.Col])
+			// Update each cell based on its row and column.
+			func(id widget.TableCellID, co fyne.CanvasObject) {
+				cont, ok := co.(*fyne.Container)
+				if !ok {
+					return
+				}
+				cont.Objects = nil
+
+				text := rows[id.Row][id.Col]
+				var cellWidget fyne.CanvasObject
+
+				// Check if this cell is in the Driver Name column (index 1).
+				if id.Col == 1 {
+					// Look for the delimiter indicating a clickable cell.
+					if strings.Contains(text, "|||") {
+						parts := strings.SplitN(text, "|||", 2)
+						displayName := parts[0]
+						fallback := parts[1]
+						// Remove the trailing emoji from the fallback URL.
+						fallback = strings.TrimSuffix(fallback, " 👤")
+						// Rebuild the clickable display text.
+						clickableText := fmt.Sprintf("%s 👤", displayName)
+						// If the driver exists in our custom mapping, use that URL.
+						if slug, ok := models.DriverURLMap[displayName]; ok {
+							url := fmt.Sprintf(models.F1DriverBioURL, slug)
+							cellWidget = ui.NewClickableLabel(clickableText, func() {
+								processes.OpenWebPage(url)
+							}, true)
+						} else {
+							// Otherwise, fallback to the API-provided URL.
+							cellWidget = ui.NewClickableLabel(clickableText, func() {
+								processes.OpenWebPage(fallback)
+							}, true)
+						}
+					} else {
+						cellWidget = widget.NewLabel(text)
+					}
+				} else {
+					cellWidget = widget.NewLabel(text)
+				}
+
+				cont.Add(cellWidget)
+				cont.Refresh()
 			},
 		)
 
-		// Set default column widths (adjust as needed).
 		table.SetColumnWidth(0, 50)
 		table.SetColumnWidth(1, 180)
 		table.SetColumnWidth(2, 100)

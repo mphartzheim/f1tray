@@ -116,7 +116,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 					lon := race.Circuit.Location.Long
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
 					cl.OnTapped = func() {
-						if err := ui.OpenWebPage(mapURL); err != nil {
+						if err := processes.OpenWebPage(mapURL); err != nil {
 							status.SetText("Failed to open map URL")
 						}
 					}

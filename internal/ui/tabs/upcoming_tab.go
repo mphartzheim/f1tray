@@ -30,7 +30,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	url := fmt.Sprintf(models.UpcomingURL, year)
 
 	watchButton := widget.NewButton("Watch on F1TV", func() {
-		if err := ui.OpenWebPage(models.F1tvURL); err != nil {
+		if err := processes.OpenWebPage(models.F1tvURL); err != nil {
 			status.SetText("Failed to open F1TV URL.")
 		}
 	})
@@ -130,7 +130,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 					country := race.Circuit.Location.Country
 					mapURL := fmt.Sprintf("%s?locality=%s&country=%s", models.MapBaseURL, locality, country)
 					nextRaceLabel.OnTapped = func() {
-						if err := ui.OpenWebPage(mapURL); err != nil {
+						if err := processes.OpenWebPage(mapURL); err != nil {
 							status.SetText("Failed to open map URL")
 						}
 					}

@@ -1,4 +1,4 @@
-package ui
+package processes
 
 import (
 	"net/url"

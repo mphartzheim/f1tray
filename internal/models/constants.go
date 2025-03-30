@@ -25,6 +25,9 @@ const (
 	// F1tvURL is the direct link to the F1TV streaming platform.
 	F1tvURL = "https://f1tv.formula1.com/"
 
+	// F1DriverBioURL is the base URL for Formula 1 driver biography pages.
+	F1DriverBioURL = "https://www.formula1.com/en/drivers/%s"
+
 	// MapBaseURL is the base OpenStreetMap URL used for race location links.
 	MapBaseURL = "https://www.openstreetmap.org/"
 )
