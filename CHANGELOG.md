@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Watch on F1TV button is now more prominent.
 - Users can now highlight their favorite drivers!
+- Global notification system (eg. warn the user if selecting too many favorites) implemented.
 
 ---
 
