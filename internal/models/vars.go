@@ -1,5 +1,9 @@
 package models
 
+import (
+	"fyne.io/fyne/v2"
+)
+
 const (
 	// ScheduleURL is the API endpoint for the full F1 schedule for a given year.
 	ScheduleURL = "https://api.jolpi.ca/ergast/f1/%s.json"
@@ -31,3 +35,6 @@ const (
 	// MapBaseURL is the base OpenStreetMap URL used for race location links.
 	MapBaseURL = "https://www.openstreetmap.org/"
 )
+
+// MainWindow holds a reference to the primary window.
+var MainWindow fyne.Window

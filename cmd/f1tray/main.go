@@ -43,6 +43,7 @@ func main() {
 	}
 
 	myWindow := myApp.NewWindow("F1 Viewer")
+	models.MainWindow = myWindow
 
 	// Build a slice of years (as strings) from the current year down to 1950.
 	currentYear := time.Now().Year()
@@ -164,7 +165,7 @@ func main() {
 	}
 
 	// Create a notification overlay.
-	notificationLabel, notificationWrapper := ui.CreateNotification()
+	notificationLabel, notificationWrapper := ui.CreateNotification(myWindow)
 
 	// Stack the tabs and the notification overlay.
 	stack := container.NewStack(tabsContainer, notificationWrapper)

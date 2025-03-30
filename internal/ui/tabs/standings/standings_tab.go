@@ -62,18 +62,14 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 			if len(favs) < 2 {
 				prefs.FavoriteDrivers = append(favs, driverName)
 			} else {
-				// Create and show a notification if already 2 favorites.
-				notiLabel, notiOverlay := ui.CreateNotification()
-				notiLabel.SetText("You can only select up to two favorite drivers.")
-				notiOverlay.Show()
+				ui.ShowNotification(models.MainWindow, "You can only select up to two favorite drivers.")
 				return
 			}
 		}
 		// Save the updated config.
 		if err := config.SaveConfig(*prefs); err != nil {
-			notiLabel, notiOverlay := ui.CreateNotification()
-			notiLabel.SetText("Failed to save config.")
-			notiOverlay.Show()
+			ui.ShowNotification(models.MainWindow, "Failed to save config.")
+			return
 		}
 		// Refresh the table UI.
 		refresh()
