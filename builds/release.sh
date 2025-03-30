@@ -2,7 +2,7 @@
 
 set -e
 
-# --- Smarter branch check: works even if detached or symbolic ---
+# --- Smarter branch detection ---
 REQUIRED_BRANCH="main"
 CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
 
@@ -53,14 +53,23 @@ if ! grep -q "$VERSION" RELEASE_NOTES.md; then
   exit 1
 fi
 
-# --- Commit release notes ---
-echo "📦 Committing release notes..."
-git add RELEASE_NOTES.md
-git commit -m "Release $VERSION"
+# --- Commit release notes if needed ---
+LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
+if [[ "$LAST_COMMIT_MSG" == "Release $VERSION" ]]; then
+  echo "ℹ️ Release commit already exists. Skipping commit step."
+else
+  echo "📦 Committing release notes..."
+  git add RELEASE_NOTES.md
+  git commit -m "Release $VERSION"
+fi
 
-# --- Tag BEFORE building ---
-echo "🏷️ Tagging as $VERSION"
-git tag "$VERSION"
+# --- Tag if it doesn't already exist ---
+if git rev-parse "$VERSION" >/dev/null 2>&1; then
+  echo "ℹ️ Tag '$VERSION' already exists. Skipping tag creation."
+else
+  echo "🏷️ Tagging as $VERSION"
+  git tag "$VERSION"
+fi
 
 # --- Run builds ---
 echo "🔧 Starting cross-platform build..."
@@ -73,10 +82,15 @@ bash "$(dirname "$0")/build-windows.sh" $CLEAN_FLAG $DEBUG_FLAG
 
 echo "✅ All builds completed successfully."
 
-# --- Push everything ---
+# --- Push if needed ---
 echo "🚀 Pushing code and tag to origin..."
-git push origin main
-git push origin "$VERSION"
+
+if [[ $(git status --porcelain) ]]; then
+  echo "⚠️ Working directory is dirty. Skipping push to avoid conflict."
+else
+  git push origin main || echo "⚠️ Failed to push main. Handle manually if needed."
+  git push origin "$VERSION" || echo "⚠️ Failed to push tag '$VERSION'. It may already be pushed."
+fi
 
 echo ""
-echo "🎉 Release $VERSION is complete and live!"
+echo "🎉 Release $VERSION complete (or already finished)."
