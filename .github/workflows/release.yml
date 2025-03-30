@@ -7,7 +7,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: write
+  contents: write  # Required to create GitHub releases
 
 jobs:
   release:
@@ -17,23 +17,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Upload Linux AppImage
-      - name: Upload Linux build (.AppImage)
+      - name: Ensure build artifacts exist
+        run: |
+          ls builds/output/linux/*.AppImage || (echo "❌ Linux AppImage not found!" && exit 1)
+          ls builds/output/windows/*.zip || (echo "❌ Windows ZIP not found!" && exit 1)
+
+      - name: Upload Linux AppImage
         uses: softprops/action-gh-release@v1
         with:
           files: builds/output/linux/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Upload Windows build (.zip)
-      - name: Upload Windows build (.zip)
+      - name: Upload Windows ZIP
         uses: softprops/action-gh-release@v1
         with:
           files: builds/output/windows/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Publish the GitHub Release with changelog notes
       - name: Publish GitHub Release with changelog
         uses: softprops/action-gh-release@v1
         with:
