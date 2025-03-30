@@ -1,32 +1,36 @@
 # Changelog
 
-<!-- Only the latest version entry will appear in the GitHub Release -->
+All notable changes to this project will be documented in this file.
 
-## [v0.1.2-dev.2] - 2025-03-29
-
-### Added
-- GitHub Actions workflow to automatically generate GitHub Releases
-- Uploads Linux `.AppImage` and Windows `.zip` from versioned build folders
-- Supports wildcard filenames and manual triggers
-
-### Tested
-- First automated release run using tag `v0.1.2-dev.2`
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [v0.1.2-dev.1] - 2025-03-29
+## [0.2.0] - 2025-03-30
 
 ### Added
-- New "Standings" tab with inner tabs for "Drivers" and "Constructors"
-- Parsers for driver and constructor standings using the Jolpica API
-- Asterisk notification logic for Standings tab, matching existing Results tab behavior
-- Standings content now updates dynamically when the selected year changes
-- Preserves selected inner tab (Drivers/Constructors) when refreshing Standings
+- New "Standings" tab displaying live Driver and Constructor championship standings.
+- Configurable session notifications with custom timing.
+- Light and dark theme support.
+- Screenshots section added to the README and `/screenshots/` directory.
+
+### Changed
+- Refactored UI layout for better consistency and theming.
+- Lazy-loaded data refresh to optimize performance on startup.
+- README reorganized: Screenshots moved below Features; image layout updated.
 
 ### Fixed
-- Typo in `ConstructorsStandingsURL` constant
-- Results and Standings tabs now properly mark themselves with an asterisk on background refresh or year change
+- Session time display issues in certain time zones.
+- Notification delivery reliability on Linux and Windows.
+- Minor Jolpica API response handling bugs.
 
-### Internal
-- Refactored `parsers.go` to support modular parsing of various data types
-- Organized models to separate JSON responses and reusable types
+---
+
+## [0.1.2] - 2025-03-17
+
+### Added
+- Initial Upcoming tab with live session info.
+- Schedule and Results views.
+- Early support for Jolpica API integration.
+
