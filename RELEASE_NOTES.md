@@ -1,4 +1,4 @@
-## 🚀 Release Notes – v0.2.1-test.2 (2025-03-30)
+## 🚀 Release Notes – v0.2.1-test2 (2025-03-30)
 
 ### Testing
 - Testing release scripts
