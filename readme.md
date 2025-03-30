@@ -44,18 +44,7 @@ F1Tray offers both light and dark themes to match your desktop environment.
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="screenshots/schedule.png" alt="Schedule Tab" width="400"/>
-  <img src="screenshots/upcoming.png" alt="Upcoming Tab" width="400"/>
-</p>
-
-<p align="center">
-  <img src="screenshots/results.png" alt="Results Tab" width="400"/>
-  <img src="screenshots/standings.png" alt="Standings Tab" width="400"/>
-</p>
-
-<p align="center">
-  <img src="screenshots/notifications.png" alt="Notifications UI" width="400"/>
-  <img src="screenshots/light_theme.png" alt="Light Theme Screenshot" width="400"/>
+  <img src="screenshots/f1tray_preview.gif" alt="F1Tray Preview" width="800"/>
 </p>
 
 <p align="center">
