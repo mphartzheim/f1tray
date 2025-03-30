@@ -12,8 +12,8 @@ fi
 # --- Get release version ---
 read -rp "🔖 Enter release version (e.g., v0.2.1): " VERSION
 
-if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "❌ Invalid version format. Use 'vX.Y.Z'"
+if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-a-zA-Z0-9]*)?$ ]]; then
+  echo "❌ Invalid version format. Use 'vX.Y.Z' or 'vX.Y.Z-suffix'"
   exit 1
 fi
 
