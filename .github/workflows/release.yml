@@ -17,6 +17,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Show workspace contents
+        run: |
+          echo "📁 Listing full workspace contents:"
+          find . -type f      
+        
       - name: Ensure build artifacts exist
         run: |
           ls builds/output/linux/*.AppImage || (echo "❌ Linux AppImage not found!" && exit 1)
