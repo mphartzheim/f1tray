@@ -21,29 +21,19 @@ jobs:
         run: |
           echo "📁 Listing full workspace contents:"
           find . -type f      
-        
+
       - name: Ensure build artifacts exist
         run: |
           ls builds/output/linux/*.AppImage || (echo "❌ Linux AppImage not found!" && exit 1)
           ls builds/output/windows/*.zip || (echo "❌ Windows ZIP not found!" && exit 1)
 
-      - name: Upload Linux AppImage
+      - name: Publish GitHub Release with assets and changelog
         uses: softprops/action-gh-release@v1
         with:
-          files: builds/output/linux/*.AppImage
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Windows ZIP
-        uses: softprops/action-gh-release@v1
-        with:
-          files: builds/output/windows/*.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish GitHub Release with changelog
-        uses: softprops/action-gh-release@v1
-        with:
+          tag_name: ${{ github.ref_name }}
           body_path: CHANGELOG.md
+          files: |
+            builds/output/linux/*.AppImage
+            builds/output/windows/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

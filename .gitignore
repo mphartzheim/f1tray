@@ -1,4 +1,4 @@
-# Go build files
+# Go build artifacts
 bin/
 *.exe
 *.exe~
@@ -7,16 +7,25 @@ bin/
 *.dylib
 **/*.syso
 
-# IDE/editor stuff
+# Ignore built CLI binary
+cmd/f1tray/f1tray
+
+# IDE/editor files
 .vscode/
 *.log
 
-# OS files
+# OS/system files
 .DS_Store
 Thumbs.db
 
-# Build folder (ignore all build artifacts)
-builds/
+# Ignore build artifacts but keep build scripts
+builds/output/
+*.AppImage
+*.zip
+*.exe
 
-# Ignore the built binary
-cmd/f1tray/f1tray
+# Keep build scripts and structure
+!builds/build-all.sh
+!builds/build-appimage.sh
+!builds/build-windows.sh
+!builds/output/.gitkeep
