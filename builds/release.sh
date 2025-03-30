@@ -2,9 +2,9 @@
 
 set -e
 
-# --- Safety check: Must be on main branch ---
+# --- Smarter branch check: works even if detached or symbolic ---
 REQUIRED_BRANCH="main"
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+CURRENT_BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "detached")
 
 if [[ "$CURRENT_BRANCH" != "$REQUIRED_BRANCH" ]]; then
   echo "❌ You must be on the '$REQUIRED_BRANCH' branch to run this script (currently on '$CURRENT_BRANCH')"
@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       echo "❌ Unknown option: $1"
-      echo "Usage: ./builds/release.sh vX.Y.Z [--clean] [--debug]"
+      echo "Usage: ./release.sh vX.Y.Z [--clean] [--debug]"
       exit 1
       ;;
   esac
@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$VERSION" ]]; then
-  echo "Usage: ./builds/release.sh vX.Y.Z [--clean] [--debug]"
+  echo "Usage: ./release.sh vX.Y.Z [--clean] [--debug]"
   exit 1
 fi
 
