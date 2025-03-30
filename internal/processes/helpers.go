@@ -15,6 +15,7 @@ import (
 	"github.com/mphartzheim/f1tray/internal/config"
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/notifications"
+	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -203,4 +204,12 @@ func OpenWebPage(link string) error {
 		return err
 	}
 	return fyne.CurrentApp().OpenURL(u)
+}
+
+// GetThemeFromName returns a fyne.Theme based on the provided theme name using the themes.AvailableThemes map, defaulting to SystemTheme if not found.
+func GetThemeFromName(name string) fyne.Theme {
+	if theme, ok := themes.AvailableThemes()[name]; ok {
+		return theme
+	}
+	return themes.SystemTheme{}
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/mphartzheim/f1tray/internal/ui/tabs/preferences"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs/results"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs/standings"
-	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -36,15 +35,7 @@ func main() {
 	myApp := app.NewWithID("f1tray")
 
 	// Choose the initial theme based on preferences.
-	var initialTheme fyne.Theme
-	switch config.Get().Themes.Theme {
-	case "Light":
-		initialTheme = themes.LightTheme{}
-	case "Dark":
-		initialTheme = themes.DarkTheme{}
-	default:
-		initialTheme = themes.SystemTheme{}
-	}
+	initialTheme := processes.GetThemeFromName(config.Get().Themes.Theme)
 	myApp.Settings().SetTheme(initialTheme)
 
 	if config.Get().Debug.Enabled {

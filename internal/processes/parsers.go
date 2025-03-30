@@ -23,15 +23,8 @@ func ParseRaceResults(body []byte) (string, [][]string, error) {
 	race := result.MRData.RaceTable.Races[0]
 	rows := make([][]string, len(race.Results))
 	for i, res := range race.Results {
-		timeOrStatus := res.Status
-		if res.Time.Time != "" {
-			timeOrStatus = res.Time.Time
-		}
-		// Build the driver name with the fallback URL embedded using "|||"
-		driverName := fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName)
-		if res.Driver.URL != "" {
-			driverName = fmt.Sprintf("%s|||%s%s", driverName, res.Driver.URL, " 👤")
-		}
+		timeOrStatus := getTimeOrStatus(res.Status, res.Time.Time)
+		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
 		rows[i] = []string{
 			res.Position,
 			driverName,
@@ -57,15 +50,8 @@ func ParseSprintResults(body []byte) (string, [][]string, error) {
 	race := result.MRData.RaceTable.Races[0]
 	rows := make([][]string, len(race.SprintResults))
 	for i, res := range race.SprintResults {
-		timeOrStatus := res.Status
-		if res.Time.Time != "" {
-			timeOrStatus = res.Time.Time
-		}
-		// Build the driver name with fallback URL if available.
-		driverName := fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName)
-		if res.Driver.URL != "" {
-			driverName = fmt.Sprintf("%s|||%s%s", driverName, res.Driver.URL, " 👤")
-		}
+		timeOrStatus := getTimeOrStatus(res.Status, res.Time.Time)
+		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
 		rows[i] = []string{
 			res.Position,
 			driverName,
@@ -91,18 +77,8 @@ func ParseQualifyingResults(body []byte) (string, [][]string, error) {
 	race := result.MRData.RaceTable.Races[0]
 	rows := make([][]string, len(race.QualifyingResults))
 	for i, res := range race.QualifyingResults {
-		bestTime := res.Q3
-		if bestTime == "" {
-			bestTime = res.Q2
-		}
-		if bestTime == "" {
-			bestTime = res.Q1
-		}
-		// Build the driver name with fallback URL if available.
-		driverName := fmt.Sprintf("%s %s", res.Driver.GivenName, res.Driver.FamilyName)
-		if res.Driver.URL != "" {
-			driverName = fmt.Sprintf("%s|||%s%s", driverName, res.Driver.URL, " 👤")
-		}
+		bestTime := bestQualifyingTime(res.Q1, res.Q2, res.Q3)
+		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
 		rows[i] = []string{
 			res.Position,
 			driverName,
@@ -227,4 +203,31 @@ func ParseConstructorStandings(body []byte) (string, [][]string, error) {
 
 	title := fmt.Sprintf("Constructor Standings (%s)", standingsLists[0].Season)
 	return title, rows, nil
+}
+
+// buildDriverDisplayName creates a driver display string with an embedded fallback URL and clickable indicator.
+func buildDriverDisplayName(givenName, familyName, url string) string {
+	fullName := fmt.Sprintf("%s %s", givenName, familyName)
+	if url != "" {
+		return fmt.Sprintf("%s|||%s%s", fullName, url, " 👤")
+	}
+	return fullName
+}
+
+// getTimeOrStatus returns the time if available, otherwise the status.
+func getTimeOrStatus(status, timeField string) string {
+	if timeField != "" {
+		return timeField
+	}
+	return status
+}
+
+// bestQualifyingTime returns the best qualifying time available, checking Q3 first, then Q2, and finally Q1.
+func bestQualifyingTime(q1, q2, q3 string) string {
+	if q3 != "" {
+		return q3
+	} else if q2 != "" {
+		return q2
+	}
+	return q1
 }
