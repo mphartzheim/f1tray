@@ -29,11 +29,22 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 
 	url := fmt.Sprintf(models.UpcomingURL, year)
 
-	watchButton := widget.NewButton("Watch on F1TV", func() {
+	// Create the button for F1TV.
+	button := widget.NewButton("Watch on F1TV", func() {
 		if err := processes.OpenWebPage(models.F1tvURL); err != nil {
 			status.SetText("Failed to open F1TV URL.")
 		}
 	})
+
+	// Create a rounded rectangle overlay using canvas.NewRectangle.
+	// Set the fill to transparent, then assign the stroke color, stroke width and corner radius.
+	rect := canvas.NewRectangle(color.Transparent)
+	rect.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
+	rect.StrokeWidth = 4
+	rect.CornerRadius = 5
+
+	// Overlay the rectangle on top of the button using container.NewStack.
+	watchButton := container.NewStack(button, rect)
 
 	refresh := func() bool {
 		data, err := processes.FetchData(url)
