@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strings"
 	"time"
@@ -193,4 +194,13 @@ func IsSessionInProgress(dateStr, timeStr string) bool {
 		duration = 2 * time.Hour
 	}
 	return now.After(start) && now.Before(start.Add(duration))
+}
+
+// OpenWebPage opens the specified URL in the default browser.
+func OpenWebPage(link string) error {
+	u, err := url.Parse(link)
+	if err != nil {
+		return err
+	}
+	return fyne.CurrentApp().OpenURL(u)
 }
