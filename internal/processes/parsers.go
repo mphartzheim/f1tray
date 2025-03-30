@@ -8,8 +8,8 @@ import (
 	"github.com/mphartzheim/f1tray/internal/models"
 )
 
-// ParseRace extracts race result data into a table-friendly format from raw JSON.
-func ParseRace(body []byte) (string, [][]string, error) {
+// ParseRaceResults extracts race result data into a table-friendly format from raw JSON.
+func ParseRaceResults(body []byte) (string, [][]string, error) {
 	var result models.RaceResultResponse
 	err := json.Unmarshal(body, &result)
 	if err != nil {

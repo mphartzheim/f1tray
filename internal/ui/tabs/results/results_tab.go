@@ -100,7 +100,7 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 func buildResultsURL(parseFunc func([]byte) (string, [][]string, error), year string, round string) string {
 	funcName := runtime.FuncForPC(reflect.ValueOf(parseFunc).Pointer()).Name()
 
-	if strings.HasSuffix(funcName, "ParseRace") {
+	if strings.HasSuffix(funcName, "ParseRaceResults") {
 		return fmt.Sprintf(models.RaceURL, year, round)
 	} else if strings.HasSuffix(funcName, "ParseQualifyingResults") {
 		return fmt.Sprintf(models.QualifyingURL, year, round)

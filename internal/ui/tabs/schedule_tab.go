@@ -99,7 +99,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 						// Set callback for single-click.
 						cl.OnTapped = func() {
 							round := rows[id.Row-1][0]
-							newResultsTab := results.CreateResultsTableTab(processes.ParseRace, year, round)
+							newResultsTab := results.CreateResultsTableTab(processes.ParseRaceResults, year, round)
 							newQualifyingTab := results.CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
 							newSprintTab := results.CreateResultsTableTab(processes.ParseSprintResults, year, round)
 							newResultsTab.Refresh()

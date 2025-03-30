@@ -72,17 +72,15 @@ func main() {
 
 	// Create the rest of your tabs using the default year.
 	upcomingTabData := tabs.CreateUpcomingTab(&state, processes.ParseUpcoming, yearSelect.Selected)
-	raceTabData := results.CreateResultsTableTab(processes.ParseRace, yearSelect.Selected, "last")
-	qualifyingTabData := results.CreateResultsTableTab(processes.ParseQualifyingResults, yearSelect.Selected, "last")
-	sprintTabData := results.CreateResultsTableTab(processes.ParseSprintResults, yearSelect.Selected, "last")
+	resultsTabData, resultsInnerTabs := results.CreateResultsTab(yearSelect.Selected, "last")
+	// Create an outer tab for Results and hold onto it.
+	resultsOuterTab := container.NewTabItem("Results", resultsTabData.Content)
 
 	// Create the tabs container.
 	tabsContainer := container.NewAppTabs(
 		scheduleTab,
 		container.NewTabItem("Upcoming", upcomingTabData.Content),
-		container.NewTabItem("Race", raceTabData.Content),
-		container.NewTabItem("Qualifying", qualifyingTabData.Content),
-		container.NewTabItem("Sprint", sprintTabData.Content),
+		resultsOuterTab,
 		container.NewTabItem("Preferences", preferences.CreatePreferencesTab(func(updated config.Preferences) {
 			_ = config.SaveConfig(updated)
 		}, func() {
@@ -90,28 +88,21 @@ func main() {
 		})),
 	)
 
-	// Hook up the UpdateTabs callback so that processes.ReloadOtherTabs can update the three tabs.
+	// Hook up the UpdateTabs callback so that processes.ReloadOtherTabs can update the three inner tabs.
 	processes.UpdateTabs = func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
-		tabsContainer.Items[2].Content = resultsContent
-		tabsContainer.Items[3].Content = qualifyingContent
-		tabsContainer.Items[4].Content = sprintContent
+		// Replace the content of each internal sub-tab.
+		resultsInnerTabs.Items[0].Content = resultsContent
+		resultsInnerTabs.Items[1].Content = qualifyingContent
+		resultsInnerTabs.Items[2].Content = sprintContent
+		resultsInnerTabs.Refresh()
 
-		// Mark updated tabs with an asterisk if they are not currently selected.
-		if tabsContainer.Selected() != tabsContainer.Items[2] {
-			if len(tabsContainer.Items[2].Text) == 0 || tabsContainer.Items[2].Text[len(tabsContainer.Items[2].Text)-1] != '*' {
-				tabsContainer.Items[2].Text += "*"
+		// Asterisk logic for the outer "Results" tab using its known index (e.g., 2)
+		if tabsContainer.SelectedIndex() != 2 {
+			if len(resultsOuterTab.Text) == 0 || resultsOuterTab.Text[len(resultsOuterTab.Text)-1] != '*' {
+				resultsOuterTab.Text += "*"
 			}
 		}
-		if tabsContainer.Selected() != tabsContainer.Items[3] {
-			if len(tabsContainer.Items[3].Text) == 0 || tabsContainer.Items[3].Text[len(tabsContainer.Items[3].Text)-1] != '*' {
-				tabsContainer.Items[3].Text += "*"
-			}
-		}
-		if tabsContainer.Selected() != tabsContainer.Items[4] {
-			if len(tabsContainer.Items[4].Text) == 0 || tabsContainer.Items[4].Text[len(tabsContainer.Items[4].Text)-1] != '*' {
-				tabsContainer.Items[4].Text += "*"
-			}
-		}
+		// Refresh the tabs container so the updated text appears.
 		tabsContainer.Refresh()
 	}
 
@@ -120,6 +111,12 @@ func main() {
 		if len(selectedTab.Text) > 0 && selectedTab.Text[len(selectedTab.Text)-1] == '*' {
 			selectedTab.Text = selectedTab.Text[:len(selectedTab.Text)-1]
 			tabsContainer.Refresh()
+		}
+	}
+	resultsInnerTabs.OnSelected = func(selectedTab *container.TabItem) {
+		if len(selectedTab.Text) > 0 && selectedTab.Text[len(selectedTab.Text)-1] == '*' {
+			selectedTab.Text = selectedTab.Text[:len(selectedTab.Text)-1]
+			resultsInnerTabs.Refresh()
 		}
 	}
 
@@ -164,7 +161,7 @@ func main() {
 
 	// Lazy-load data once the UI is ready.
 	go processes.RefreshAllData(notificationLabel, notificationWrapper,
-		upcomingTabData, raceTabData, qualifyingTabData, sprintTabData)
+		upcomingTabData, resultsTabData)
 
 	// Start background auto-refresh.
 	go processes.StartAutoRefresh(&state, fmt.Sprintf("%d", time.Now().Year()))
