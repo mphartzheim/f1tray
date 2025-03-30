@@ -150,3 +150,59 @@ func ParseUpcoming(body []byte) (string, [][]string, error) {
 
 	return title, rows, nil
 }
+
+// ParseDriverStandings extracts driver standings into a table-friendly format from raw JSON.
+func ParseDriverStandings(body []byte) (string, [][]string, error) {
+	var result models.DriverStandingsResponse
+	err := json.Unmarshal(body, &result)
+	if err != nil {
+		return "", nil, fmt.Errorf("JSON error: %v", err)
+	}
+
+	standingsLists := result.MRData.StandingsTable.StandingsLists
+	if len(standingsLists) == 0 {
+		return "", nil, fmt.Errorf("no driver standings data found")
+	}
+
+	standings := standingsLists[0].DriverStandings
+	rows := make([][]string, len(standings))
+	for i, s := range standings {
+		rows[i] = []string{
+			s.Position,
+			fmt.Sprintf("%s %s", s.Driver.GivenName, s.Driver.FamilyName),
+			s.Constructors[0].Name, // usually only one constructor per driver
+			s.Points,
+		}
+	}
+
+	title := fmt.Sprintf("Driver Standings (%s)", standingsLists[0].Season)
+	return title, rows, nil
+}
+
+// ParseConstructorStandings extracts constructor standings into a table-friendly format from raw JSON.
+func ParseConstructorStandings(body []byte) (string, [][]string, error) {
+	var result models.ConstructorStandingsResponse
+	err := json.Unmarshal(body, &result)
+	if err != nil {
+		return "", nil, fmt.Errorf("JSON error: %v", err)
+	}
+
+	standingsLists := result.MRData.StandingsTable.StandingsLists
+	if len(standingsLists) == 0 {
+		return "", nil, fmt.Errorf("no constructor standings data found")
+	}
+
+	standings := standingsLists[0].ConstructorStandings
+	rows := make([][]string, len(standings))
+	for i, s := range standings {
+		rows[i] = []string{
+			s.Position,
+			s.Constructor.Name,
+			s.Constructor.Nationality,
+			s.Points,
+		}
+	}
+
+	title := fmt.Sprintf("Constructor Standings (%s)", standingsLists[0].Season)
+	return title, rows, nil
+}

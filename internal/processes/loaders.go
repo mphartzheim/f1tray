@@ -32,6 +32,9 @@ func FetchData(url string) ([]byte, error) {
 // UpdateTabs updates the Race Results, Qualifying, and Sprint tabs via callback from main.
 var UpdateTabs func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject)
 
+// UpdateStandingsTabs allows UI components to update the inner Drivers and Constructors tab content.
+var UpdateStandingsTabs func(driversContent, constructorsContent fyne.CanvasObject)
+
 // ReloadOtherTabs refreshes the Race Results, Qualifying, and Sprint tabs using UpdateTabs.
 func ReloadOtherTabs(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
 	if UpdateTabs != nil {

@@ -13,6 +13,7 @@ import (
 	"github.com/mphartzheim/f1tray/internal/ui/tabs"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs/preferences"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs/results"
+	"github.com/mphartzheim/f1tray/internal/ui/tabs/standings"
 	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
@@ -73,14 +74,18 @@ func main() {
 	// Create the rest of your tabs using the default year.
 	upcomingTabData := tabs.CreateUpcomingTab(&state, processes.ParseUpcoming, yearSelect.Selected)
 	resultsTabData, resultsInnerTabs := results.CreateResultsTab(yearSelect.Selected, "last")
-	// Create an outer tab for Results and hold onto it.
+	standingsTabData, standingsInnerTabs := standings.CreateStandingsTab(yearSelect.Selected, yearSelect.Selected)
+
+	// Hold onto Results and Standings outer tab items so we can rename them with an asterisk later.
 	resultsOuterTab := container.NewTabItem("Results", resultsTabData.Content)
+	standingsOuterTab := container.NewTabItem("Standings", standingsTabData.Content)
 
 	// Create the tabs container.
 	tabsContainer := container.NewAppTabs(
 		scheduleTab,
 		container.NewTabItem("Upcoming", upcomingTabData.Content),
 		resultsOuterTab,
+		standingsOuterTab,
 		container.NewTabItem("Preferences", preferences.CreatePreferencesTab(func(updated config.Preferences) {
 			_ = config.SaveConfig(updated)
 		}, func() {
@@ -105,6 +110,19 @@ func main() {
 		// Refresh the tabs container so the updated text appears.
 		tabsContainer.Refresh()
 	}
+	// Add this to handle asterisks for standings tab too
+	processes.UpdateStandingsTabs = func(driversContent, constructorsContent fyne.CanvasObject) {
+		standingsInnerTabs.Items[0].Content = driversContent
+		standingsInnerTabs.Items[1].Content = constructorsContent
+		standingsInnerTabs.Refresh()
+
+		if tabsContainer.SelectedIndex() != 3 {
+			if len(standingsOuterTab.Text) == 0 || standingsOuterTab.Text[len(standingsOuterTab.Text)-1] != '*' {
+				standingsOuterTab.Text += "*"
+			}
+			tabsContainer.Refresh()
+		}
+	}
 
 	// Remove a trailing asterisk when a tab is selected.
 	tabsContainer.OnSelected = func(selectedTab *container.TabItem) {
@@ -119,11 +137,38 @@ func main() {
 			resultsInnerTabs.Refresh()
 		}
 	}
+	standingsInnerTabs.OnSelected = func(selectedTab *container.TabItem) {
+		if len(selectedTab.Text) > 0 && selectedTab.Text[len(selectedTab.Text)-1] == '*' {
+			selectedTab.Text = selectedTab.Text[:len(selectedTab.Text)-1]
+			standingsInnerTabs.Refresh()
+		}
+	}
 
 	// When the selected year changes, update the Schedule tab's content.
 	yearSelect.OnChanged = func(selectedYear string) {
 		newScheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, selectedYear)
 		scheduleTab.Content = newScheduleTabData.Content
+
+		// Remember which inner tab was selected (Drivers = 0, Constructors = 1)
+		selectedStandingsIndex := standingsInnerTabs.SelectedIndex()
+
+		// Rebuild Standings tab content with the new year
+		newStandingsTabData, newStandingsInnerTabs := standings.CreateStandingsTab(selectedYear, "last")
+		standingsOuterTab.Content = newStandingsTabData.Content
+		standingsInnerTabs = newStandingsInnerTabs
+
+		// Restore previously selected tab index
+		if selectedStandingsIndex >= 0 && selectedStandingsIndex < len(standingsInnerTabs.Items) {
+			standingsInnerTabs.SelectIndex(selectedStandingsIndex)
+		}
+
+		// Add asterisk if Standings tab isn't selected
+		if tabsContainer.SelectedIndex() != 3 {
+			if len(standingsOuterTab.Text) == 0 || standingsOuterTab.Text[len(standingsOuterTab.Text)-1] != '*' {
+				standingsOuterTab.Text += "*"
+			}
+		}
+
 		tabsContainer.Refresh()
 	}
 

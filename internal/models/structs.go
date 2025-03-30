@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/xml"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -145,6 +146,119 @@ type UpcomingResponse struct {
 			} `json:"Races"`
 		} `json:"RaceTable"`
 	} `json:"MRData"`
+}
+
+// DriverStandingsResponse represents the JSON structure for driver standings from the Ergast API.
+type DriverStandingsResponse struct {
+	MRData struct {
+		StandingsTable struct {
+			Season         string `json:"season"`
+			StandingsLists []struct {
+				Season          string `json:"season"`
+				Round           string `json:"round"`
+				DriverStandings []struct {
+					Position     string `json:"position"`
+					PositionText string `json:"positionText"`
+					Points       string `json:"points"`
+					Wins         string `json:"wins"`
+					Driver       struct {
+						DriverID        string `json:"driverId"`
+						PermanentNumber string `json:"permanentNumber"`
+						Code            string `json:"code"`
+						URL             string `json:"url"`
+						GivenName       string `json:"givenName"`
+						FamilyName      string `json:"familyName"`
+						DateOfBirth     string `json:"dateOfBirth"`
+						Nationality     string `json:"nationality"`
+					} `json:"Driver"`
+					Constructors []struct {
+						ConstructorID string `json:"constructorId"`
+						URL           string `json:"url"`
+						Name          string `json:"name"`
+						Nationality   string `json:"nationality"`
+					} `json:"Constructors"`
+				} `json:"DriverStandings"`
+			} `json:"StandingsLists"`
+		} `json:"StandingsTable"`
+	} `json:"MRData"`
+}
+
+// ConstructorStandingsResponse represents the JSON structure for constructor standings from the Ergast API.
+type ConstructorStandingsResponse struct {
+	MRData struct {
+		StandingsTable struct {
+			Season         string `json:"season"`
+			StandingsLists []struct {
+				Season               string `json:"season"`
+				Round                string `json:"round"`
+				ConstructorStandings []struct {
+					Position     string `json:"position"`
+					PositionText string `json:"positionText"`
+					Points       string `json:"points"`
+					Wins         string `json:"wins"`
+					Constructor  struct {
+						ConstructorID string `json:"constructorId"`
+						URL           string `json:"url"`
+						Name          string `json:"name"`
+						Nationality   string `json:"nationality"`
+					} `json:"Constructor"`
+				} `json:"ConstructorStandings"`
+			} `json:"StandingsLists"`
+		} `json:"StandingsTable"`
+	} `json:"MRData"`
+}
+
+// MRData represents the top-level structure of the API response.
+type MRData struct {
+	XMLName        xml.Name       `json:"MRData"`
+	Series         string         `json:"series"`
+	Limit          string         `json:"limit"`
+	Offset         string         `json:"offset"`
+	Total          string         `json:"total"`
+	StandingsTable StandingsTable `json:"StandingsTable"`
+}
+
+// StandingsTable contains the season and a list of standings.
+type StandingsTable struct {
+	Season         string          `json:"season"`
+	StandingsLists []StandingsList `json:"StandingsLists"`
+}
+
+// StandingsList represents the standings after a particular round.
+type StandingsList struct {
+	Season          string           `json:"season"`
+	Round           string           `json:"round"`
+	DriverStandings []DriverStanding `json:"DriverStandings"`
+}
+
+// DriverStanding holds the position, points, and other details of a driver.
+type DriverStanding struct {
+	Position     string        `json:"position"`
+	PositionText string        `json:"positionText"`
+	Points       string        `json:"points"`
+	Wins         string        `json:"wins"`
+	Driver       Driver        `json:"Driver"`
+	Constructors []Constructor `json:"Constructors"`
+}
+
+// Driver contains personal and professional information about a driver.
+type Driver struct {
+	DriverID        string `json:"driverId"`
+	PermanentNumber string `json:"permanentNumber"`
+	Code            string `json:"code"`
+	URL             string `json:"url"`
+	GivenName       string `json:"givenName"`
+	FamilyName      string `json:"familyName"`
+	DateOfBirth     string `json:"dateOfBirth"`
+	Nationality     string `json:"nationality"`
+}
+
+// Constructor represents a constructor (team) in the standings.
+type Constructor struct {
+	ConstructorID string `json:"constructorId"`
+	URL           string `json:"url"`
+	Name          string `json:"name"`
+	Nationality   string `json:"nationality"`
 }
 
 // TabData contains the content and refresh logic for a UI tab.
