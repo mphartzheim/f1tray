@@ -11,6 +11,8 @@ import (
 	"github.com/mphartzheim/f1tray/internal/processes"
 	"github.com/mphartzheim/f1tray/internal/ui"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs"
+	"github.com/mphartzheim/f1tray/internal/ui/tabs/preferences"
+	"github.com/mphartzheim/f1tray/internal/ui/tabs/results"
 	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
@@ -70,18 +72,18 @@ func main() {
 
 	// Create the rest of your tabs using the default year.
 	upcomingTabData := tabs.CreateUpcomingTab(&state, processes.ParseUpcoming, yearSelect.Selected)
-	resultsTabData := tabs.CreateResultsTableTab(processes.ParseRaceResults, yearSelect.Selected, "last")
-	qualifyingTabData := tabs.CreateResultsTableTab(processes.ParseQualifyingResults, yearSelect.Selected, "last")
-	sprintTabData := tabs.CreateResultsTableTab(processes.ParseSprintResults, yearSelect.Selected, "last")
+	raceTabData := results.CreateResultsTableTab(processes.ParseRace, yearSelect.Selected, "last")
+	qualifyingTabData := results.CreateResultsTableTab(processes.ParseQualifyingResults, yearSelect.Selected, "last")
+	sprintTabData := results.CreateResultsTableTab(processes.ParseSprintResults, yearSelect.Selected, "last")
 
 	// Create the tabs container.
 	tabsContainer := container.NewAppTabs(
 		scheduleTab,
 		container.NewTabItem("Upcoming", upcomingTabData.Content),
-		container.NewTabItem("Race Results", resultsTabData.Content),
+		container.NewTabItem("Race", raceTabData.Content),
 		container.NewTabItem("Qualifying", qualifyingTabData.Content),
 		container.NewTabItem("Sprint", sprintTabData.Content),
-		container.NewTabItem("Preferences", tabs.CreatePreferencesTab(func(updated config.Preferences) {
+		container.NewTabItem("Preferences", preferences.CreatePreferencesTab(func(updated config.Preferences) {
 			_ = config.SaveConfig(updated)
 		}, func() {
 			upcomingTabData.Refresh()
@@ -162,7 +164,7 @@ func main() {
 
 	// Lazy-load data once the UI is ready.
 	go processes.RefreshAllData(notificationLabel, notificationWrapper,
-		upcomingTabData, resultsTabData, qualifyingTabData, sprintTabData)
+		upcomingTabData, raceTabData, qualifyingTabData, sprintTabData)
 
 	// Start background auto-refresh.
 	go processes.StartAutoRefresh(&state, fmt.Sprintf("%d", time.Now().Year()))

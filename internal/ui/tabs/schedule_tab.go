@@ -8,6 +8,7 @@ import (
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/processes"
 	"github.com/mphartzheim/f1tray/internal/ui"
+	"github.com/mphartzheim/f1tray/internal/ui/tabs/results"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -98,9 +99,9 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 						// Set callback for single-click.
 						cl.OnTapped = func() {
 							round := rows[id.Row-1][0]
-							newResultsTab := CreateResultsTableTab(processes.ParseRaceResults, year, round)
-							newQualifyingTab := CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
-							newSprintTab := CreateResultsTableTab(processes.ParseSprintResults, year, round)
+							newResultsTab := results.CreateResultsTableTab(processes.ParseRace, year, round)
+							newQualifyingTab := results.CreateResultsTableTab(processes.ParseQualifyingResults, year, round)
+							newSprintTab := results.CreateResultsTableTab(processes.ParseSprintResults, year, round)
 							newResultsTab.Refresh()
 							newQualifyingTab.Refresh()
 							newSprintTab.Refresh()

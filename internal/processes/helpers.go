@@ -87,7 +87,7 @@ func StartAutoRefresh(state *models.AppState, selectedYear string) {
 func DownloadDataHash(selectedYear string) (string, error) {
 	// Define your endpoints here; update these URLs as needed for your application.
 	endpoints := []string{
-		fmt.Sprintf(models.RaceResultsURL, selectedYear, "last"),
+		fmt.Sprintf(models.RaceURL, selectedYear, "last"),
 		fmt.Sprintf(models.QualifyingURL, selectedYear, "last"),
 		fmt.Sprintf(models.SprintURL, selectedYear, "last"),
 	}
