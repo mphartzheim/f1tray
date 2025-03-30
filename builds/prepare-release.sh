@@ -2,10 +2,14 @@
 
 set -e
 
-# --- Confirm you're on dev branch ---
-CURRENT_BRANCH=$(git branch --show-current)
-if [[ "$CURRENT_BRANCH" != "dev" ]]; then
-  echo "❌ You must run this script from the 'dev' branch (currently on '$CURRENT_BRANCH')"
+# --- Safety check: Must be on dev branch ---
+REQUIRED_BRANCH="dev"
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if [[ "$CURRENT_BRANCH" != "$REQUIRED_BRANCH" ]]; then
+  echo "❌ You must be on the '$REQUIRED_BRANCH' branch to run this script (currently on '$CURRENT_BRANCH')"
+  echo "💡 Switch to 'dev' first:"
+  echo "   git checkout $REQUIRED_BRANCH && git pull origin $REQUIRED_BRANCH"
   exit 1
 fi
 
@@ -46,7 +50,7 @@ echo "  Clean build: ${CLEAN_FLAG:-no}"
 echo "  Debug mode:  ${DEBUG_FLAG:-no}"
 echo ""
 
-read -rp "📤 Push dev and open PR into main? (y/N): " CONFIRM
+read -rp "📤 Push 'dev' and open PR into 'main'? (y/N): " CONFIRM
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
   echo "❌ Aborting."
   exit 1
@@ -70,10 +74,9 @@ else
     --body-file RELEASE_NOTES.md
 fi
 
-# --- Final instructions ---
 echo ""
 echo "✅ Pull request is ready. Please review and merge it on GitHub."
-echo "🧠 Once merged, finish the release with:"
+echo "🧠 After merging, complete the release by running:"
 echo ""
 echo "    git checkout main && git pull origin main"
 echo "    ./release.sh $VERSION $CLEAN_FLAG $DEBUG_FLAG"
