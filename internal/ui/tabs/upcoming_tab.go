@@ -37,7 +37,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	})
 
 	// Create a rounded rectangle overlay using canvas.NewRectangle.
-	// Set the fill to transparent, then assign the stroke color, stroke width and corner radius.
+	// (This overlay is still used on the watch button.)
 	rect := canvas.NewRectangle(color.Transparent)
 	rect.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
 	rect.StrokeWidth = 4
@@ -190,52 +190,40 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 
 // createTableCell returns a cell that is a stack containing a background rectangle and a ClickableLabel.
 func createTableCell() fyne.CanvasObject {
-	bg := canvas.NewRectangle(color.Transparent)
-	// Create a non-clickable label with default empty text.
 	cl := ui.NewClickableLabel("", nil, false)
-	return container.NewStack(bg, cl)
+	return container.NewVBox(cl)
 }
 
 // updateTableCell sets the cell text and, for certain columns, applies formatting or interactivity.
 func updateTableCell(cell fyne.CanvasObject, rows [][]string, id widget.TableCellID) {
-	cont := cell.(*fyne.Container)
-	bg := cont.Objects[0].(*canvas.Rectangle)
-	// For column 1, reformat the date to a full format.
-	if id.Col == 1 {
+	cont, ok := cell.(*fyne.Container)
+	if !ok {
+		return
+	}
+	cont.Objects = nil
+
+	var newLabel *ui.ClickableLabel
+	switch id.Col {
+	case 1:
+		// For column 1, reformat the date to a full format.
 		text := formatFullDate(rows[id.Row][id.Col])
-		if cl, ok := cont.Objects[1].(*ui.ClickableLabel); ok {
-			cl.Text = text
-			cl.OnTapped = nil
-			cl.Clickable = false
-			cl.Refresh()
-		}
-	} else if id.Col == 2 {
+		newLabel = ui.NewClickableLabel(text, nil, false)
+	case 2:
 		// Column 2: For the session time.
 		text := rows[id.Row][id.Col]
-		// Check if the session is active.
 		if processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
 			clickableText := fmt.Sprintf("%s 🔴", text)
-			clickableLabel := ui.NewClickableLabel(clickableText, func() {
-				// Open F1TV when clicked.
+			newLabel = ui.NewClickableLabel(clickableText, func() {
 				processes.OpenWebPage(models.F1tvURL)
 			}, true)
-			cont.Objects[1] = clickableLabel
-			// Update background to visually indicate live status.
-			bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
-			bg.StrokeWidth = 2
-			bg.Show()
+			newLabel.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
 		} else {
-			// Session is not live: show plain text using a non-clickable label.
-			plainLabel := ui.NewClickableLabel(text, nil, false)
-			cont.Objects[1] = plainLabel
-			bg.StrokeWidth = 0
-			bg.Hide()
+			newLabel = ui.NewClickableLabel(text, nil, false)
 		}
-	} else {
-		// Other columns: use a non-clickable label with plain text.
-		plainLabel := ui.NewClickableLabel(rows[id.Row][id.Col], nil, false)
-		cont.Objects[1] = plainLabel
+	default:
+		newLabel = ui.NewClickableLabel(rows[id.Row][id.Col], nil, false)
 	}
+	cont.Add(newLabel)
 	cont.Refresh()
 }
 
