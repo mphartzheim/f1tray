@@ -1,4 +1,4 @@
-# Release Notes v0.2.2 (Test Release)
+# Release Notes v0.2.4 (Test Release)
 **Release Date:** 2025-03-30
 
 ---

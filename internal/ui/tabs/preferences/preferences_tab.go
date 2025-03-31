@@ -8,6 +8,7 @@ import (
 	"github.com/mphartzheim/f1tray/internal/config"
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/notifications"
+	"github.com/mphartzheim/f1tray/internal/ui"
 	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
@@ -161,20 +162,43 @@ func buildSessionNotificationSection(title string, sessionPrefs *config.SessionN
 	// --- Row for "Before Session" ---
 	beforeValueEntry := widget.NewEntry()
 	beforeValueEntry.SetText(strconv.Itoa(sessionPrefs.BeforeValue))
-	beforeValueEntry.OnChanged = func(val string) {
-		if n, err := strconv.Atoi(val); err == nil {
-			sessionPrefs.BeforeValue = n
-			_ = config.Set(config.Get())
-			onSave(*config.Get())
-		}
-	}
-
 	beforeUnitSelect := widget.NewSelect([]string{"minutes", "hours"}, func(selected string) {
 		sessionPrefs.BeforeUnit = selected
 		_ = config.Set(config.Get())
 		onSave(*config.Get())
 	})
 	beforeUnitSelect.SetSelected(sessionPrefs.BeforeUnit)
+
+	// Validation: Allow 1-24 for "hours" and 1-59 for "minutes". No negative values.
+	beforeValueEntry.OnChanged = func(val string) {
+		n, err := strconv.Atoi(val)
+		if err != nil {
+			ui.ShowNotification(models.MainWindow, "Invalid input. Please enter a numeric value.")
+			return
+		}
+		if n < 0 {
+			ui.ShowNotification(models.MainWindow, "Negative numbers are not allowed.")
+			return
+		}
+
+		// Get the currently selected unit from the select widget.
+		unit := beforeUnitSelect.Selected
+		if unit == "hours" {
+			if n < 1 || n > 24 {
+				ui.ShowNotification(models.MainWindow, "Please enter a value between 1 and 24 hours.")
+				return
+			}
+		} else if unit == "minutes" {
+			if n < 1 || n > 59 {
+				ui.ShowNotification(models.MainWindow, "Please enter a value between 1 and 59 minutes.")
+				return
+			}
+		}
+
+		sessionPrefs.BeforeValue = n
+		_ = config.Set(config.Get())
+		onSave(*config.Get())
+	}
 
 	playSoundBeforeCheck := widget.NewCheck("Play sound", func(checked bool) {
 		sessionPrefs.PlaySoundBefore = checked
