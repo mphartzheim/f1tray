@@ -7,13 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [v0.2.4] - 2025-03-30
+## [v0.3.0] - 2025-03-31
 
-### Notes
+### New Features
+- **Favorite Constructor:** Launched the early stages of the innovative Favorite Constructor feature, offering fans a personalized experience.
+- **Interactive Cells:** Transformed all cells into clickable labels, creating a more dynamic and engaging interface.
 
-- Testing automations
-- Corrected Constructor standings tab after Favorite Drivers implementation broke it
-- Refactored Driver name code for reusability
+### Bug Fixes
+- **Constructor Standings:** Resolved critical issues in the Constructor standings tab caused by the new Favorite Drivers implementation, restoring full functionality.
+- **F1TV Button:** Fixed the border color bug on the Watch on F1TV button, ensuring a consistent and visually appealing design.
+
+### Refactoring
+- **Driver Name Code:** Streamlined and refactored the driver name code to boost reusability and maintainability.
+- **UI Cleanup:** Removed unnecessary visibility from the Watch on F1TV button to improve overall interface consistency and reduce complexity.
+- **Window Resizing:** Disabled window resizing to provide a more uniform and controlled user experience across platforms.
+
+### Automation
+- **Build & Release:** Implemented robust automation for building and releasing, paving the way for smoother, faster, and more reliable deployments.
 
 ---
 

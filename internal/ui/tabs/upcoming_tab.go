@@ -3,7 +3,6 @@ package tabs
 import (
 	"encoding/json"
 	"fmt"
-	"image/color"
 	"time"
 
 	"github.com/mphartzheim/f1tray/internal/models"
@@ -11,7 +10,6 @@ import (
 	"github.com/mphartzheim/f1tray/internal/ui"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -30,21 +28,11 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	url := fmt.Sprintf(models.UpcomingURL, year)
 
 	// Create the button for F1TV.
-	button := widget.NewButton("Watch on F1TV", func() {
+	watchButton := widget.NewButton("Watch on F1TV", func() {
 		if err := processes.OpenWebPage(models.F1tvURL); err != nil {
 			status.SetText("Failed to open F1TV URL.")
 		}
 	})
-
-	// Create a rounded rectangle overlay using canvas.NewRectangle.
-	// (This overlay is still used on the watch button.)
-	rect := canvas.NewRectangle(color.Transparent)
-	rect.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
-	rect.StrokeWidth = 4
-	rect.CornerRadius = 5
-
-	// Overlay the rectangle on top of the button using container.NewStack.
-	watchButton := container.NewStack(button, rect)
 
 	refresh := func() bool {
 		data, err := processes.FetchData(url)

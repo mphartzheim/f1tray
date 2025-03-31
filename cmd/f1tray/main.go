@@ -43,6 +43,7 @@ func main() {
 	}
 
 	myWindow := myApp.NewWindow("F1 Viewer")
+	myWindow.SetFixedSize(true)
 	models.MainWindow = myWindow
 
 	// Build a slice of years (as strings) from the current year down to 1950.
