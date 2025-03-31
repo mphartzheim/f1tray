@@ -267,6 +267,15 @@ type Driver struct {
 	Nationality     string `json:"nationality"`
 }
 
+// ConstructorListResponse represents the response structure for /constructors.json
+type ConstructorListResponse struct {
+	MRData struct {
+		ConstructorTable struct {
+			Constructors []Constructor `json:"Constructors"`
+		} `json:"ConstructorTable"`
+	} `json:"MRData"`
+}
+
 // Constructor represents a constructor (team) in the standings.
 type Constructor struct {
 	ConstructorID string `json:"constructorId"`
@@ -274,6 +283,8 @@ type Constructor struct {
 	Name          string `json:"name"`
 	Nationality   string `json:"nationality"`
 }
+
+var AllConstructors []Constructor
 
 // TabData contains the content and refresh logic for a UI tab.
 type TabData struct {

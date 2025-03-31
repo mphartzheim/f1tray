@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.3.1] - 2025-xx-xx
 
 ### Notes
-- *Details for this release are forthcoming.*
+- Store list of all constructors available via Jolpica so we can reference their URL.
+- Favorite constructors are now implemented app wide.
+- Constructor team links are now available anywhere you see them.
 
 ---
 

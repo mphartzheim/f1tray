@@ -32,6 +32,9 @@ const (
 	// F1DriverBioURL is the base URL for Formula 1 driver biography pages.
 	F1DriverBioURL = "https://www.formula1.com/en/drivers/%s"
 
+	// F1ConstructorBioURL is the API endpoint for Formula 1 Constructor biography pages.
+	F1ConstructorBioURL = "https://www.formula1.com/en/teams/%s"
+
 	// MapBaseURL is the base OpenStreetMap URL used for race location links.
 	MapBaseURL = "https://www.openstreetmap.org/"
 )

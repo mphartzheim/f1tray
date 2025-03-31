@@ -19,18 +19,15 @@ import (
 // CreateResultsTableTab builds a tab displaying race results fetched from a URL and parsed into a formatted table.
 func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), year string, round string) models.TabData {
 	status := widget.NewLabel("Loading results...")
-	// Use ClickableLabel for the race name display (non-clickable).
 	raceNameLabel := ui.NewClickableLabel("", nil, false)
 	tableContainer := container.NewStack()
 
 	url := buildResultsURL(parseFunc, year, round)
 
-	// Declare refresh as a variable so it can be referenced inside toggleFavorite.
 	var refresh func() bool
 
-	// toggleFavorite updates the favorites in the config.
 	toggleFavorite := func(driverName string) {
-		prefs := config.Get() // retrieve current preferences
+		prefs := config.Get()
 		favs := prefs.FavoriteDrivers
 		alreadyFav := false
 		for _, fav := range favs {
@@ -40,7 +37,6 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 			}
 		}
 		if alreadyFav {
-			// Remove from favorites.
 			newFavs := []string{}
 			for _, fav := range favs {
 				if fav != driverName {
@@ -49,7 +45,6 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 			}
 			prefs.FavoriteDrivers = newFavs
 		} else {
-			// Only add if there are fewer than 2 favorites.
 			if len(favs) < 2 {
 				prefs.FavoriteDrivers = append(favs, driverName)
 			} else {
@@ -57,12 +52,10 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 				return
 			}
 		}
-		// Save updated config.
 		if err := config.SaveConfig(*prefs); err != nil {
 			ui.ShowNotification(models.MainWindow, "Failed to save config.")
 			return
 		}
-		// Refresh the table UI.
 		refresh()
 	}
 
@@ -73,12 +66,9 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 			return false
 		}
 
-		// Get the function name for later use.
 		funcName := runtime.FuncForPC(reflect.ValueOf(parseFunc).Pointer()).Name()
 
-		// Parse the data.
 		raceName, rows, err := parseFunc(data)
-		// Handle missing data gracefully for sprint/qualifying events.
 		if err != nil {
 			if strings.HasSuffix(funcName, "ParseSprintResults") && strings.Contains(err.Error(), "no sprint data found") {
 				raceNameLabel.Text = "Not a sprint race event"
@@ -102,9 +92,6 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 		raceNameLabel.Text = fmt.Sprintf("Results for: %s", raceName)
 		raceNameLabel.Refresh()
 
-		// Create a table:
-		// Now each row has 5 columns:
-		//   [0]: Position, [1]: Favorite, [2]: Driver, [3]: Team, [4]: Time/Status.
 		table := widget.NewTable(
 			func() (int, int) {
 				if len(rows) == 0 {
@@ -112,12 +99,9 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 				}
 				return len(rows), len(rows[0])
 			},
-			// Create each cell as a container that we can update later.
 			func() fyne.CanvasObject {
-				// Use ClickableLabel with no tap callback.
 				return container.NewStack(ui.NewClickableLabel("", nil, false))
 			},
-			// Update each cell.
 			func(id widget.TableCellID, co fyne.CanvasObject) {
 				cont, ok := co.(*fyne.Container)
 				if !ok {
@@ -127,12 +111,9 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 
 				var cellWidget fyne.CanvasObject
 				switch id.Col {
-				// Column 0: Position.
 				case 0:
 					cellWidget = ui.NewClickableLabel(rows[id.Row][0], nil, false)
-				// Column 1: Favorite column.
 				case 1:
-					// The driver name is stored in column 2.
 					driverNameRaw := rows[id.Row][2]
 					driverName := driverNameRaw
 					if strings.Contains(driverNameRaw, "|||") {
@@ -140,13 +121,10 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 						driverName = parts[0]
 					}
 					cellWidget = processes.CreateClickableStar(driverName, toggleFavorite)
-				// Column 2: Driver column.
 				case 2:
 					cellWidget = processes.MakeClickableDriverCell(rows[id.Row][2])
-				// Column 3: Team.
 				case 3:
-					cellWidget = ui.NewClickableLabel(rows[id.Row][3], nil, false)
-				// Column 4: Time/Status.
+					cellWidget = processes.MakeClickableConstructorCell(rows[id.Row][3])
 				case 4:
 					cellWidget = ui.NewClickableLabel(rows[id.Row][4], nil, false)
 				}
@@ -155,12 +133,11 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 			},
 		)
 
-		// Set proper column widths.
-		table.SetColumnWidth(0, 50)  // Position
-		table.SetColumnWidth(1, 50)  // Favorite
-		table.SetColumnWidth(2, 180) // Driver
-		table.SetColumnWidth(3, 180) // Team
-		table.SetColumnWidth(4, 300) // Time/Status
+		table.SetColumnWidth(0, 50)
+		table.SetColumnWidth(1, 50)
+		table.SetColumnWidth(2, 180)
+		table.SetColumnWidth(3, 180)
+		table.SetColumnWidth(4, 300)
 
 		tableContainer.Objects = []fyne.CanvasObject{table}
 		tableContainer.Refresh()
@@ -171,8 +148,8 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 	refresh()
 
 	content := container.NewBorder(
-		container.NewVBox(raceNameLabel), // Top
-		status,                           // Bottom
+		container.NewVBox(raceNameLabel),
+		status,
 		nil, nil,
 		tableContainer,
 	)

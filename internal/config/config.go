@@ -16,6 +16,7 @@ type Preferences struct {
 	Notifications       NotificationPreferences `json:"notifications"`
 	FavoriteDrivers     []string                `json:"favorite_drivers"`
 	FavoriteConstructor string                  `json:"favorite_constructor"`
+	LastConstructorHash string                  `json:"last_constructor_hash"`
 }
 
 // WindowPreferences groups window-related settings.
@@ -89,7 +90,8 @@ var DefaultPreferences = Preferences{
 		Race:       defaultSessionNotificationSettings(),
 	},
 	FavoriteDrivers:     []string{}, // default empty favorites list
-	FavoriteConstructor: "",         // default no favorite constructor
+	FavoriteConstructor: "",
+	LastConstructorHash: "",
 }
 
 var (
@@ -190,9 +192,13 @@ func validatePreferences(prefs Preferences) Preferences {
 	if prefs.FavoriteDrivers == nil {
 		prefs.FavoriteDrivers = []string{}
 	}
-	// Ensure FavoriteConstructor is set (default to empty string if missing).
+	// Ensure FavoriteConstructor is set.
 	if prefs.FavoriteConstructor == "" {
 		prefs.FavoriteConstructor = ""
+	}
+	// Ensure LastConstructorHash is set.
+	if prefs.LastConstructorHash == "" {
+		prefs.LastConstructorHash = DefaultPreferences.LastConstructorHash
 	}
 	return prefs
 }
@@ -230,5 +236,6 @@ func migrateLegacy(old legacyPreferences) Preferences {
 		},
 		FavoriteDrivers:     []string{}, // no legacy data; start with an empty list
 		FavoriteConstructor: "",
+		LastConstructorHash: "",
 	}
 }
