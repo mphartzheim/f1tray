@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store list of all constructors available via Jolpica so we can reference their URL.
 - Favorite constructors are now implemented app wide.
 - Constructor team links are now available anywhere you see them.
+- Constructor list only loads if the file is not present.
 
 ---
 
