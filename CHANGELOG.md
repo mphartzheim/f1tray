@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.2-test] - 2025-03-30
+
+### Notes
+
+- **Test Release for Automated Builds**  
+  This release is a test version aimed at automating our build process. We're refining our workflow and making sure everything—from PR creation to building—is as smooth as possible.
+
+---
+
 ## [0.2.2] - 2025-03-30
 
 ### Added
