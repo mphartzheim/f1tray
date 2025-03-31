@@ -1,21 +1,11 @@
-# Release Notes v0.2.2
+# Release Notes v0.2.2 (Test Release)
 **Release Date:** 2025-03-30
 
 ---
 
-### What's New
+### Notes
 
-- **Enhanced F1TV Experience**  
-  The "Watch on F1TV" button has been redesigned to be more prominent, ensuring you never miss a moment of the live action.
+- **Test Release for Automated Builds**  
+  This release is a test version aimed at automating our build process. We're refining our workflow and making sure everything—from PR creation to building—is as smooth as possible.
 
-- **Favorite Drivers Spotlight**  
-  Personalize your dashboard! You can now highlight your favorite drivers with ease, making it simpler to track your top performers.
-
-- **Global Notification System**  
-  Stay informed with our new notification system. It proactively alerts you—for instance, if you try to select too many favorite drivers—keeping your experience smooth and organized.
-
-Enjoy the update and thank you for being part of our community!
-
----
-
-🔗 [Compare with v0.2.1](https://github.com/mphartzheim/f1tray/compare/v0.2.1...v0.2.2)
+Enjoy the new features, and thank you for helping us perfect our automated build process!
