@@ -268,3 +268,15 @@ func MakeClickableDriverCell(text string) fyne.CanvasObject {
 	}
 	return widget.NewLabel(text)
 }
+
+// IsSessionDay checks if any session is scheduled for today.
+func IsSessionDay(sessions []models.SessionInfo) bool {
+	today := time.Now().In(time.UTC).Truncate(24 * time.Hour)
+	for _, session := range sessions {
+		sessionDay := session.StartTime.In(time.UTC).Truncate(24 * time.Hour)
+		if sessionDay.Equal(today) {
+			return true
+		}
+	}
+	return false
+}

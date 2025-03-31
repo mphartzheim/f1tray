@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Testing automations
 - Corrected Constructor standings tab after Favorite Drivers implementation broke it
+- Refactored Driver name code for reusability
 
 ---
 

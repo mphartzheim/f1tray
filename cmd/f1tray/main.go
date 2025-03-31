@@ -205,5 +205,20 @@ func main() {
 	// Start background auto-refresh.
 	go processes.StartAutoRefresh(&state, fmt.Sprintf("%d", time.Now().Year()))
 
+	// Start a ticker to refresh the Upcoming tab if it's a session day.
+	go func() {
+		ticker := time.NewTicker(60 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			isUpcomingTabVisible := tabsContainer.Selected() == upcomingTab
+			isSessionToday := processes.IsSessionDay(state.UpcomingSessions)
+
+			if isUpcomingTabVisible && isSessionToday {
+				upcomingTabData.Refresh()
+			}
+		}
+	}()
+
 	myApp.Run()
 }

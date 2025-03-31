@@ -195,29 +195,46 @@ func createTableCell() fyne.CanvasObject {
 func updateTableCell(cell fyne.CanvasObject, rows [][]string, id widget.TableCellID) {
 	cont := cell.(*fyne.Container)
 	bg := cont.Objects[0].(*canvas.Rectangle)
-	lbl := cont.Objects[1].(*widget.Label)
-
-	// Get the original text from the row.
-	text := rows[id.Row][id.Col]
-
-	// For Column 2, reformat the date to a full format.
+	// For column 2, we replace the label with a clickable label if the session is live.
 	if id.Col == 1 {
-		text = formatFullDate(text)
+		// For Column 1, we reformat the date to a full format.
+		text := formatFullDate(rows[id.Row][id.Col])
+		// Replace the label with the formatted text.
+		// We assume the cell already contains a label at index 1.
+		if lbl, ok := cont.Objects[1].(*widget.Label); ok {
+			lbl.SetText(text)
+		}
 	} else if id.Col == 2 {
-		// If the session is active, add the 🔴 icon.
+		// Column 2: For the session time.
+		text := rows[id.Row][id.Col]
+		// Check if the session is active.
 		if processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
-			text += " 🔴"
+			// Create clickable text with a live icon.
+			clickableText := fmt.Sprintf("%s 🔴", text)
+			clickableLabel := ui.NewClickableLabel(clickableText, func() {
+				// Open F1TV when clicked.
+				processes.OpenWebPage(models.F1tvURL)
+			}, true)
+			// Replace the old label with our clickable label.
+			cont.Objects[1] = clickableLabel
+			// Optional: update background to visually indicate live status.
 			bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
 			bg.StrokeWidth = 2
 			bg.Show()
 		} else {
+			// Session is not live: show plain text.
+			plainLabel := widget.NewLabel(text)
+			cont.Objects[1] = plainLabel
 			bg.StrokeWidth = 0
 			bg.Hide()
 		}
+	} else {
+		// Other columns: use plain text.
+		plainLabel := widget.NewLabel(rows[id.Row][id.Col])
+		// Replace the label.
+		cont.Objects[1] = plainLabel
 	}
-
-	lbl.SetText(text)
-	bg.Refresh()
+	cont.Refresh()
 }
 
 // formatFullDate converts a YYYY-MM-DD string to a full date like "Friday, April 4th 2025".
