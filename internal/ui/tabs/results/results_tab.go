@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/mphartzheim/f1tray/internal/config"
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/processes"
 	"github.com/mphartzheim/f1tray/internal/ui"
@@ -23,7 +24,58 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 
 	url := buildResultsURL(parseFunc, year, round)
 
-	refresh := func() bool {
+	// Helper function to check whether a driver is a favorite.
+	isFavorite := func(favs []string, driverName string) bool {
+		for _, fav := range favs {
+			if fav == driverName {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Declare refresh as a variable so it can be referenced inside toggleFavorite.
+	var refresh func() bool
+
+	// toggleFavorite updates the favorites in the config.
+	toggleFavorite := func(driverName string) {
+		prefs := config.Get() // retrieve current preferences
+		favs := prefs.FavoriteDrivers
+		alreadyFav := false
+		for _, fav := range favs {
+			if fav == driverName {
+				alreadyFav = true
+				break
+			}
+		}
+		if alreadyFav {
+			// Remove from favorites.
+			newFavs := []string{}
+			for _, fav := range favs {
+				if fav != driverName {
+					newFavs = append(newFavs, fav)
+				}
+			}
+			prefs.FavoriteDrivers = newFavs
+		} else {
+			// Only add if there are fewer than 2 favorites.
+			if len(favs) < 2 {
+				prefs.FavoriteDrivers = append(favs, driverName)
+			} else {
+				ui.ShowNotification(models.MainWindow, "You can only select up to two favorite drivers.")
+				return
+			}
+		}
+		// Save updated config.
+		if err := config.SaveConfig(*prefs); err != nil {
+			ui.ShowNotification(models.MainWindow, "Failed to save config.")
+			return
+		}
+		// Refresh the table UI.
+		refresh()
+	}
+
+	refresh = func() bool {
 		data, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch results.")
@@ -35,7 +87,7 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 
 		// Parse the data.
 		raceName, rows, err := parseFunc(data)
-		// If there's an error and we're dealing with sprint or qualifying results, handle it gracefully.
+		// Handle missing data gracefully for sprint/qualifying events.
 		if err != nil {
 			if strings.HasSuffix(funcName, "ParseSprintResults") && strings.Contains(err.Error(), "no sprint data found") {
 				raceNameLabel.SetText("Not a sprint race event")
@@ -55,6 +107,9 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 		}
 
 		raceNameLabel.SetText(fmt.Sprintf("Results for: %s", raceName))
+		// Create a table:
+		// Now each row has 5 columns:
+		//   [0]: Position, [1]: Favorite, [2]: Driver, [3]: Team, [4]: Time/Status.
 		table := widget.NewTable(
 			func() (int, int) {
 				if len(rows) == 0 {
@@ -62,7 +117,7 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 				}
 				return len(rows), len(rows[0])
 			},
-			// Create each cell as a container so we can swap its content if needed.
+			// Create each cell as a container that we can update later.
 			func() fyne.CanvasObject {
 				return container.NewStack(widget.NewLabel(""))
 			},
@@ -73,18 +128,36 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 					return
 				}
 				cont.Objects = nil
-				text := rows[id.Row][id.Col]
-				var cellWidget fyne.CanvasObject
 
-				// Apply clickable logic for the Driver column (index 1)
-				if id.Col == 1 {
-					// Check for our delimiter indicating a clickable cell.
+				var cellWidget fyne.CanvasObject
+				switch id.Col {
+				// Column 0: Position.
+				case 0:
+					cellWidget = widget.NewLabel(rows[id.Row][0])
+				// Column 1: Favorite column.
+				case 1:
+					// The driver name is stored in column 2.
+					driverNameRaw := rows[id.Row][2]
+					driverName := driverNameRaw
+					if strings.Contains(driverNameRaw, "|||") {
+						parts := strings.SplitN(driverNameRaw, "|||", 2)
+						driverName = parts[0]
+					}
+					star := "☆"
+					if isFavorite(config.Get().FavoriteDrivers, driverName) {
+						star = "★"
+					}
+					cellWidget = ui.NewClickableLabel(star, func() {
+						toggleFavorite(driverName)
+					}, true)
+				// Column 2: Driver column.
+				case 2:
+					text := rows[id.Row][2]
 					if strings.Contains(text, "|||") {
 						parts := strings.SplitN(text, "|||", 2)
 						displayName := parts[0]
 						fallback := strings.TrimSuffix(parts[1], " 👤")
 						clickableText := fmt.Sprintf("%s 👤", displayName)
-						// Use custom URL if available, otherwise fallback to the API URL.
 						if slug, ok := models.DriverURLMap[displayName]; ok {
 							url := fmt.Sprintf(models.F1DriverBioURL, slug)
 							cellWidget = ui.NewClickableLabel(clickableText, func() {
@@ -98,8 +171,12 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 					} else {
 						cellWidget = widget.NewLabel(text)
 					}
-				} else {
-					cellWidget = widget.NewLabel(text)
+				// Column 3: Team.
+				case 3:
+					cellWidget = widget.NewLabel(rows[id.Row][3])
+				// Column 4: Time/Status.
+				case 4:
+					cellWidget = widget.NewLabel(rows[id.Row][4])
 				}
 				cont.Add(cellWidget)
 				cont.Refresh()
@@ -108,9 +185,10 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 
 		// Set proper column widths.
 		table.SetColumnWidth(0, 50)  // Position
-		table.SetColumnWidth(1, 180) // Driver
-		table.SetColumnWidth(2, 180) // Team
-		table.SetColumnWidth(3, 300) // Time/Status
+		table.SetColumnWidth(1, 50)  // Favorite
+		table.SetColumnWidth(2, 180) // Driver
+		table.SetColumnWidth(3, 180) // Team
+		table.SetColumnWidth(4, 300) // Time/Status
 
 		tableContainer.Objects = []fyne.CanvasObject{table}
 		tableContainer.Refresh()

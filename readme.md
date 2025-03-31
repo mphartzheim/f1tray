@@ -51,7 +51,7 @@ F1Tray offers both light and dark themes to match your desktop environment.
   <em>Schedule, sessions, results, standings, notifications, and theming – all at a glance.</em>
 </p>
 
-> 💡 More screenshots available in the [`/screenshots`](./screenshots) folder.
+> 💡 More screenshots available in the [`screenshots`](./screenshots) folder.
 
 ---
 

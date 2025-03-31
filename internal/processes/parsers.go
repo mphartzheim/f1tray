@@ -25,11 +25,13 @@ func ParseRaceResults(body []byte) (string, [][]string, error) {
 	for i, res := range race.Results {
 		timeOrStatus := getTimeOrStatus(res.Status, res.Time.Time)
 		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
+		// Insert an empty placeholder at index 1 for the Favorite column.
 		rows[i] = []string{
-			res.Position,
-			driverName,
-			res.Constructor.Name,
-			timeOrStatus,
+			res.Position,         // Column 0: Position
+			"",                   // Column 1: Favorite (placeholder)
+			driverName,           // Column 2: Driver (includes URL indicator if available)
+			res.Constructor.Name, // Column 3: Team
+			timeOrStatus,         // Column 4: Time/Status
 		}
 	}
 	return race.RaceName, rows, nil
@@ -52,11 +54,13 @@ func ParseSprintResults(body []byte) (string, [][]string, error) {
 	for i, res := range race.SprintResults {
 		timeOrStatus := getTimeOrStatus(res.Status, res.Time.Time)
 		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
+		// Insert an empty placeholder at index 1 for the Favorite column.
 		rows[i] = []string{
-			res.Position,
-			driverName,
-			res.Constructor.Name,
-			timeOrStatus,
+			res.Position,         // Column 0: Position
+			"",                   // Column 1: Favorite placeholder
+			driverName,           // Column 2: Driver name
+			res.Constructor.Name, // Column 3: Constructor/Team
+			timeOrStatus,         // Column 4: Time/Status
 		}
 	}
 	return race.RaceName, rows, nil
@@ -79,11 +83,13 @@ func ParseQualifyingResults(body []byte) (string, [][]string, error) {
 	for i, res := range race.QualifyingResults {
 		bestTime := bestQualifyingTime(res.Q1, res.Q2, res.Q3)
 		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
+		// Insert an empty placeholder at index 1 for the Favorite column.
 		rows[i] = []string{
-			res.Position,
-			driverName,
-			res.Constructor.Name,
-			bestTime,
+			res.Position,         // Column 0: Position
+			"",                   // Column 1: Favorite placeholder
+			driverName,           // Column 2: Driver name
+			res.Constructor.Name, // Column 3: Constructor/Team
+			bestTime,             // Column 4: Best qualifying time
 		}
 	}
 	return race.RaceName, rows, nil
@@ -165,8 +171,10 @@ func ParseDriverStandings(body []byte) (string, [][]string, error) {
 		if s.Driver.URL != "" {
 			driverName = fmt.Sprintf("%s|||%s%s", driverName, s.Driver.URL, " 👤")
 		}
+		// Build row with 5 columns: Position, (Favorite placeholder), Driver Name, Team, Points.
 		rows[i] = []string{
 			s.Position,
+			"", // Favorite column placeholder; the clickable label will be created in the table update function.
 			driverName,
 			s.Constructors[0].Name, // usually only one constructor per driver
 			s.Points,

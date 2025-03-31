@@ -9,11 +9,12 @@ import (
 
 // Preferences defines user-configurable application settings.
 type Preferences struct {
-	Window        WindowPreferences       `json:"window"`
-	Themes        ThemesPreferences       `json:"theme"`
-	Clock         ClockPreferences        `json:"clock"`
-	Debug         DebugPreferences        `json:"debug"`
-	Notifications NotificationPreferences `json:"notifications"`
+	Window          WindowPreferences       `json:"window"`
+	Themes          ThemesPreferences       `json:"theme"`
+	Clock           ClockPreferences        `json:"clock"`
+	Debug           DebugPreferences        `json:"debug"`
+	Notifications   NotificationPreferences `json:"notifications"`
+	FavoriteDrivers []string                `json:"favorite_drivers"`
 }
 
 // WindowPreferences groups window-related settings.
@@ -86,6 +87,7 @@ var DefaultPreferences = Preferences{
 		Qualifying: defaultSessionNotificationSettings(),
 		Race:       defaultSessionNotificationSettings(),
 	},
+	FavoriteDrivers: []string{}, // default empty favorites list
 }
 
 var (
@@ -182,7 +184,10 @@ func validatePreferences(prefs Preferences) Preferences {
 	if prefs.Notifications.Race == nil {
 		prefs.Notifications.Race = defaultSessionNotificationSettings()
 	}
-	// No further validation needed for Clock or Debug.
+	// Ensure FavoriteDrivers is non-nil.
+	if prefs.FavoriteDrivers == nil {
+		prefs.FavoriteDrivers = []string{}
+	}
 	return prefs
 }
 
@@ -217,5 +222,6 @@ func migrateLegacy(old legacyPreferences) Preferences {
 			Qualifying: defaultSessionNotificationSettings(),
 			Race:       defaultSessionNotificationSettings(),
 		},
+		FavoriteDrivers: []string{}, // no legacy data; start with an empty list
 	}
 }

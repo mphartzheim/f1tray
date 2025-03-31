@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+
+## [02.2.] - 2025-xx-xx
+
+### Added
+- Watch on F1TV button is now more prominent.
+- Users can now highlight their favorite drivers!
+- Global notification system (eg. warn the user if selecting too many favorites) implemented.
+
+---
+
 ## [0.2.1] - 2025-03-30
 
 ### Added
