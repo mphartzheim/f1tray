@@ -26,8 +26,8 @@ type ConstructorsResponse struct {
 	} `json:"MRData"`
 }
 
-// LoadOrUpdateConstructorsJSON ensures a local copy of constructors.json is available and up-to-date.
-// It returns the path to the local JSON file.
+// LoadOrUpdateConstructorsJSON ensures a local copy of constructors.json is available.
+// It downloads the file only if it is not already present, otherwise it returns the existing file.
 func LoadOrUpdateConstructorsJSON() (string, error) {
 	// Determine config directory
 	configDir, err := os.UserConfigDir()
@@ -42,7 +42,12 @@ func LoadOrUpdateConstructorsJSON() (string, error) {
 		return "", fmt.Errorf("failed to create cache directory: %v", err)
 	}
 
-	// Pagination logic
+	// Check if the file already exists; if so, skip the download.
+	if _, err := os.Stat(cachePath); err == nil {
+		return cachePath, nil
+	}
+
+	// File does not exist, so download and merge the JSON data.
 	limit := 100
 	offset := 0
 	var allConstructors []json.RawMessage
@@ -90,21 +95,14 @@ func LoadOrUpdateConstructorsJSON() (string, error) {
 		return "", fmt.Errorf("failed to marshal merged constructors JSON: %v", err)
 	}
 
-	// Compute the hash of the merged JSON data.
-	newHash := hashBytes(mergedJSON)
-
-	prefs := config.Get()
-	if prefs.LastConstructorHash == newHash {
-		// Data unchanged
-		return cachePath, nil
-	}
-
 	// Save merged JSON to file.
 	if err := os.WriteFile(cachePath, mergedJSON, 0644); err != nil {
 		return "", fmt.Errorf("failed to write constructors.json: %v", err)
 	}
 
 	// Update config with new hash.
+	newHash := hashBytes(mergedJSON)
+	prefs := config.Get()
 	prefs.LastConstructorHash = newHash
 	if err := config.SaveConfig(*prefs); err != nil {
 		return "", fmt.Errorf("failed to save updated config: %v", err)
