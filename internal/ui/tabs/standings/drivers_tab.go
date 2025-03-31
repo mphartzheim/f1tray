@@ -108,25 +108,7 @@ func CreateDriverStandingsTableTab(parseFunc func([]byte) (string, [][]string, e
 					cellWidget = processes.CreateClickableStar(driverName, toggleFavorite)
 				case 2:
 					// Column 2: Driver Name.
-					text := rows[id.Row][2]
-					if strings.Contains(text, "|||") {
-						parts := strings.SplitN(text, "|||", 2)
-						displayName := parts[0]
-						fallback := strings.TrimSuffix(parts[1], " 👤")
-						clickableText := fmt.Sprintf("%s 👤", displayName)
-						if slug, ok := models.DriverURLMap[displayName]; ok {
-							url := fmt.Sprintf(models.F1DriverBioURL, slug)
-							cellWidget = ui.NewClickableLabel(clickableText, func() {
-								processes.OpenWebPage(url)
-							}, true)
-						} else {
-							cellWidget = ui.NewClickableLabel(clickableText, func() {
-								processes.OpenWebPage(fallback)
-							}, true)
-						}
-					} else {
-						cellWidget = widget.NewLabel(text)
-					}
+					cellWidget = processes.MakeClickableDriverCell(rows[id.Row][2])
 				default:
 					// Other columns (Position, Team, Points) show plain text.
 					cellWidget = widget.NewLabel(rows[id.Row][id.Col])

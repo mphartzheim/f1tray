@@ -24,16 +24,6 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 
 	url := buildResultsURL(parseFunc, year, round)
 
-	// Helper function to check whether a driver is a favorite.
-	isFavorite := func(favs []string, driverName string) bool {
-		for _, fav := range favs {
-			if fav == driverName {
-				return true
-			}
-		}
-		return false
-	}
-
 	// Declare refresh as a variable so it can be referenced inside toggleFavorite.
 	var refresh func() bool
 
@@ -143,34 +133,10 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 						parts := strings.SplitN(driverNameRaw, "|||", 2)
 						driverName = parts[0]
 					}
-					star := "☆"
-					if isFavorite(config.Get().FavoriteDrivers, driverName) {
-						star = "★"
-					}
-					cellWidget = ui.NewClickableLabel(star, func() {
-						toggleFavorite(driverName)
-					}, true)
+					cellWidget = processes.CreateClickableStar(driverName, toggleFavorite)
 				// Column 2: Driver column.
 				case 2:
-					text := rows[id.Row][2]
-					if strings.Contains(text, "|||") {
-						parts := strings.SplitN(text, "|||", 2)
-						displayName := parts[0]
-						fallback := strings.TrimSuffix(parts[1], " 👤")
-						clickableText := fmt.Sprintf("%s 👤", displayName)
-						if slug, ok := models.DriverURLMap[displayName]; ok {
-							url := fmt.Sprintf(models.F1DriverBioURL, slug)
-							cellWidget = ui.NewClickableLabel(clickableText, func() {
-								processes.OpenWebPage(url)
-							}, true)
-						} else {
-							cellWidget = ui.NewClickableLabel(clickableText, func() {
-								processes.OpenWebPage(fallback)
-							}, true)
-						}
-					} else {
-						cellWidget = widget.NewLabel(text)
-					}
+					cellWidget = processes.MakeClickableDriverCell(rows[id.Row][2])
 				// Column 3: Team.
 				case 3:
 					cellWidget = widget.NewLabel(rows[id.Row][3])

@@ -247,3 +247,24 @@ func CreateClickableStar(driverName string, toggleFavorite func(string)) fyne.Ca
 		toggleFavorite(driverName)
 	}, true)
 }
+
+// MakeClickableDriverCell returns a fyne.CanvasObject for a driver cell with a bio link if available.
+func MakeClickableDriverCell(text string) fyne.CanvasObject {
+	if strings.Contains(text, "|||") {
+		parts := strings.SplitN(text, "|||", 2)
+		displayName := parts[0]
+		fallback := strings.TrimSuffix(parts[1], " 👤")
+		clickableText := fmt.Sprintf("%s 👤", displayName)
+
+		if slug, ok := models.DriverURLMap[displayName]; ok {
+			url := fmt.Sprintf(models.F1DriverBioURL, slug)
+			return ui.NewClickableLabel(clickableText, func() {
+				OpenWebPage(url)
+			}, true)
+		}
+		return ui.NewClickableLabel(clickableText, func() {
+			OpenWebPage(fallback)
+		}, true)
+	}
+	return widget.NewLabel(text)
+}
