@@ -10,8 +10,8 @@ import (
 // CreateStandingsTab combines Race, Qualifying, and Sprint tabs into one unified Results tab.
 func CreateStandingsTab(year string, round string) (models.TabData, *container.AppTabs) {
 	// Create individual sub-tabs using your existing result-building logic
-	driversTab := CreateStandingsTableTab(processes.ParseDriverStandings, year)
-	constructorsTab := CreateStandingsTableTab(processes.ParseConstructorStandings, year)
+	driversTab := CreateDriverStandingsTableTab(processes.ParseDriverStandings, year)
+	constructorsTab := CreateConstructorStandingsTableTab(processes.ParseConstructorStandings, year)
 
 	// Create internal tab bar
 	nestedTabs := container.NewAppTabs(

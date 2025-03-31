@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
 	"runtime"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/mphartzheim/f1tray/internal/config"
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/notifications"
+	"github.com/mphartzheim/f1tray/internal/ui"
 	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
@@ -211,4 +213,37 @@ func GetThemeFromName(name string) fyne.Theme {
 		return theme
 	}
 	return themes.SystemTheme{}
+}
+
+// BuildStandingsURL builds the URL for standings data based on the provided parse function.
+func BuildStandingsURL(parseFunc func([]byte) (string, [][]string, error), year string) string {
+	funcName := runtime.FuncForPC(reflect.ValueOf(parseFunc).Pointer()).Name()
+
+	if strings.HasSuffix(funcName, "ParseDriverStandings") {
+		return fmt.Sprintf(models.DriversStandingsURL, year)
+	} else if strings.HasSuffix(funcName, "ParseConstructorStandings") {
+		return fmt.Sprintf(models.ConstructorsStandingsURL, year)
+	}
+	return ""
+}
+
+// IsFavorite checks whether driverName is in the list of favorite drivers.
+func IsFavorite(favs []string, driverName string) bool {
+	for _, fav := range favs {
+		if fav == driverName {
+			return true
+		}
+	}
+	return false
+}
+
+// CreateClickableStar returns a clickable star label based on whether the driver is a favorite.
+func CreateClickableStar(driverName string, toggleFavorite func(string)) fyne.CanvasObject {
+	star := "☆"
+	if IsFavorite(config.Get().FavoriteDrivers, driverName) {
+		star = "★"
+	}
+	return ui.NewClickableLabel(star, func() {
+		toggleFavorite(driverName)
+	}, true)
 }
