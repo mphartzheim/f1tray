@@ -22,6 +22,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -243,9 +244,11 @@ func CreateClickableStar(driverName string, toggleFavorite func(string)) fyne.Ca
 	if IsFavorite(config.Get().FavoriteDrivers, driverName) {
 		star = "★"
 	}
-	return ui.NewClickableLabel(star, func() {
+	cl := ui.NewClickableLabel(star, func() {
 		toggleFavorite(driverName)
 	}, true)
+	cl.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
+	return cl
 }
 
 // MakeClickableDriverCell returns a fyne.CanvasObject for a driver cell with a bio link if available.
@@ -256,15 +259,33 @@ func MakeClickableDriverCell(text string) fyne.CanvasObject {
 		fallback := strings.TrimSuffix(parts[1], " 👤")
 		clickableText := fmt.Sprintf("%s 👤", displayName)
 
+		// Check if the driver is a favorite.
+		favorite := false
+		prefs := config.Get()
+		for _, fav := range prefs.FavoriteDrivers {
+			if fav == displayName {
+				favorite = true
+				break
+			}
+		}
+
+		var cl *ui.ClickableLabel
 		if slug, ok := models.DriverURLMap[displayName]; ok {
 			url := fmt.Sprintf(models.F1DriverBioURL, slug)
-			return ui.NewClickableLabel(clickableText, func() {
+			cl = ui.NewClickableLabel(clickableText, func() {
 				OpenWebPage(url)
 			}, true)
+		} else {
+			cl = ui.NewClickableLabel(clickableText, func() {
+				OpenWebPage(fallback)
+			}, true)
 		}
-		return ui.NewClickableLabel(clickableText, func() {
-			OpenWebPage(fallback)
-		}, true)
+
+		// If favorite, change the text color.
+		if favorite {
+			cl.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
+		}
+		return cl
 	}
 	return widget.NewLabel(text)
 }
