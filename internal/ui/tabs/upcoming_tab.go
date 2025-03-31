@@ -3,7 +3,6 @@ package tabs
 import (
 	"encoding/json"
 	"fmt"
-	"image/color"
 	"time"
 
 	"github.com/mphartzheim/f1tray/internal/models"
@@ -11,7 +10,6 @@ import (
 	"github.com/mphartzheim/f1tray/internal/ui"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -30,21 +28,11 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	url := fmt.Sprintf(models.UpcomingURL, year)
 
 	// Create the button for F1TV.
-	button := widget.NewButton("Watch on F1TV", func() {
+	watchButton := widget.NewButton("Watch on F1TV", func() {
 		if err := processes.OpenWebPage(models.F1tvURL); err != nil {
 			status.SetText("Failed to open F1TV URL.")
 		}
 	})
-
-	// Create a rounded rectangle overlay using canvas.NewRectangle.
-	// Set the fill to transparent, then assign the stroke color, stroke width and corner radius.
-	rect := canvas.NewRectangle(color.Transparent)
-	rect.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
-	rect.StrokeWidth = 4
-	rect.CornerRadius = 5
-
-	// Overlay the rectangle on top of the button using container.NewStack.
-	watchButton := container.NewStack(button, rect)
 
 	refresh := func() bool {
 		data, err := processes.FetchData(url)
@@ -82,8 +70,10 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 		var upcomingResp models.UpcomingResponse
 		err = json.Unmarshal(data, &upcomingResp)
 		if err != nil {
-			nextRaceLabel.SetText("Next Race (map unavailable)")
+			nextRaceLabel.Text = "Next Race (map unavailable)"
 			nextRaceLabel.OnTapped = nil
+			nextRaceLabel.Clickable = false
+			nextRaceLabel.Refresh()
 		} else {
 			var upcoming []models.SessionInfo
 			now := time.Now()
@@ -135,7 +125,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 					continue
 				}
 				if raceDate.After(now) || raceDate.Equal(now) {
-					nextRaceLabel.SetText(fmt.Sprintf("Next Race: %s (%s 🗺️)", race.RaceName, race.Circuit.CircuitName))
+					nextRaceLabel.Text = fmt.Sprintf("Next Race: %s (%s 🗺️)", race.RaceName, race.Circuit.CircuitName)
 					// UpcomingResponse may not have lat/long, so using locality and country as a fallback.
 					locality := race.Circuit.Location.Locality
 					country := race.Circuit.Location.Country
@@ -146,14 +136,16 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 						}
 					}
 					nextRaceLabel.Clickable = true
+					nextRaceLabel.Refresh()
 					found = true
 					break
 				}
 			}
 			if !found {
-				nextRaceLabel.SetText("Next Race: Not available")
+				nextRaceLabel.Text = "Next Race: Not available"
 				nextRaceLabel.OnTapped = nil
 				nextRaceLabel.Clickable = false
+				nextRaceLabel.Refresh()
 			}
 		}
 
@@ -184,40 +176,43 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	}
 }
 
-// createTableCell returns a cell that is a stack containing a background rectangle and a label.
+// createTableCell returns a cell that is a stack containing a background rectangle and a ClickableLabel.
 func createTableCell() fyne.CanvasObject {
-	bg := canvas.NewRectangle(color.Transparent)
-	lbl := widget.NewLabel("")
-	return container.NewStack(bg, lbl)
+	cl := ui.NewClickableLabel("", nil, false)
+	return container.NewVBox(cl)
 }
 
-// updateTableCell sets the cell text and, for the date cell (column 2), reformats the date.
+// updateTableCell sets the cell text and, for certain columns, applies formatting or interactivity.
 func updateTableCell(cell fyne.CanvasObject, rows [][]string, id widget.TableCellID) {
-	cont := cell.(*fyne.Container)
-	bg := cont.Objects[0].(*canvas.Rectangle)
-	lbl := cont.Objects[1].(*widget.Label)
-
-	// Get the original text from the row.
-	text := rows[id.Row][id.Col]
-
-	// For Column 2, reformat the date to a full format.
-	if id.Col == 1 {
-		text = formatFullDate(text)
-	} else if id.Col == 2 {
-		// If the session is active, add the 🔴 icon.
-		if processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
-			text += " 🔴"
-			bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
-			bg.StrokeWidth = 2
-			bg.Show()
-		} else {
-			bg.StrokeWidth = 0
-			bg.Hide()
-		}
+	cont, ok := cell.(*fyne.Container)
+	if !ok {
+		return
 	}
+	cont.Objects = nil
 
-	lbl.SetText(text)
-	bg.Refresh()
+	var newLabel *ui.ClickableLabel
+	switch id.Col {
+	case 1:
+		// For column 1, reformat the date to a full format.
+		text := formatFullDate(rows[id.Row][id.Col])
+		newLabel = ui.NewClickableLabel(text, nil, false)
+	case 2:
+		// Column 2: For the session time.
+		text := rows[id.Row][id.Col]
+		if processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
+			clickableText := fmt.Sprintf("%s 🔴", text)
+			newLabel = ui.NewClickableLabel(clickableText, func() {
+				processes.OpenWebPage(models.F1tvURL)
+			}, true)
+			newLabel.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
+		} else {
+			newLabel = ui.NewClickableLabel(text, nil, false)
+		}
+	default:
+		newLabel = ui.NewClickableLabel(rows[id.Row][id.Col], nil, false)
+	}
+	cont.Add(newLabel)
+	cont.Refresh()
 }
 
 // formatFullDate converts a YYYY-MM-DD string to a full date like "Friday, April 4th 2025".

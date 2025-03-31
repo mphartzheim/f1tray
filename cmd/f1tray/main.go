@@ -43,6 +43,7 @@ func main() {
 	}
 
 	myWindow := myApp.NewWindow("F1 Viewer")
+	myWindow.SetFixedSize(true)
 	models.MainWindow = myWindow
 
 	// Build a slice of years (as strings) from the current year down to 1950.
@@ -172,7 +173,7 @@ func main() {
 
 	// Set the window content.
 	myWindow.SetContent(container.NewBorder(headerContainer, nil, nil, nil, stack))
-	myWindow.Resize(fyne.NewSize(900, 600))
+	myWindow.Resize(fyne.NewSize(900, 700))
 
 	// System tray integration.
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
@@ -204,6 +205,21 @@ func main() {
 
 	// Start background auto-refresh.
 	go processes.StartAutoRefresh(&state, fmt.Sprintf("%d", time.Now().Year()))
+
+	// Start a ticker to refresh the Upcoming tab if it's a session day.
+	go func() {
+		ticker := time.NewTicker(60 * time.Second)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			isUpcomingTabVisible := tabsContainer.Selected() == upcomingTab
+			isSessionToday := processes.IsSessionDay(state.UpcomingSessions)
+
+			if isUpcomingTabVisible && isSessionToday {
+				upcomingTabData.Refresh()
+			}
+		}
+	}()
 
 	myApp.Run()
 }

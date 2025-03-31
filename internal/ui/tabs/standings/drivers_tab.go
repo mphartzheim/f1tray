@@ -2,8 +2,6 @@ package standings
 
 import (
 	"fmt"
-	"reflect"
-	"runtime"
 	"strings"
 
 	"github.com/mphartzheim/f1tray/internal/config"
@@ -16,30 +14,20 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// CreateStandingsTableTab builds a tab displaying standings fetched from a URL and parsed into a formatted table.
-func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
+// CreateDriverStandingsTableTab builds the driver standings tab with a clickable star column.
+func CreateDriverStandingsTableTab(parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 	status := widget.NewLabel("Loading standings...")
 	headerLabel := widget.NewLabel("")
-	tableContainer := container.NewStack() // Use a container that fills available space
+	tableContainer := container.NewStack() // Container that fills available space
 
-	url := buildStandingsURL(parseFunc, year)
-
-	// Helper function to check whether a driver is a favorite.
-	isFavorite := func(favs []string, driverName string) bool {
-		for _, fav := range favs {
-			if fav == driverName {
-				return true
-			}
-		}
-		return false
-	}
+	url := processes.BuildStandingsURL(parseFunc, year)
 
 	// Declare refresh as a variable so it can be referenced by toggleFavorite.
 	var refresh func() bool
 
 	// toggleFavorite updates the favorites in the config.
 	toggleFavorite := func(driverName string) {
-		prefs := config.Get() // retrieve current preferences
+		prefs := config.Get()
 		favs := prefs.FavoriteDrivers
 		alreadyFav := false
 		for _, fav := range favs {
@@ -66,12 +54,10 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 				return
 			}
 		}
-		// Save the updated config.
 		if err := config.SaveConfig(*prefs); err != nil {
 			ui.ShowNotification(models.MainWindow, "Failed to save config.")
 			return
 		}
-		// Refresh the table UI.
 		refresh()
 	}
 
@@ -95,14 +81,16 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 				if len(rows) == 0 {
 					return 0, 0
 				}
-				// Now rows have 5 columns.
+				// Expected columns for driver standings:
+				// 0: Position, 1: Favorite star, 2: Driver Name, 3: Team, 4: Points.
 				return len(rows), len(rows[0])
 			},
 			// Create each cell as a container that we can update later.
 			func() fyne.CanvasObject {
-				return container.NewStack(widget.NewLabel(""))
+				// Use a container holding a ClickableLabel for consistency.
+				return container.NewStack(ui.NewClickableLabel("", nil, false))
 			},
-			// Update each cell based on its row and column.
+			// Update each cell.
 			func(id widget.TableCellID, co fyne.CanvasObject) {
 				cont, ok := co.(*fyne.Container)
 				if !ok {
@@ -111,58 +99,31 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 				cont.Objects = nil
 
 				var cellWidget fyne.CanvasObject
-				// Column 1 is the Favorite column.
-				if id.Col == 1 {
-					// The driver name is in column 2.
+				switch id.Col {
+				case 1:
+					// Column 1: clickable favorite star.
 					driverNameRaw := rows[id.Row][2]
 					driverName := driverNameRaw
 					if strings.Contains(driverNameRaw, "|||") {
 						parts := strings.SplitN(driverNameRaw, "|||", 2)
 						driverName = parts[0]
 					}
-					star := "☆"
-					if isFavorite(config.Get().FavoriteDrivers, driverName) {
-						star = "★"
-					}
-					cellWidget = ui.NewClickableLabel(star, func() {
-						toggleFavorite(driverName)
-					}, true)
-				} else if id.Col == 2 {
-					// Driver Name column.
-					text := rows[id.Row][2]
-					// Check for clickable driver URL indicator.
-					if strings.Contains(text, "|||") {
-						parts := strings.SplitN(text, "|||", 2)
-						displayName := parts[0]
-						fallback := parts[1]
-						fallback = strings.TrimSuffix(fallback, " 👤")
-						clickableText := fmt.Sprintf("%s 👤", displayName)
-						if slug, ok := models.DriverURLMap[displayName]; ok {
-							url := fmt.Sprintf(models.F1DriverBioURL, slug)
-							cellWidget = ui.NewClickableLabel(clickableText, func() {
-								processes.OpenWebPage(url)
-							}, true)
-						} else {
-							cellWidget = ui.NewClickableLabel(clickableText, func() {
-								processes.OpenWebPage(fallback)
-							}, true)
-						}
-					} else {
-						cellWidget = widget.NewLabel(text)
-					}
-				} else {
-					// For other columns, simply create a label.
-					cellWidget = widget.NewLabel(rows[id.Row][id.Col])
+					cellWidget = processes.CreateClickableStar(driverName, toggleFavorite)
+				case 2:
+					// Column 2: Driver Name.
+					cellWidget = processes.MakeClickableDriverCell(rows[id.Row][2])
+				default:
+					// Other columns (Position, Team, Points) show plain text.
+					cellWidget = ui.NewClickableLabel(rows[id.Row][id.Col], nil, false)
 				}
-
 				cont.Add(cellWidget)
 				cont.Refresh()
 			},
 		)
 
-		// Set updated column widths.
+		// Set column widths for Driver Standings.
 		table.SetColumnWidth(0, 50)  // Position
-		table.SetColumnWidth(1, 50)  // Favorite
+		table.SetColumnWidth(1, 50)  // Favorite star
 		table.SetColumnWidth(2, 180) // Driver Name
 		table.SetColumnWidth(3, 100) // Team
 		table.SetColumnWidth(4, 80)  // Points
@@ -186,16 +147,4 @@ func CreateStandingsTableTab(parseFunc func([]byte) (string, [][]string, error),
 		Content: content,
 		Refresh: refresh,
 	}
-}
-
-// buildStandingsURL builds the URL for standings data based on the provided parse function.
-func buildStandingsURL(parseFunc func([]byte) (string, [][]string, error), year string) string {
-	funcName := runtime.FuncForPC(reflect.ValueOf(parseFunc).Pointer()).Name()
-
-	if strings.HasSuffix(funcName, "ParseDriverStandings") {
-		return fmt.Sprintf(models.DriversStandingsURL, year)
-	} else if strings.HasSuffix(funcName, "ParseConstructorStandings") {
-		return fmt.Sprintf(models.ConstructorsStandingsURL, year)
-	}
-	return ""
 }

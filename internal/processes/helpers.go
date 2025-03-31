@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"reflect"
 	"runtime"
 	"strings"
 	"time"
@@ -15,11 +16,13 @@ import (
 	"github.com/mphartzheim/f1tray/internal/config"
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/notifications"
+	"github.com/mphartzheim/f1tray/internal/ui"
 	"github.com/mphartzheim/f1tray/internal/ui/themes"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -211,4 +214,90 @@ func GetThemeFromName(name string) fyne.Theme {
 		return theme
 	}
 	return themes.SystemTheme{}
+}
+
+// BuildStandingsURL builds the URL for standings data based on the provided parse function.
+func BuildStandingsURL(parseFunc func([]byte) (string, [][]string, error), year string) string {
+	funcName := runtime.FuncForPC(reflect.ValueOf(parseFunc).Pointer()).Name()
+
+	if strings.HasSuffix(funcName, "ParseDriverStandings") {
+		return fmt.Sprintf(models.DriversStandingsURL, year)
+	} else if strings.HasSuffix(funcName, "ParseConstructorStandings") {
+		return fmt.Sprintf(models.ConstructorsStandingsURL, year)
+	}
+	return ""
+}
+
+// IsFavorite checks whether driverName is in the list of favorite drivers.
+func IsFavorite(favs []string, driverName string) bool {
+	for _, fav := range favs {
+		if fav == driverName {
+			return true
+		}
+	}
+	return false
+}
+
+// CreateClickableStar returns a clickable star label based on whether the driver is a favorite.
+func CreateClickableStar(driverName string, toggleFavorite func(string)) fyne.CanvasObject {
+	star := "☆"
+	if IsFavorite(config.Get().FavoriteDrivers, driverName) {
+		star = "★"
+	}
+	cl := ui.NewClickableLabel(star, func() {
+		toggleFavorite(driverName)
+	}, true)
+	cl.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
+	return cl
+}
+
+// MakeClickableDriverCell returns a fyne.CanvasObject for a driver cell with a bio link if available.
+func MakeClickableDriverCell(text string) fyne.CanvasObject {
+	if strings.Contains(text, "|||") {
+		parts := strings.SplitN(text, "|||", 2)
+		displayName := parts[0]
+		fallback := strings.TrimSuffix(parts[1], " 👤")
+		clickableText := fmt.Sprintf("%s 👤", displayName)
+
+		// Check if the driver is a favorite.
+		favorite := false
+		prefs := config.Get()
+		for _, fav := range prefs.FavoriteDrivers {
+			if fav == displayName {
+				favorite = true
+				break
+			}
+		}
+
+		var cl *ui.ClickableLabel
+		if slug, ok := models.DriverURLMap[displayName]; ok {
+			url := fmt.Sprintf(models.F1DriverBioURL, slug)
+			cl = ui.NewClickableLabel(clickableText, func() {
+				OpenWebPage(url)
+			}, true)
+		} else {
+			cl = ui.NewClickableLabel(clickableText, func() {
+				OpenWebPage(fallback)
+			}, true)
+		}
+
+		// If favorite, change the text color.
+		if favorite {
+			cl.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
+		}
+		return cl
+	}
+	return widget.NewLabel(text)
+}
+
+// IsSessionDay checks if any session is scheduled for today.
+func IsSessionDay(sessions []models.SessionInfo) bool {
+	today := time.Now().In(time.UTC).Truncate(24 * time.Hour)
+	for _, session := range sessions {
+		sessionDay := session.StartTime.In(time.UTC).Truncate(24 * time.Hour)
+		if sessionDay.Equal(today) {
+			return true
+		}
+	}
+	return false
 }
