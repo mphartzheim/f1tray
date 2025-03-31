@@ -9,12 +9,13 @@ import (
 
 // Preferences defines user-configurable application settings.
 type Preferences struct {
-	Window          WindowPreferences       `json:"window"`
-	Themes          ThemesPreferences       `json:"theme"`
-	Clock           ClockPreferences        `json:"clock"`
-	Debug           DebugPreferences        `json:"debug"`
-	Notifications   NotificationPreferences `json:"notifications"`
-	FavoriteDrivers []string                `json:"favorite_drivers"`
+	Window              WindowPreferences       `json:"window"`
+	Themes              ThemesPreferences       `json:"theme"`
+	Clock               ClockPreferences        `json:"clock"`
+	Debug               DebugPreferences        `json:"debug"`
+	Notifications       NotificationPreferences `json:"notifications"`
+	FavoriteDrivers     []string                `json:"favorite_drivers"`
+	FavoriteConstructor string                  `json:"favorite_constructor"`
 }
 
 // WindowPreferences groups window-related settings.
@@ -87,7 +88,8 @@ var DefaultPreferences = Preferences{
 		Qualifying: defaultSessionNotificationSettings(),
 		Race:       defaultSessionNotificationSettings(),
 	},
-	FavoriteDrivers: []string{}, // default empty favorites list
+	FavoriteDrivers:     []string{}, // default empty favorites list
+	FavoriteConstructor: "",         // default no favorite constructor
 }
 
 var (
@@ -188,6 +190,10 @@ func validatePreferences(prefs Preferences) Preferences {
 	if prefs.FavoriteDrivers == nil {
 		prefs.FavoriteDrivers = []string{}
 	}
+	// Ensure FavoriteConstructor is set (default to empty string if missing).
+	if prefs.FavoriteConstructor == "" {
+		prefs.FavoriteConstructor = ""
+	}
 	return prefs
 }
 
@@ -222,6 +228,7 @@ func migrateLegacy(old legacyPreferences) Preferences {
 			Qualifying: defaultSessionNotificationSettings(),
 			Race:       defaultSessionNotificationSettings(),
 		},
-		FavoriteDrivers: []string{}, // no legacy data; start with an empty list
+		FavoriteDrivers:     []string{}, // no legacy data; start with an empty list
+		FavoriteConstructor: "",
 	}
 }

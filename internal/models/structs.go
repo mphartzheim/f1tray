@@ -282,10 +282,12 @@ type TabData struct {
 }
 
 // AppState tracks application state like whether it's the first run.
+// Updated to include the favorite constructor.
 type AppState struct {
-	FirstRun         bool          `json:"first_run"`
-	UpcomingSessions []SessionInfo `json:"upcoming_sessions"`
-	FavoriteDrivers  []string      `json:"favorite_drivers"`
+	FirstRun            bool          `json:"first_run"`
+	UpcomingSessions    []SessionInfo `json:"upcoming_sessions"`
+	FavoriteDrivers     []string      `json:"favorite_drivers"`
+	FavoriteConstructor string        `json:"favorite_constructor"`
 }
 
 // SessionInfo holds individual session data for notification purposes.
