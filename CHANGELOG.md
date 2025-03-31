@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.2.4] - 2025-03-30
+
+### Notes
+
+- Testing automations
+
+---
+
 ## [v0.2.3] - 2025-xx-xx
 
 ### Notes
