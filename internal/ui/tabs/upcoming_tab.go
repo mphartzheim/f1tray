@@ -37,7 +37,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	})
 
 	// Create a rounded rectangle overlay using canvas.NewRectangle.
-	// Set the fill to transparent, then assign the stroke color, stroke width and corner radius.
+	// (This overlay is still used on the watch button.)
 	rect := canvas.NewRectangle(color.Transparent)
 	rect.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
 	rect.StrokeWidth = 4
@@ -82,8 +82,10 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 		var upcomingResp models.UpcomingResponse
 		err = json.Unmarshal(data, &upcomingResp)
 		if err != nil {
-			nextRaceLabel.SetText("Next Race (map unavailable)")
+			nextRaceLabel.Text = "Next Race (map unavailable)"
 			nextRaceLabel.OnTapped = nil
+			nextRaceLabel.Clickable = false
+			nextRaceLabel.Refresh()
 		} else {
 			var upcoming []models.SessionInfo
 			now := time.Now()
@@ -135,7 +137,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 					continue
 				}
 				if raceDate.After(now) || raceDate.Equal(now) {
-					nextRaceLabel.SetText(fmt.Sprintf("Next Race: %s (%s 🗺️)", race.RaceName, race.Circuit.CircuitName))
+					nextRaceLabel.Text = fmt.Sprintf("Next Race: %s (%s 🗺️)", race.RaceName, race.Circuit.CircuitName)
 					// UpcomingResponse may not have lat/long, so using locality and country as a fallback.
 					locality := race.Circuit.Location.Locality
 					country := race.Circuit.Location.Country
@@ -146,14 +148,16 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 						}
 					}
 					nextRaceLabel.Clickable = true
+					nextRaceLabel.Refresh()
 					found = true
 					break
 				}
 			}
 			if !found {
-				nextRaceLabel.SetText("Next Race: Not available")
+				nextRaceLabel.Text = "Next Race: Not available"
 				nextRaceLabel.OnTapped = nil
 				nextRaceLabel.Clickable = false
+				nextRaceLabel.Refresh()
 			}
 		}
 
@@ -184,56 +188,42 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	}
 }
 
-// createTableCell returns a cell that is a stack containing a background rectangle and a label.
+// createTableCell returns a cell that is a stack containing a background rectangle and a ClickableLabel.
 func createTableCell() fyne.CanvasObject {
-	bg := canvas.NewRectangle(color.Transparent)
-	lbl := widget.NewLabel("")
-	return container.NewStack(bg, lbl)
+	cl := ui.NewClickableLabel("", nil, false)
+	return container.NewVBox(cl)
 }
 
-// updateTableCell sets the cell text and, for the date cell (column 2), reformats the date.
+// updateTableCell sets the cell text and, for certain columns, applies formatting or interactivity.
 func updateTableCell(cell fyne.CanvasObject, rows [][]string, id widget.TableCellID) {
-	cont := cell.(*fyne.Container)
-	bg := cont.Objects[0].(*canvas.Rectangle)
-	// For column 2, we replace the label with a clickable label if the session is live.
-	if id.Col == 1 {
-		// For Column 1, we reformat the date to a full format.
+	cont, ok := cell.(*fyne.Container)
+	if !ok {
+		return
+	}
+	cont.Objects = nil
+
+	var newLabel *ui.ClickableLabel
+	switch id.Col {
+	case 1:
+		// For column 1, reformat the date to a full format.
 		text := formatFullDate(rows[id.Row][id.Col])
-		// Replace the label with the formatted text.
-		// We assume the cell already contains a label at index 1.
-		if lbl, ok := cont.Objects[1].(*widget.Label); ok {
-			lbl.SetText(text)
-		}
-	} else if id.Col == 2 {
+		newLabel = ui.NewClickableLabel(text, nil, false)
+	case 2:
 		// Column 2: For the session time.
 		text := rows[id.Row][id.Col]
-		// Check if the session is active.
 		if processes.IsSessionInProgress(rows[id.Row][0], rows[id.Row][1]) {
-			// Create clickable text with a live icon.
 			clickableText := fmt.Sprintf("%s 🔴", text)
-			clickableLabel := ui.NewClickableLabel(clickableText, func() {
-				// Open F1TV when clicked.
+			newLabel = ui.NewClickableLabel(clickableText, func() {
 				processes.OpenWebPage(models.F1tvURL)
 			}, true)
-			// Replace the old label with our clickable label.
-			cont.Objects[1] = clickableLabel
-			// Optional: update background to visually indicate live status.
-			bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
-			bg.StrokeWidth = 2
-			bg.Show()
+			newLabel.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
 		} else {
-			// Session is not live: show plain text.
-			plainLabel := widget.NewLabel(text)
-			cont.Objects[1] = plainLabel
-			bg.StrokeWidth = 0
-			bg.Hide()
+			newLabel = ui.NewClickableLabel(text, nil, false)
 		}
-	} else {
-		// Other columns: use plain text.
-		plainLabel := widget.NewLabel(rows[id.Row][id.Col])
-		// Replace the label.
-		cont.Objects[1] = plainLabel
+	default:
+		newLabel = ui.NewClickableLabel(rows[id.Row][id.Col], nil, false)
 	}
+	cont.Add(newLabel)
 	cont.Refresh()
 }
 

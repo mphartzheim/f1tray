@@ -19,7 +19,8 @@ import (
 // CreateResultsTableTab builds a tab displaying race results fetched from a URL and parsed into a formatted table.
 func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), year string, round string) models.TabData {
 	status := widget.NewLabel("Loading results...")
-	raceNameLabel := widget.NewLabel("")
+	// Use ClickableLabel for the race name display (non-clickable).
+	raceNameLabel := ui.NewClickableLabel("", nil, false)
 	tableContainer := container.NewStack()
 
 	url := buildResultsURL(parseFunc, year, round)
@@ -80,13 +81,15 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 		// Handle missing data gracefully for sprint/qualifying events.
 		if err != nil {
 			if strings.HasSuffix(funcName, "ParseSprintResults") && strings.Contains(err.Error(), "no sprint data found") {
-				raceNameLabel.SetText("Not a sprint race event")
+				raceNameLabel.Text = "Not a sprint race event"
+				raceNameLabel.Refresh()
 				tableContainer.Objects = nil
 				tableContainer.Refresh()
 				status.SetText("Results loaded")
 				return true
 			} else if strings.HasSuffix(funcName, "ParseQualifyingResults") && strings.Contains(err.Error(), "no qualifying data found") {
-				raceNameLabel.SetText("No data available on Jolpica API")
+				raceNameLabel.Text = "No data available on Jolpica API"
+				raceNameLabel.Refresh()
 				tableContainer.Objects = nil
 				tableContainer.Refresh()
 				status.SetText("Results loaded.")
@@ -96,7 +99,9 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 			return false
 		}
 
-		raceNameLabel.SetText(fmt.Sprintf("Results for: %s", raceName))
+		raceNameLabel.Text = fmt.Sprintf("Results for: %s", raceName)
+		raceNameLabel.Refresh()
+
 		// Create a table:
 		// Now each row has 5 columns:
 		//   [0]: Position, [1]: Favorite, [2]: Driver, [3]: Team, [4]: Time/Status.
@@ -109,7 +114,8 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 			},
 			// Create each cell as a container that we can update later.
 			func() fyne.CanvasObject {
-				return container.NewStack(widget.NewLabel(""))
+				// Use ClickableLabel with no tap callback.
+				return container.NewStack(ui.NewClickableLabel("", nil, false))
 			},
 			// Update each cell.
 			func(id widget.TableCellID, co fyne.CanvasObject) {
@@ -123,7 +129,7 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 				switch id.Col {
 				// Column 0: Position.
 				case 0:
-					cellWidget = widget.NewLabel(rows[id.Row][0])
+					cellWidget = ui.NewClickableLabel(rows[id.Row][0], nil, false)
 				// Column 1: Favorite column.
 				case 1:
 					// The driver name is stored in column 2.
@@ -139,10 +145,10 @@ func CreateResultsTableTab(parseFunc func([]byte) (string, [][]string, error), y
 					cellWidget = processes.MakeClickableDriverCell(rows[id.Row][2])
 				// Column 3: Team.
 				case 3:
-					cellWidget = widget.NewLabel(rows[id.Row][3])
+					cellWidget = ui.NewClickableLabel(rows[id.Row][3], nil, false)
 				// Column 4: Time/Status.
 				case 4:
-					cellWidget = widget.NewLabel(rows[id.Row][4])
+					cellWidget = ui.NewClickableLabel(rows[id.Row][4], nil, false)
 				}
 				cont.Add(cellWidget)
 				cont.Refresh()

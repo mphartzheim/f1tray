@@ -172,7 +172,7 @@ func main() {
 
 	// Set the window content.
 	myWindow.SetContent(container.NewBorder(headerContainer, nil, nil, nil, stack))
-	myWindow.Resize(fyne.NewSize(900, 600))
+	myWindow.Resize(fyne.NewSize(900, 700))
 
 	// System tray integration.
 	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)

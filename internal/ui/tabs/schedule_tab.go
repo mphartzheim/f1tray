@@ -59,7 +59,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 		// Factory function returns a container with a background rectangle and a clickable label.
 		factory := func() fyne.CanvasObject {
 			bg := canvas.NewRectangle(nil)
-			// Initialize ClickableLabel with Clickable false.
+			// Initialize NewClickableLabel with default text and not clickable.
 			cl := ui.NewClickableLabel("", nil, false)
 			return container.NewStack(bg, cl)
 		}
@@ -71,20 +71,23 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 			cl := wrapper.Objects[1].(*ui.ClickableLabel)
 
 			if id.Row == 0 {
-				// Header row: set header text, disable click, and hide background.
+				// Header row: set header text, disable click, hide background and use default text color.
 				headers := []string{"Round", "Race Name", "Circuit", "Location (Date)"}
-				cl.SetText(headers[id.Col])
+				cl.Text = headers[id.Col]
 				cl.OnTapped = nil
 				cl.Clickable = false
+				cl.SetTextColor(theme.Current().Color(theme.ColorNameForeground, fyne.CurrentApp().Settings().ThemeVariant()))
+				cl.Refresh()
 				bg.Hide()
 			} else {
 				// Set base text from the row data.
 				baseText := rows[id.Row-1][id.Col]
-				cl.SetText(baseText)
-				// By default, disable clickability.
+				cl.Text = baseText
+				// By default, disable clickability and reset text color.
 				cl.OnTapped = nil
 				cl.Clickable = false
-				// Hide background initially.
+				cl.SetTextColor(theme.Current().Color(theme.ColorNameForeground, fyne.CurrentApp().Settings().ThemeVariant()))
+				cl.Refresh()
 				bg.Hide()
 
 				race := schedule.MRData.RaceTable.Races[id.Row-1]
@@ -95,7 +98,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 						fmt.Printf("Error parsing race date: %v\n", err)
 					} else if raceDate.Before(now) {
 						// Append checkered flag emoji.
-						cl.SetText(baseText + " 🏁")
+						cl.Text = baseText + " 🏁"
 						// Set callback for single-click.
 						cl.OnTapped = func() {
 							round := rows[id.Row-1][0]
@@ -108,10 +111,11 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 							processes.ReloadOtherTabs(newResultsTab.Content, newQualifyingTab.Content, newSprintTab.Content)
 						}
 						cl.Clickable = true
+						cl.Refresh()
 					}
 				} else if id.Col == 2 {
 					// Column 2: Circuit name. Append map emoji and enable single-click.
-					cl.SetText(baseText + " 🗺️")
+					cl.Text = baseText + " 🗺️"
 					lat := race.Circuit.Location.Lat
 					lon := race.Circuit.Location.Long
 					mapURL := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
@@ -121,14 +125,13 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 						}
 					}
 					cl.Clickable = true
+					cl.Refresh()
 				}
 
+				// Instead of a stroke, change the text color for the highlighted row.
 				if id.Row == highlightRow {
-					bg.StrokeColor = theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant())
-					bg.StrokeWidth = 2
-				} else {
-					// Remove border for non-highlighted rows.
-					bg.StrokeWidth = 0
+					cl.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
+					cl.Refresh()
 				}
 
 				bg.Show()

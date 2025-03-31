@@ -85,9 +85,12 @@ func CreateDriverStandingsTableTab(parseFunc func([]byte) (string, [][]string, e
 				// 0: Position, 1: Favorite star, 2: Driver Name, 3: Team, 4: Points.
 				return len(rows), len(rows[0])
 			},
+			// Create each cell as a container that we can update later.
 			func() fyne.CanvasObject {
-				return container.NewStack(widget.NewLabel(""))
+				// Use a container holding a ClickableLabel for consistency.
+				return container.NewStack(ui.NewClickableLabel("", nil, false))
 			},
+			// Update each cell.
 			func(id widget.TableCellID, co fyne.CanvasObject) {
 				cont, ok := co.(*fyne.Container)
 				if !ok {
@@ -111,7 +114,7 @@ func CreateDriverStandingsTableTab(parseFunc func([]byte) (string, [][]string, e
 					cellWidget = processes.MakeClickableDriverCell(rows[id.Row][2])
 				default:
 					// Other columns (Position, Team, Points) show plain text.
-					cellWidget = widget.NewLabel(rows[id.Row][id.Col])
+					cellWidget = ui.NewClickableLabel(rows[id.Row][id.Col], nil, false)
 				}
 				cont.Add(cellWidget)
 				cont.Refresh()
