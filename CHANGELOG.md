@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.3] - 2025-xx-xx
+
+### Notes
+
+- Sanity check our preferences
+
 ## [0.2.2-test] - 2025-03-30
 
 ### Notes
