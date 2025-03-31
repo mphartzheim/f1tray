@@ -7,13 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [v0.3.1] - 2025-xx-xx
+## [v0.3.1] - 2025-03-31
 
-### Notes
-- Store list of all constructors available via Jolpica so we can reference their URL.
-- Favorite constructors are now implemented app wide.
-- Constructor team links are now available anywhere you see them.
-- Constructor list only loads if the file is not present.
+### ✨ Features
+- **Favorite Constructors**: Support for starring favorite constructor teams has been implemented across the app.
+- **Constructor Links Everywhere**: Team name links are now available globally—anywhere you see a constructor, you can click through to learn more.
+
+### 🧠 Improvements
+- **Constructor URL Caching**: All constructors from the Jolpica API are now cached locally to enable persistent access and link mapping.
+- **Lazy Loading**: The constructor list is only fetched if not already stored locally, reducing unnecessary API calls.
+
+### 🧪 Dev Tools
+- **Benchmarking Framework**: Added internal scaffolding for future performance testing and analysis.
 
 ---
 

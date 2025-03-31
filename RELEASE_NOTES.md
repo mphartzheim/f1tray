@@ -1,35 +1,33 @@
-# Release Notes - v0.3.0 (2025-03-31)
+## v0.3.1 – Favorite Constructors + Performance Foundations
+**Release Date:** 2025-03-31  
+**Tag:** `v0.3.1`
 
-We're excited to announce version **v0.3.0** which brings a host of enhancements and fixes to improve your experience.
+---
 
-## What's New
+### What's New
 
-- **Personalized Features:**  
-  We've begun rolling out the early stages of the Favorite Constructor feature to offer fans a more tailored experience.
+This release focuses on enhancing constructor data integration, personalizing the experience with favorites, and laying the groundwork for future performance tuning.
 
-- **Enhanced Interactivity:**  
-  All cells in the application have been transformed into clickable labels, making navigation and information access more dynamic.
+---
 
-## Bug Fixes
+### ✨ Features
+- **Favorite Constructors**  
+  You can now star your favorite constructor teams. Favorites are tracked globally across the app and can be used to highlight your top picks.
 
-- **Constructor Standings Restored:**  
-  We addressed issues in the Constructor standings tab that surfaced after implementing the new Favorite Drivers feature.
+- **Constructor Links Everywhere**  
+  Constructor names are now clickable anywhere they appear, taking you directly to their profile pages for more info.
 
-- **F1TV Button Color:**  
-  The border color on the Watch on F1TV button has been corrected for a consistent and polished look.
+---
 
-## Under the Hood
+### 🧠 Improvements
+- **Constructor URL Caching**  
+  The app now pulls and caches the full constructor list from the Jolpica API to enable consistent access to team URLs.
 
-- **Improved Code Reusability:**  
-  The driver name code has been refactored to boost maintainability and reusability.
+- **On-Demand Loading**  
+  The constructor list is only downloaded if it doesn’t already exist locally, helping reduce startup time and save bandwidth.
 
-- **UI Adjustments:**  
-  Extra visibility on the Watch on F1TV button has been removed to streamline the interface and reduce potential issues.
-  The application window is now fixed in size to provide a more consistent and uniform user experience across platforms.
+---
 
-## Automation
-
-- **Build & Release Automation:**  
-  Robust automation for building and releasing has been implemented, paving the way for smoother, faster, and more reliable deployments.
-
-Thank you for your continued support. We’re committed to enhancing your experience and welcome your feedback!
+### 🧪 Dev Tools
+- **Benchmarking Framework**  
+  Added foundational tools for internal performance benchmarking and diagnostics. Expect more fine-tuning in upcoming builds.
