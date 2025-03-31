@@ -7,12 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [02.2.] - 2025-xx-xx
+## [0.2.2] - 2025-03-30
 
 ### Added
-- Watch on F1TV button is now more prominent.
-- Users can now highlight their favorite drivers!
-- Global notification system (eg. warn the user if selecting too many favorites) implemented.
+- 🎥 **Watch on F1TV Button:** The button is now more prominent—catch your favorite live action with ease!
+- ⭐ **Favorite Drivers Highlight:** Users can now spotlight their top drivers with a simple click, adding a personal touch to the experience.
+- 🔔 **Global Notification System:** Stay informed with timely alerts—if you try to select too many favorites, you'll be gently warned.
 
 ---
 
