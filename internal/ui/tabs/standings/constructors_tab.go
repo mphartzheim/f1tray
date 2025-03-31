@@ -5,6 +5,7 @@ import (
 
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/processes"
+	"github.com/mphartzheim/f1tray/internal/ui"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -44,9 +45,16 @@ func CreateConstructorStandingsTableTab(parseFunc func([]byte) (string, [][]stri
 				// 0: Position, 1: Team Name, 2: Team Nationality, 3: Points.
 				return len(rows), len(rows[0])
 			},
+			// Create each cell as a container with a ClickableLabel.
 			func() fyne.CanvasObject {
-				return container.NewStack(widget.NewLabel(""))
+				return container.NewStack(
+					// Create a non-clickable label with empty text.
+					// This ensures a consistent cell structure.
+					// (Assuming ui.NewClickableLabel is imported from your internal/ui package.)
+					ui.NewClickableLabel("", nil, false),
+				)
 			},
+			// Update each cell.
 			func(id widget.TableCellID, co fyne.CanvasObject) {
 				cont, ok := co.(*fyne.Container)
 				if !ok {
@@ -57,10 +65,10 @@ func CreateConstructorStandingsTableTab(parseFunc func([]byte) (string, [][]stri
 				var cellWidget fyne.CanvasObject
 				if id.Col == 1 {
 					// Column 1: Team Name.
-					cellWidget = widget.NewLabel(rows[id.Row][1])
+					cellWidget = ui.NewClickableLabel(rows[id.Row][1], nil, false)
 				} else {
 					// Other columns (Position, Nationality, Points) use the corresponding row text.
-					cellWidget = widget.NewLabel(rows[id.Row][id.Col])
+					cellWidget = ui.NewClickableLabel(rows[id.Row][id.Col], nil, false)
 				}
 
 				cont.Add(cellWidget)
