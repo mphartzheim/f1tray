@@ -290,6 +290,36 @@ func MakeClickableDriverCell(text string) fyne.CanvasObject {
 	return widget.NewLabel(text)
 }
 
+// MakeClickableConstructorCell returns a fyne.CanvasObject for a constructor cell with a bio link if available.
+func MakeClickableConstructorCell(text string) fyne.CanvasObject {
+	if strings.Contains(text, "|||") {
+		parts := strings.SplitN(text, "|||", 2)
+		displayName := parts[0]
+		fallback := strings.TrimSuffix(parts[1], " 🌐")
+		clickableText := fmt.Sprintf("%s 🌐", displayName)
+
+		prefs := config.Get()
+		favorite := prefs.FavoriteConstructor == displayName
+
+		var cl *ui.ClickableLabel
+		if url, ok := models.ConstructorURLMap[displayName]; ok {
+			cl = ui.NewClickableLabel(clickableText, func() {
+				OpenWebPage(url)
+			}, true)
+		} else {
+			cl = ui.NewClickableLabel(clickableText, func() {
+				OpenWebPage(fallback)
+			}, true)
+		}
+
+		if favorite {
+			cl.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
+		}
+		return cl
+	}
+	return widget.NewLabel(text)
+}
+
 // IsSessionDay checks if any session is scheduled for today.
 func IsSessionDay(sessions []models.SessionInfo) bool {
 	today := time.Now().In(time.UTC).Truncate(24 * time.Hour)

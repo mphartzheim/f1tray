@@ -22,3 +22,16 @@ var DriverURLMap = map[string]string{
 	"Andrea Kimi Antonelli": "kimi-antonelli",
 	"Yuki Tsunoda":          "yuki-tsunoda",
 }
+
+var ConstructorURLMap = map[string]string{
+	"Red Bull":       "https://www.formula1.com/en/teams/red-bull-racing",
+	"Mercedes":       "https://www.formula1.com/en/teams/mercedes",
+	"Ferrari":        "https://www.formula1.com/en/teams/ferrari",
+	"McLaren":        "https://www.formula1.com/en/teams/mclaren",
+	"Aston Martin":   "https://www.formula1.com/en/teams/aston-martin",
+	"RB F1 Team":     "https://www.formula1.com/en/teams/racing-bulls",
+	"Haas F1 Team":   "https://www.formula1.com/en/teams/haas",
+	"Alpine F1 Team": "https://www.formula1.com/en/teams/alpine",
+	"Williams":       "https://www.formula1.com/en/teams/williams",
+	"Sauber":         "https://www.formula1.com/en/teams/kick-sauber",
+}

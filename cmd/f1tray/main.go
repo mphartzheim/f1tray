@@ -2,7 +2,9 @@ package main
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -29,6 +31,20 @@ var trayIconBytes []byte
 func main() {
 	state := models.AppState{
 		FirstRun: true,
+	}
+
+	// Preload and cache constructors.json from Jolpica
+	constructorFile, err := processes.LoadOrUpdateConstructorsJSON()
+	if err != nil {
+		fmt.Println("Warning: Failed to load constructors.json:", err)
+	} else {
+		data, err := os.ReadFile(constructorFile)
+		if err == nil {
+			var constructorList models.ConstructorListResponse
+			if json.Unmarshal(data, &constructorList) == nil {
+				models.AllConstructors = constructorList.MRData.ConstructorTable.Constructors
+			}
+		}
 	}
 
 	// Create the Fyne app.

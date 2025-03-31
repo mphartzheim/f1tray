@@ -25,13 +25,16 @@ func ParseRaceResults(body []byte) (string, [][]string, error) {
 	for i, res := range race.Results {
 		timeOrStatus := getTimeOrStatus(res.Status, res.Time.Time)
 		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
-		// Insert an empty placeholder at index 1 for the Favorite column.
+
+		url := models.ConstructorURLMap[res.Constructor.Name]
+		constructorName := buildConstructorDisplayName(res.Constructor.Name, url)
+
 		rows[i] = []string{
-			res.Position,         // Column 0: Position
-			"",                   // Column 1: Favorite (placeholder)
-			driverName,           // Column 2: Driver (includes URL indicator if available)
-			res.Constructor.Name, // Column 3: Team
-			timeOrStatus,         // Column 4: Time/Status
+			res.Position,
+			"",
+			driverName,
+			constructorName,
+			timeOrStatus,
 		}
 	}
 	return race.RaceName, rows, nil
@@ -54,13 +57,16 @@ func ParseSprintResults(body []byte) (string, [][]string, error) {
 	for i, res := range race.SprintResults {
 		timeOrStatus := getTimeOrStatus(res.Status, res.Time.Time)
 		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
-		// Insert an empty placeholder at index 1 for the Favorite column.
+
+		url := models.ConstructorURLMap[res.Constructor.Name]
+		constructorName := buildConstructorDisplayName(res.Constructor.Name, url)
+
 		rows[i] = []string{
-			res.Position,         // Column 0: Position
-			"",                   // Column 1: Favorite placeholder
-			driverName,           // Column 2: Driver name
-			res.Constructor.Name, // Column 3: Constructor/Team
-			timeOrStatus,         // Column 4: Time/Status
+			res.Position,
+			"",
+			driverName,
+			constructorName,
+			timeOrStatus,
 		}
 	}
 	return race.RaceName, rows, nil
@@ -83,13 +89,16 @@ func ParseQualifyingResults(body []byte) (string, [][]string, error) {
 	for i, res := range race.QualifyingResults {
 		bestTime := bestQualifyingTime(res.Q1, res.Q2, res.Q3)
 		driverName := buildDriverDisplayName(res.Driver.GivenName, res.Driver.FamilyName, res.Driver.URL)
-		// Insert an empty placeholder at index 1 for the Favorite column.
+
+		url := models.ConstructorURLMap[res.Constructor.Name]
+		constructorName := buildConstructorDisplayName(res.Constructor.Name, url)
+
 		rows[i] = []string{
-			res.Position,         // Column 0: Position
-			"",                   // Column 1: Favorite placeholder
-			driverName,           // Column 2: Driver name
-			res.Constructor.Name, // Column 3: Constructor/Team
-			bestTime,             // Column 4: Best qualifying time
+			res.Position,
+			"",
+			driverName,
+			constructorName,
+			bestTime,
 		}
 	}
 	return race.RaceName, rows, nil
@@ -129,15 +138,12 @@ func ParseUpcoming(body []byte) (string, [][]string, error) {
 		return "", nil, fmt.Errorf("no upcoming race data found")
 	}
 
-	// Load user preferences to determine the time format.
 	use24h := config.Get().Clock.Use24Hour
-
 	race := races[0]
 	location := fmt.Sprintf("%s, %s", race.Circuit.Location.Locality, race.Circuit.Location.Country)
 	title := fmt.Sprintf("Next Race: %s (%s)", race.RaceName, location)
 
 	var rows [][]string
-
 	rows = AppendSessionRow(rows, "Practice 1", race.FirstPractice.Date, race.FirstPractice.Time, use24h)
 	rows = AppendSessionRow(rows, "Practice 2", race.SecondPractice.Date, race.SecondPractice.Time, use24h)
 	rows = AppendSessionRow(rows, "Practice 3", race.ThirdPractice.Date, race.ThirdPractice.Time, use24h)
@@ -164,19 +170,17 @@ func ParseDriverStandings(body []byte) (string, [][]string, error) {
 	standings := standingsLists[0].DriverStandings
 	rows := make([][]string, len(standings))
 	for i, s := range standings {
-		// Build the driver name.
-		// If an API URL is provided, embed it using "|||" as a delimiter,
-		// then append the clickable emoji.
-		driverName := fmt.Sprintf("%s %s", s.Driver.GivenName, s.Driver.FamilyName)
-		if s.Driver.URL != "" {
-			driverName = fmt.Sprintf("%s|||%s%s", driverName, s.Driver.URL, " 👤")
-		}
-		// Build row with 5 columns: Position, (Favorite placeholder), Driver Name, Team, Points.
+		driverName := buildDriverDisplayName(s.Driver.GivenName, s.Driver.FamilyName, s.Driver.URL)
+
+		constructor := s.Constructors[0]
+		url := models.ConstructorURLMap[constructor.Name]
+		constructorName := buildConstructorDisplayName(constructor.Name, url)
+
 		rows[i] = []string{
 			s.Position,
-			"", // Favorite column placeholder; the clickable label will be created in the table update function.
+			"",
 			driverName,
-			s.Constructors[0].Name, // usually only one constructor per driver
+			constructorName,
 			s.Points,
 		}
 	}
@@ -201,10 +205,13 @@ func ParseConstructorStandings(body []byte) (string, [][]string, error) {
 	standings := standingsLists[0].ConstructorStandings
 	rows := make([][]string, len(standings))
 	for i, s := range standings {
+		url := models.ConstructorURLMap[s.Constructor.Name]
+		constructorName := buildConstructorDisplayName(s.Constructor.Name, url)
+
 		rows[i] = []string{
 			s.Position,
-			s.Constructor.Name,
-			s.Constructor.Nationality,
+			"",
+			constructorName,
 			s.Points,
 		}
 	}
@@ -220,6 +227,24 @@ func buildDriverDisplayName(givenName, familyName, url string) string {
 		return fmt.Sprintf("%s|||%s%s", fullName, url, " 👤")
 	}
 	return fullName
+}
+
+// buildConstructorDisplayName creates a constructor display string with an embedded fallback URL and clickable indicator.
+func buildConstructorDisplayName(name, _ string) string {
+	// Step 1: Try the ConstructorURLMap first.
+	if url, ok := models.ConstructorURLMap[name]; ok && url != "" {
+		return fmt.Sprintf("%s|||%s 🌐", name, url)
+	}
+
+	// Step 2: Try fallback from AllConstructors (downloaded JSON).
+	for _, c := range models.AllConstructors {
+		if c.Name == name && c.URL != "" {
+			return fmt.Sprintf("%s|||%s 🌐", name, c.URL)
+		}
+	}
+
+	// Step 3: No URL available.
+	return name
 }
 
 // getTimeOrStatus returns the time if available, otherwise the status.
