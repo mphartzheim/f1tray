@@ -173,11 +173,11 @@ func buildSessionNotificationSection(title string, sessionPrefs *config.SessionN
 	beforeValueEntry.OnChanged = func(val string) {
 		n, err := strconv.Atoi(val)
 		if err != nil {
-			ui.ShowNotification(models.MainWindow, "Invalid input. Please enter a numeric value.")
+			ui.ShowNotification(models.MainWindow, "Invalid input. Please enter a numeric value.", false)
 			return
 		}
 		if n < 0 {
-			ui.ShowNotification(models.MainWindow, "Negative numbers are not allowed.")
+			ui.ShowNotification(models.MainWindow, "Negative numbers are not allowed.", false)
 			return
 		}
 
@@ -185,12 +185,12 @@ func buildSessionNotificationSection(title string, sessionPrefs *config.SessionN
 		unit := beforeUnitSelect.Selected
 		if unit == "hours" {
 			if n < 1 || n > 24 {
-				ui.ShowNotification(models.MainWindow, "Please enter a value between 1 and 24 hours.")
+				ui.ShowNotification(models.MainWindow, "Please enter a value between 1 and 24 hours.", false)
 				return
 			}
 		} else if unit == "minutes" {
 			if n < 1 || n > 59 {
-				ui.ShowNotification(models.MainWindow, "Please enter a value between 1 and 59 minutes.")
+				ui.ShowNotification(models.MainWindow, "Please enter a value between 1 and 59 minutes.", false)
 				return
 			}
 		}

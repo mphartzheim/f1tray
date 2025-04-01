@@ -127,7 +127,7 @@ func buildUI(myApp fyne.App, state *models.AppState) UIComponents {
 	registerYearSelectCallback(yearSelect, scheduleTab, &standingsInnerTabs, standingsOuterTab, tabsContainer)
 
 	// Create the notification overlay.
-	notificationLabel, notificationWrapper := ui.CreateNotification(myWindow)
+	notificationLabel, notificationWrapper := ui.CreateNotification(myWindow, false)
 
 	// Stack the tabs and notification overlay.
 	stack := container.NewStack(tabsContainer, notificationWrapper)
