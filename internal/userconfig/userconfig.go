@@ -24,10 +24,10 @@ func configFilePath() (string, error) {
 	if err := os.MkdirAll(appConfigDir, 0755); err != nil {
 		return "", err
 	}
-	return filepath.Join(appConfigDir, "config.json"), nil
+	return filepath.Join(appConfigDir, "userconfig.json"), nil
 }
 
-// Load loads the user configuration from config.json (or returns defaults)
+// Load loads the user configuration from userconfig.json (or returns defaults)
 func Load() (*UserConfig, error) {
 	path, err := configFilePath()
 	if err != nil {
@@ -47,7 +47,7 @@ func Load() (*UserConfig, error) {
 	return &cfg, nil
 }
 
-// Save writes the user configuration to config.json
+// Save writes the user configuration to userconfig.json
 func Save(cfg *UserConfig) error {
 	path, err := configFilePath()
 	if err != nil {
