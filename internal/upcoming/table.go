@@ -1,7 +1,6 @@
 package upcoming
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -73,28 +72,12 @@ func CreateUpcomingTable(state *appstate.AppState, race *NextRace) *widget.Table
 					}
 				}
 			}
-
 			cell.Label.SetText(displayText)
-
 			cell.OnTapped = func() {
-				if state.Debug {
-					fmt.Printf("Clicked: row=%d col=%d -> %s\n", id.Row, id.Col, displayText)
-				}
-
 				if id.Col == 1 && isSessionRow(label) && strings.Contains(displayText, "🔴 LIVE") {
 					if models.F1tvURL != "" {
 						util.OpenWebPage(models.F1tvURL)
 					}
-				}
-			}
-			cell.OnMouseIn = func() {
-				if state.Debug {
-					fmt.Printf("Mouse in: row=%d col=%d -> %s\n", id.Row, id.Col, displayText)
-				}
-			}
-			cell.OnMouseOut = func() {
-				if state.Debug {
-					fmt.Printf("Mouse out: row=%d col=%d -> %s\n", id.Row, id.Col, displayText)
 				}
 			}
 		},

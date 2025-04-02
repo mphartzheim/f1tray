@@ -78,26 +78,7 @@ func CreateScheduleTable(state *appstate.AppState, races []ScheduledRace) *widge
 			case 4:
 				text = util.FormatToLocal(race.Date, race.Time)[11:] // Time
 			}
-
 			cell.Label.SetText(text)
-
-			if cell.OnTapped == nil {
-				cell.OnTapped = func() {
-					if state.Debug {
-						fmt.Printf("Clicked: row=%d, col=%d, value=%s\n", id.Row, id.Col, text)
-					}
-				}
-			}
-			cell.OnMouseIn = func() {
-				if state.Debug {
-					fmt.Printf("Mouse in: row=%d, col=%d, value=%s\n", id.Row, id.Col, text)
-				}
-			}
-			cell.OnMouseOut = func() {
-				if state.Debug {
-					fmt.Printf("Mouse out: row=%d, col=%d, value=%s\n", id.Row, id.Col, text)
-				}
-			}
 		},
 	)
 

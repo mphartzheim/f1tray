@@ -50,22 +50,6 @@ func CreateRaceResultsTable(state *appstate.AppState, race *RaceResultsEvent) *w
 				}
 			}
 			cell.Label.SetText(text)
-
-			cell.OnTapped = func() {
-				if state.Debug {
-					fmt.Printf("Clicked: row=%d, col=%d, value=%s\n", id.Row, id.Col, text)
-				}
-			}
-			cell.OnMouseIn = func() {
-				if state.Debug {
-					fmt.Printf("Mouse in: row=%d, col=%d, value=%s\n", id.Row, id.Col, text)
-				}
-			}
-			cell.OnMouseOut = func() {
-				if state.Debug {
-					fmt.Printf("Mouse out: row=%d, col=%d, value=%s\n", id.Row, id.Col, text)
-				}
-			}
 		},
 	)
 
@@ -113,11 +97,7 @@ func CreateQualifyingResultsTable(state *appstate.AppState, event *QualifyingEve
 			case 5:
 				text = r.Q3
 			}
-
 			cell.Label.SetText(text)
-			cell.OnTapped = func() {
-				fmt.Printf("Qualifying cell clicked: %s\n", text)
-			}
 		},
 	)
 
@@ -169,12 +149,7 @@ func CreateSprintResultsTable(state *appstate.AppState, event *SprintEvent) *wid
 					text = r.Status
 				}
 			}
-
 			cell.Label.SetText(text)
-
-			cell.OnTapped = func() {
-				fmt.Printf("Sprint cell clicked: %s\n", text)
-			}
 		},
 	)
 
