@@ -239,7 +239,9 @@ func main() {
 
 	// Season dropdown and callback
 	seasonSelect := widget.NewSelect(years, func(selected string) {
-		fmt.Println("Selected season:", selected)
+		if state.Debug {
+			fmt.Println("Selected season:", selected)
+		}
 		state.SelectedYear = selected
 		onYearSelected(selected)
 	})
