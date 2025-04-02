@@ -1,327 +1,339 @@
 package main
 
 import (
-	_ "embed"
-	"encoding/json"
+	"flag"
 	"fmt"
-	"os"
-	"strconv"
+	"strings"
 	"time"
 
-	"github.com/mphartzheim/f1tray/internal/config"
+	"github.com/mphartzheim/f1tray/internal/appstate"
+	"github.com/mphartzheim/f1tray/internal/layout"
 	"github.com/mphartzheim/f1tray/internal/models"
-	"github.com/mphartzheim/f1tray/internal/processes"
-	"github.com/mphartzheim/f1tray/internal/ui"
-	"github.com/mphartzheim/f1tray/internal/ui/tabs"
-	"github.com/mphartzheim/f1tray/internal/ui/tabs/preferences"
-	"github.com/mphartzheim/f1tray/internal/ui/tabs/results"
-	"github.com/mphartzheim/f1tray/internal/ui/tabs/standings"
+	"github.com/mphartzheim/f1tray/internal/results"
+	"github.com/mphartzheim/f1tray/internal/schedule"
+	"github.com/mphartzheim/f1tray/internal/standings"
+	"github.com/mphartzheim/f1tray/internal/upcoming"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/driver/desktop"
-	fyneTheme "fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/data/binding"
+	fyneLayout "fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
-//go:embed assets/tray_icon.png
-var trayIconBytes []byte
+var debugFlag = flag.Bool("debug", false, "Enable debug mode")
 
-// UIComponents holds references to the main UI parts needed later.
-type UIComponents struct {
-	window              fyne.Window
-	tabsContainer       *container.AppTabs
-	scheduleTab         *container.TabItem
-	upcomingTab         *container.TabItem
-	resultsOuterTab     *container.TabItem
-	standingsOuterTab   *container.TabItem
-	preferencesTab      *container.TabItem
-	notificationLabel   *widget.Label
-	notificationWrapper fyne.CanvasObject
-	upcomingTabData     *models.TabData
-	resultsTabData      *models.TabData
+type tabLoadResult struct {
+	name string
+	err  error
 }
 
 func main() {
-	state := models.AppState{FirstRun: true}
+	flag.Parse()
+	myApp := app.New()
+	myWindow := myApp.NewWindow("F1 Tray Application")
+	currentYear := fmt.Sprintf("%d", time.Now().Year())
+	state := &appstate.AppState{Window: myWindow, SelectedYear: currentYear, Debug: *debugFlag}
 
-	// Preload and cache constructors.json.
-	loadConstructors()
+	loadingLabel := widget.NewLabelWithStyle("Loading F1 data...", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	loading := container.NewCenter(loadingLabel)
+	myWindow.SetContent(loading)
 
-	// Create the Fyne app with its initial theme.
-	myApp := setupApp()
-
-	// Build the UI and obtain key components.
-	uiComps := buildUI(myApp, &state)
-
-	// Set up the system tray integration.
-	configureSystemTray(myApp, uiComps)
-
-	// Configure window behavior (show/hide and close interception).
-	setupWindowBehavior(myApp, uiComps.window)
-
-	// Lazy-load additional data once the UI is ready.
-	// Dereference the pointers so that RefreshAllData gets models.TabData values.
-	go processes.RefreshAllData(uiComps.notificationLabel, uiComps.notificationWrapper, *uiComps.upcomingTabData, *uiComps.resultsTabData)
-
-	// Start background auto-refresh.
-	go processes.StartAutoRefresh(&state, strconv.Itoa(time.Now().Year()))
-
-	// Start a ticker to periodically refresh the Upcoming tab.
-	startUpcomingTicker(&state, uiComps.tabsContainer, uiComps.upcomingTab)
-
-	myApp.Run()
-}
-
-// loadConstructors preloads and caches the constructors.json data.
-func loadConstructors() {
-	constructorFile, err := processes.LoadOrUpdateConstructorsJSON()
+	nextRace, err := upcoming.FetchNextRace()
 	if err != nil {
-		fmt.Println("Warning: Failed to load constructors.json:", err)
-		return
+		fmt.Println("Error fetching upcoming race:", err)
+		nextRace = &upcoming.NextRace{}
 	}
-	data, err := os.ReadFile(constructorFile)
-	if err != nil {
-		fmt.Println("Warning: Failed to read constructors file:", err)
-		return
+
+	scheduleContainer := container.NewStack()
+	scheduleContainer.Resize(fyne.NewSize(900, 780))
+	updateSchedule := func() {
+		races, err := schedule.FetchSchedule(state)
+		if err != nil {
+			fmt.Println("Error fetching schedule:", err)
+			races = []schedule.ScheduledRace{}
+		}
+		scheduleContainer.Objects = []fyne.CanvasObject{
+			container.NewStack(schedule.CreateScheduleTable(state, races)),
+		}
+		scheduleContainer.Refresh()
 	}
-	var constructorList models.ConstructorListResponse
-	if err := json.Unmarshal(data, &constructorList); err != nil {
-		fmt.Println("Warning: Failed to unmarshal constructors.json:", err)
-		return
+
+	// Define countdown binding and label
+	countdown := binding.NewString()
+	countdownLabel := widget.NewLabelWithData(countdown)
+	seasonLabel := widget.NewLabel("Season: ")
+
+	// Build the list of seasons (from current year to 1950)
+	currentYearInt := time.Now().Year()
+	years := make([]string, 0)
+	for y := currentYearInt; y >= 1950; y-- {
+		years = append(years, fmt.Sprintf("%d", y))
 	}
-	models.AllConstructors = constructorList.MRData.ConstructorTable.Constructors
-}
 
-// setupApp initializes the Fyne application and applies the initial theme.
-func setupApp() fyne.App {
-	myApp := app.NewWithID("f1tray")
-	initialTheme := processes.GetThemeFromName(config.Get().Themes.Theme)
-	myApp.Settings().SetTheme(initialTheme)
-	if config.Get().Debug.Enabled {
-		fmt.Printf("Theme: %T\n", fyneTheme.Current())
+	upcomingContainer := container.NewStack()
+	upcomingContainer.Resize(fyne.NewSize(900, 780))
+	updateUpcoming := func() {
+		nextRace, err := upcoming.FetchNextRace()
+		if err != nil {
+			fmt.Println("Error fetching upcoming race:", err)
+			upcomingContainer.Objects = []fyne.CanvasObject{
+				widget.NewLabel("Failed to load upcoming race."),
+			}
+		} else {
+			upcomingContainer.Objects = []fyne.CanvasObject{
+				container.NewStack(upcoming.CreateUpcomingTable(state, nextRace)),
+			}
+		}
+		upcomingContainer.Refresh()
 	}
-	return myApp
-}
 
-// buildUI constructs the main window, header, tabs, and notification overlay.
-func buildUI(myApp fyne.App, state *models.AppState) UIComponents {
-	// Create main window.
-	myWindow := myApp.NewWindow("F1 Viewer")
-	myWindow.SetFixedSize(true)
-	models.MainWindow = myWindow
-
-	// Create header (yearSelect and header container).
-	yearSelect, headerContainer := createHeader()
-
-	// Create all tabs.
-	scheduleTab, upcomingTab, resultsOuterTab, standingsOuterTab, preferencesTab,
-		upcomingTabDataVal, resultsTabDataVal, resultsInnerTabs, standingsInnerTabs,
-		tabsContainer := createTabs(yearSelect, state)
-
-	// Register callbacks for inner tab updates.
-	registerTabCallbacks(tabsContainer, resultsOuterTab, standingsOuterTab, resultsInnerTabs, standingsInnerTabs)
-
-	// Register the yearSelect callback to update tab content when the year changes.
-	registerYearSelectCallback(yearSelect, scheduleTab, &standingsInnerTabs, standingsOuterTab, tabsContainer)
-
-	// Create the notification overlay.
-	notificationLabel, notificationWrapper := ui.CreateNotification(myWindow, false)
-
-	// Stack the tabs and notification overlay.
-	stack := container.NewStack(tabsContainer, notificationWrapper)
-	myWindow.SetContent(container.NewBorder(headerContainer, nil, nil, nil, stack))
-	myWindow.Resize(fyne.NewSize(900, 700))
-
-	return UIComponents{
-		window:              myWindow,
-		tabsContainer:       tabsContainer,
-		scheduleTab:         scheduleTab,
-		upcomingTab:         upcomingTab,
-		resultsOuterTab:     resultsOuterTab,
-		standingsOuterTab:   standingsOuterTab,
-		preferencesTab:      preferencesTab,
-		notificationLabel:   notificationLabel,
-		notificationWrapper: notificationWrapper,
-		// Store as pointers so that later functions can use their Refresh methods.
-		upcomingTabData: &upcomingTabDataVal,
-		resultsTabData:  &resultsTabDataVal,
+	raceResultsContainer := container.NewStack(widget.NewLabel("Loading race results..."))
+	raceResultsContainer.Resize(fyne.NewSize(900, 780))
+	updateRaceResults := func() {
+		raceURL := fmt.Sprintf(models.RaceURL, state.SelectedYear, "last")
+		raceData, err := results.FetchRaceResults(state, raceURL)
+		if err != nil {
+			fmt.Println("Error fetching race results:", err)
+			raceResultsContainer.Objects = []fyne.CanvasObject{
+				widget.NewLabel("Failed to load race results."),
+			}
+		} else {
+			raceResultsContainer.Objects = []fyne.CanvasObject{
+				results.CreateRaceResultsTable(state, raceData),
+			}
+		}
+		raceResultsContainer.Refresh()
 	}
-}
 
-// createHeader builds the header container with a "Season" label and a year selector.
-func createHeader() (*widget.Select, fyne.CanvasObject) {
-	currentYear := time.Now().Year()
-	years := []string{}
-	for y := currentYear; y >= 1950; y-- {
-		years = append(years, strconv.Itoa(y))
+	qualifyingResultsContainer := container.NewStack(widget.NewLabel("Loading qualifying results..."))
+	qualifyingResultsContainer.Resize(fyne.NewSize(900, 780))
+	updateQualifyingResults := func() {
+		qualURL := fmt.Sprintf(models.QualifyingURL, state.SelectedYear, "last")
+		qualData, err := results.FetchQualifyingResults(state, qualURL)
+		if err != nil {
+			fmt.Println("Error fetching qualifying results:", err)
+			qualifyingResultsContainer.Objects = []fyne.CanvasObject{
+				widget.NewLabel("Failed to load qualifying results."),
+			}
+		} else {
+			qualifyingResultsContainer.Objects = []fyne.CanvasObject{
+				results.CreateQualifyingResultsTable(state, qualData),
+			}
+		}
+		qualifyingResultsContainer.Refresh()
 	}
-	yearSelect := widget.NewSelect(years, nil)
-	yearSelect.SetSelected(years[0])
-	headerContainer := container.NewHBox(widget.NewLabel("Season"), yearSelect)
-	return yearSelect, headerContainer
-}
 
-// createTabs builds each of the tabs (Schedule, Upcoming, Results, Standings, Preferences)
-// and returns the tab items along with inner tab data and the main tabs container.
-func createTabs(yearSelect *widget.Select, state *models.AppState) (scheduleTab, upcomingTab, resultsOuterTab, standingsOuterTab, preferencesTab *container.TabItem,
-	upcomingTabData, resultsTabData models.TabData,
-	resultsInnerTabs, standingsInnerTabs *container.AppTabs,
-	tabsContainer *container.AppTabs) {
+	sprintResultsContainer := container.NewStack(widget.NewLabel("Loading sprint results..."))
+	sprintResultsContainer.Resize(fyne.NewSize(900, 780))
+	updateSprintResults := func() {
+		sprintURL := fmt.Sprintf(models.SprintURL, state.SelectedYear, "last")
+		sprintData, err := results.FetchSprintResults(state, sprintURL)
 
-	// Schedule Tab.
-	scheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, yearSelect.Selected)
-	scheduleTab = container.NewTabItem("Schedule", scheduleTabData.Content)
+		if err != nil {
+			fmt.Println("Error fetching sprint results:", err)
+			sprintResultsContainer.Objects = []fyne.CanvasObject{
+				widget.NewLabel("Failed to load sprint results."),
+			}
+		} else if sprintData == nil {
+			sprintResultsContainer.Objects = []fyne.CanvasObject{
+				widget.NewLabel("Not a Sprint event."),
+			}
+		} else {
+			sprintResultsContainer.Objects = []fyne.CanvasObject{
+				results.CreateSprintResultsTable(state, sprintData),
+			}
+		}
+		sprintResultsContainer.Refresh()
+	}
 
-	// Upcoming Tab.
-	upcomingTabData = tabs.CreateUpcomingTab(state, processes.ParseUpcoming, yearSelect.Selected)
-	upcomingTab = container.NewTabItem("Upcoming", upcomingTabData.Content)
+	driverStandingsContainer := container.NewStack(widget.NewLabel("Loading driver standings..."))
+	driverStandingsContainer.Resize(fyne.NewSize(900, 780))
 
-	// Results Tab.
-	resultsTabData, resultsInnerTabs = results.CreateResultsTab(yearSelect.Selected, "last")
-	resultsOuterTab = container.NewTabItem("Results", resultsTabData.Content)
+	updateDriverStandings := func() {
+		driverURL := fmt.Sprintf(models.DriversStandingsURL, state.SelectedYear)
+		data, err := standings.FetchDriverStandings(state, driverURL)
 
-	// Standings Tab.
-	standingsTabData, standingsInnerTabs := standings.CreateStandingsTab(yearSelect.Selected, yearSelect.Selected)
-	standingsOuterTab = container.NewTabItem("Standings", standingsTabData.Content)
+		if err != nil {
+			fmt.Println("Error fetching driver standings:", err)
+			driverStandingsContainer.Objects = []fyne.CanvasObject{
+				widget.NewLabel("Failed to load driver standings."),
+			}
+		} else {
+			driverStandingsContainer.Objects = []fyne.CanvasObject{
+				standings.CreateDriverStandingsTable(state, data),
+			}
+		}
+		driverStandingsContainer.Refresh()
+	}
 
-	// Preferences Tab.
-	preferencesTab = container.NewTabItem("Preferences", preferences.CreatePreferencesTab(
-		func(updated config.Preferences) { _ = config.SaveConfig(updated) },
-		func() { upcomingTabData.Refresh() },
-	))
+	constructorStandingsContainer := container.NewStack(widget.NewLabel("Loading constructor standings..."))
+	constructorStandingsContainer.Resize(fyne.NewSize(900, 780))
 
-	// Assemble the main tabs container.
-	tabsContainer = container.NewAppTabs(
-		scheduleTab,
-		upcomingTab,
-		resultsOuterTab,
-		standingsOuterTab,
-		preferencesTab,
+	updateConstructorStandings := func() {
+		constructorURL := fmt.Sprintf(models.ConstructorsStandingsURL, state.SelectedYear)
+		data, err := standings.FetchConstructorStandings(state, constructorURL)
+
+		if err != nil {
+			fmt.Println("Error fetching constructor standings:", err)
+			constructorStandingsContainer.Objects = []fyne.CanvasObject{
+				widget.NewLabel("Failed to load constructor standings."),
+			}
+		} else {
+			constructorStandingsContainer.Objects = []fyne.CanvasObject{
+				standings.CreateConstructorStandingsTable(state, data),
+			}
+		}
+		constructorStandingsContainer.Refresh()
+	}
+
+	onYearSelected := func(newYear string) {
+		state.SelectedYear = newYear
+
+		results := make(chan tabLoadResult)
+
+		go func() {
+			updateSchedule()
+			results <- tabLoadResult{name: "Schedule", err: nil}
+		}()
+
+		go func() {
+			updateUpcoming()
+			results <- tabLoadResult{name: "Upcoming", err: nil}
+		}()
+
+		go func() {
+			updateRaceResults()
+			results <- tabLoadResult{name: "Race Results", err: nil}
+		}()
+
+		go func() {
+			updateQualifyingResults()
+			results <- tabLoadResult{name: "Qualifying Results", err: nil}
+		}()
+
+		go func() {
+			updateSprintResults()
+			results <- tabLoadResult{name: "Sprint Results", err: nil}
+		}()
+
+		go func() {
+			updateDriverStandings()
+			results <- tabLoadResult{name: "Driver Standings", err: nil}
+		}()
+
+		go func() {
+			updateConstructorStandings()
+			results <- tabLoadResult{name: "Constructor Standings", err: nil}
+		}()
+
+		go func() {
+			for i := 0; i < 7; i++ {
+				res := <-results
+				if state.Debug {
+					if res.err != nil {
+						fmt.Println("❌ Error loading", res.name, ":", res.err)
+					} else {
+						fmt.Println("✅ Loaded", res.name)
+					}
+				}
+			}
+		}()
+	}
+
+	// Season dropdown and callback
+	seasonSelect := widget.NewSelect(years, func(selected string) {
+		fmt.Println("Selected season:", selected)
+		state.SelectedYear = selected
+		onYearSelected(selected)
+	})
+
+	// Set the default selection to current year
+	if len(years) > 0 {
+		seasonSelect.SetSelected(years[0])
+		state.SelectedYear = years[0]
+	}
+
+	// Build the top row container
+	topRow := container.NewHBox(seasonLabel, seasonSelect, fyneLayout.NewSpacer(), countdownLabel)
+
+	resultsTabs := container.NewAppTabs(
+		container.NewTabItem("Race", raceResultsContainer),
+		container.NewTabItem("Qualifying", qualifyingResultsContainer),
+		container.NewTabItem("Sprint", sprintResultsContainer),
 	)
 
-	return
-}
+	standingsTabs := container.NewAppTabs(
+		container.NewTabItem("Driver", driverStandingsContainer),
+		container.NewTabItem("Constructor", constructorStandingsContainer),
+	)
 
-// registerTabCallbacks sets up the update callbacks and the OnSelected handlers for the tab containers.
-func registerTabCallbacks(tabsContainer *container.AppTabs, resultsOuterTab, standingsOuterTab *container.TabItem,
-	resultsInnerTabs, standingsInnerTabs *container.AppTabs) {
+	preferencesTabs := container.NewAppTabs(
+		container.NewTabItem("Main", widget.NewLabel("Main preferences content")),
+		container.NewTabItem("Notifications", widget.NewLabel("Notification preferences content")),
+	)
 
-	processes.UpdateTabs = func(resultsContent, qualifyingContent, sprintContent fyne.CanvasObject) {
-		resultsInnerTabs.Items[0].Content = resultsContent
-		resultsInnerTabs.Items[1].Content = qualifyingContent
-		resultsInnerTabs.Items[2].Content = sprintContent
-		resultsInnerTabs.Refresh()
+	outerTabs := container.NewAppTabs(
+		container.NewTabItem("Schedule", scheduleContainer),
+		container.NewTabItem("Upcoming", upcomingContainer),
+		container.NewTabItem("Results", resultsTabs),
+		container.NewTabItem("Standings", standingsTabs),
+		container.NewTabItem("Preferences", preferencesTabs),
+	)
 
-		if tabsContainer.SelectedIndex() != 2 {
-			if len(resultsOuterTab.Text) == 0 || resultsOuterTab.Text[len(resultsOuterTab.Text)-1] != '*' {
-				resultsOuterTab.Text += "*"
-			}
-		}
-		tabsContainer.Refresh()
-	}
+	content := container.NewBorder(topRow, nil, nil, nil, outerTabs)
+	myWindow.SetContent(content)
+	myWindow.Resize(fyne.NewSize(900, 800))
 
-	processes.UpdateStandingsTabs = func(driversContent, constructorsContent fyne.CanvasObject) {
-		standingsInnerTabs.Items[0].Content = driversContent
-		standingsInnerTabs.Items[1].Content = constructorsContent
-		standingsInnerTabs.Refresh()
-
-		if tabsContainer.SelectedIndex() != 3 {
-			if len(standingsOuterTab.Text) == 0 || standingsOuterTab.Text[len(standingsOuterTab.Text)-1] != '*' {
-				standingsOuterTab.Text += "*"
-			}
-			tabsContainer.Refresh()
-		}
-	}
-
-	// Remove trailing asterisks when a tab is selected.
-	tabsContainer.OnSelected = func(selectedTab *container.TabItem) {
-		if len(selectedTab.Text) > 0 && selectedTab.Text[len(selectedTab.Text)-1] == '*' {
-			selectedTab.Text = selectedTab.Text[:len(selectedTab.Text)-1]
-			tabsContainer.Refresh()
-		}
-	}
-	resultsInnerTabs.OnSelected = func(selectedTab *container.TabItem) {
-		if len(selectedTab.Text) > 0 && selectedTab.Text[len(selectedTab.Text)-1] == '*' {
-			selectedTab.Text = selectedTab.Text[:len(selectedTab.Text)-1]
-			resultsInnerTabs.Refresh()
-		}
-	}
-	standingsInnerTabs.OnSelected = func(selectedTab *container.TabItem) {
-		if len(selectedTab.Text) > 0 && selectedTab.Text[len(selectedTab.Text)-1] == '*' {
-			selectedTab.Text = selectedTab.Text[:len(selectedTab.Text)-1]
-			standingsInnerTabs.Refresh()
-		}
-	}
-}
-
-// registerYearSelectCallback sets the callback for year selection changes,
-// updating the Schedule and Standings tabs accordingly.
-// Note: standingsInnerTabs is passed as a pointer-to-pointer so that it can be updated.
-func registerYearSelectCallback(yearSelect *widget.Select, scheduleTab *container.TabItem,
-	standingsInnerTabs **container.AppTabs, standingsOuterTab *container.TabItem, tabsContainer *container.AppTabs) {
-
-	yearSelect.OnChanged = func(selectedYear string) {
-		newScheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, selectedYear)
-		scheduleTab.Content = newScheduleTabData.Content
-
-		selectedStandingsIndex := (*standingsInnerTabs).SelectedIndex()
-		newStandingsTabData, newStandingsInnerTabs := standings.CreateStandingsTab(selectedYear, "last")
-		standingsOuterTab.Content = newStandingsTabData.Content
-		*standingsInnerTabs = newStandingsInnerTabs
-
-		if selectedStandingsIndex >= 0 && selectedStandingsIndex < len((*standingsInnerTabs).Items) {
-			(*standingsInnerTabs).SelectIndex(selectedStandingsIndex)
-		}
-
-		if tabsContainer.SelectedIndex() != 3 {
-			if len(standingsOuterTab.Text) == 0 || standingsOuterTab.Text[len(standingsOuterTab.Text)-1] != '*' {
-				standingsOuterTab.Text += "*"
-			}
-		}
-		tabsContainer.Refresh()
-	}
-}
-
-// configureSystemTray sets up the system tray icon and menu.
-func configureSystemTray(myApp fyne.App, comps UIComponents) {
-	iconResource := fyne.NewStaticResource("tray_icon.png", trayIconBytes)
-	if desk, ok := myApp.(desktop.App); ok {
-		processes.SetTrayIcon(desk, iconResource, comps.tabsContainer, comps.window,
-			comps.scheduleTab, comps.upcomingTab, comps.resultsOuterTab, comps.standingsOuterTab, comps.preferencesTab,
-		)
-	}
-}
-
-// setupWindowBehavior configures the window's show/hide behavior and close interception.
-func setupWindowBehavior(myApp fyne.App, win fyne.Window) {
-	if config.Get().Window.HideOnOpen {
-		win.Hide()
-	} else {
-		win.Show()
-	}
-
-	win.SetCloseIntercept(func() {
-		if config.Get().Window.CloseBehavior == "exit" {
-			myApp.Quit()
-		} else {
-			win.Hide()
-		}
-	})
-}
-
-// startUpcomingTicker starts a ticker that refreshes the Upcoming tab every 60 seconds
-// if the Upcoming tab is visible and today is a session day.
-func startUpcomingTicker(state *models.AppState, tabsContainer *container.AppTabs, upcomingTab *container.TabItem) {
+	// Start live countdown goroutine
 	go func() {
-		ticker := time.NewTicker(60 * time.Second)
-		defer ticker.Stop()
-		for range ticker.C {
-			if tabsContainer.Selected() == upcomingTab && processes.IsSessionDay(state.UpcomingSessions) {
-				// Refresh the Upcoming tab.
-				// (Assuming upcomingTabData.Refresh() is the correct way to update its content.)
+		for {
+			sessionTime, label := layout.GetNextSessionTime(nextRace)
+			if sessionTime.IsZero() {
+				countdown.Set("Countdown: no upcoming sessions")
+				time.Sleep(10 * time.Second)
+				continue
 			}
+
+			diff := time.Until(sessionTime)
+			weeks := int(diff.Hours()) / 168
+			days := (int(diff.Hours()) % 168) / 24
+			hours := int(diff.Hours()) % 24
+			minutes := int(diff.Minutes()) % 60
+			seconds := int(diff.Seconds()) % 60
+
+			units := []struct {
+				value  int
+				suffix string
+			}{
+				{weeks, "w"},
+				{days, "d"},
+				{hours, "h"},
+				{minutes, "m"},
+				{seconds, "s"},
+			}
+
+			var parts []string
+			seenNonZero := false
+			for _, unit := range units {
+				if unit.value > 0 || seenNonZero {
+					seenNonZero = true
+					parts = append(parts, fmt.Sprintf("%d%s", unit.value, unit.suffix))
+				}
+
+				// Always include seconds if everything is zero
+				if unit.suffix == "s" && !seenNonZero {
+					parts = append(parts, fmt.Sprintf("%d%s", unit.value, unit.suffix))
+				}
+			}
+
+			formatted := fmt.Sprintf("Countdown to %s: %s", label, strings.Join(parts, " "))
+			countdown.Set(formatted)
+			time.Sleep(1 * time.Second)
 		}
 	}()
+
+	onYearSelected(state.SelectedYear)
+	myWindow.ShowAndRun()
 }

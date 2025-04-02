@@ -1,33 +1,23 @@
-## v0.3.1 – Favorite Constructors + Performance Foundations
-**Release Date:** 2025-03-31  
-**Tag:** `v0.3.1`
+## [v0.4.0] - 2025-04-01
 
----
+### 🚀 Major Overhaul
+- **🔨 Total Rebuild**: The F1Tray app was completely rewritten from scratch with modular architecture, cleaner logic, and maintainable code. Every feature was thoughtfully restructured for performance, readability, and scalability.
+- **🧠 Smarter Structure**: Modular packages for `schedule`, `results`, `standings`, `upcoming`, and `layout` keep logic clean and easy to work with.
 
-### What's New
+### ⚡ Performance Upgrades
+- **📡 Concurrent Data Loading**: Tab data is now fetched in parallel using Go channels — dramatically improving performance at app startup and when switching seasons.
+- **🧠 Lazy Loading Tabs**: Content is only fetched when tabs are opened, saving bandwidth and load time.
+- **🕹️ Debug Mode**: Toggle debug logs with a command-line flag. See exactly what’s loading and when.
 
-This release focuses on enhancing constructor data integration, personalizing the experience with favorites, and laying the groundwork for future performance tuning.
+### 🧭 Navigation Enhancements
+- **🗓️ Year Selector**: Quickly switch between seasons with an intuitive dropdown.
+- **📊 Standings Tabs**: View driver and constructor standings from any season, instantly.
+- **📅 Schedule + Upcoming**: Check session dates, circuits, and countdowns to the next event — all fetched live.
 
----
+### 🔧 Stability & UX
+- **💥 Tab Isolation**: Crashes in one tab won't affect others. Each tab manages its own state and failures.
+- **⏱️ Countdown Timer**: Shows time until the next session, updated in real-time.
+- **📁 Cleaner Error Handling**: UI provides graceful fallbacks for failed API calls.
 
-### ✨ Features
-- **Favorite Constructors**  
-  You can now star your favorite constructor teams. Favorites are tracked globally across the app and can be used to highlight your top picks.
-
-- **Constructor Links Everywhere**  
-  Constructor names are now clickable anywhere they appear, taking you directly to their profile pages for more info.
-
----
-
-### 🧠 Improvements
-- **Constructor URL Caching**  
-  The app now pulls and caches the full constructor list from the Jolpica API to enable consistent access to team URLs.
-
-- **On-Demand Loading**  
-  The constructor list is only downloaded if it doesn’t already exist locally, helping reduce startup time and save bandwidth.
-
----
-
-### 🧪 Dev Tools
-- **Benchmarking Framework**  
-  Added foundational tools for internal performance benchmarking and diagnostics. Expect more fine-tuning in upcoming builds.
+### 🐞 Known Issues
+- This is still a WIP — bugs may exist and polish is ongoing. But the core is **solid**.

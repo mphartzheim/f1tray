@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.4.0] - 2025-04-01
+
+### Improvements
+- **Complete Rebuild**: Built from the ground up for better logic and readability.
+
+### Bugs
+- **Lots**: This is still a WIP.
+
 ## [v0.3.1] - 2025-03-31
 
 ### ✨ Features
