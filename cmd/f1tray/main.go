@@ -12,6 +12,7 @@ import (
 	"github.com/mphartzheim/f1tray/internal/results"
 	"github.com/mphartzheim/f1tray/internal/schedule"
 	"github.com/mphartzheim/f1tray/internal/standings"
+	"github.com/mphartzheim/f1tray/internal/themes"
 	"github.com/mphartzheim/f1tray/internal/upcoming"
 
 	"fyne.io/fyne/v2"
@@ -35,6 +36,17 @@ func main() {
 	myWindow := myApp.NewWindow("F1 Tray Application")
 	currentYear := fmt.Sprintf("%d", time.Now().Year())
 	state := &appstate.AppState{Window: myWindow, SelectedYear: currentYear, Debug: *debugFlag}
+
+	themeSelect := widget.NewSelect(themes.SortedThemeList(), func(selected string) {
+		fyne.CurrentApp().Settings().SetTheme(themes.AvailableThemes()[selected])
+	})
+	themeSelect.SetSelected("System") // Or load from config
+	prefsTab := container.NewVBox(
+		container.NewHBox(
+			widget.NewLabel("Select Theme:"),
+			container.NewStack(themeSelect),
+		),
+	)
 
 	nextRace, err := upcoming.FetchNextRace()
 	if err != nil {
@@ -267,7 +279,7 @@ func main() {
 	)
 
 	preferencesTabs := container.NewAppTabs(
-		container.NewTabItem("Main", widget.NewLabel("Main preferences content")),
+		container.NewTabItem("Main", prefsTab),
 		container.NewTabItem("Notifications", widget.NewLabel("Notification preferences content")),
 	)
 
