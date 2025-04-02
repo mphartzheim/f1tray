@@ -36,10 +36,6 @@ func main() {
 	currentYear := fmt.Sprintf("%d", time.Now().Year())
 	state := &appstate.AppState{Window: myWindow, SelectedYear: currentYear, Debug: *debugFlag}
 
-	loadingLabel := widget.NewLabelWithStyle("Loading F1 data...", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	loading := container.NewCenter(loadingLabel)
-	myWindow.SetContent(loading)
-
 	nextRace, err := upcoming.FetchNextRace()
 	if err != nil {
 		fmt.Println("Error fetching upcoming race:", err)
@@ -150,7 +146,6 @@ func main() {
 
 	driverStandingsContainer := container.NewStack(widget.NewLabel("Loading driver standings..."))
 	driverStandingsContainer.Resize(fyne.NewSize(900, 780))
-
 	updateDriverStandings := func() {
 		driverURL := fmt.Sprintf(models.DriversStandingsURL, state.SelectedYear)
 		data, err := standings.FetchDriverStandings(state, driverURL)
@@ -170,7 +165,6 @@ func main() {
 
 	constructorStandingsContainer := container.NewStack(widget.NewLabel("Loading constructor standings..."))
 	constructorStandingsContainer.Resize(fyne.NewSize(900, 780))
-
 	updateConstructorStandings := func() {
 		constructorURL := fmt.Sprintf(models.ConstructorsStandingsURL, state.SelectedYear)
 		data, err := standings.FetchConstructorStandings(state, constructorURL)
@@ -193,10 +187,11 @@ func main() {
 
 		results := make(chan tabLoadResult)
 
-		go func() {
+		/* go func() {
 			updateSchedule()
 			results <- tabLoadResult{name: "Schedule", err: nil}
-		}()
+		}() */
+		updateSchedule() // Doesn't like to be in a channel, fyne.Do[AndWait] errors
 
 		go func() {
 			updateUpcoming()
@@ -334,6 +329,5 @@ func main() {
 		}
 	}()
 
-	onYearSelected(state.SelectedYear)
 	myWindow.ShowAndRun()
 }

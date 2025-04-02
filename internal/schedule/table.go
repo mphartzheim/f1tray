@@ -61,11 +61,11 @@ func CreateScheduleTable(state *appstate.AppState, races []ScheduledRace) *widge
 		},
 	)
 
-	table.SetColumnWidth(0, 80)
-	table.SetColumnWidth(1, 200)
-	table.SetColumnWidth(2, 300)
-	table.SetColumnWidth(3, 100)
-	table.SetColumnWidth(4, 100)
-	table.Resize(fyne.NewSize(900, 780))
+	table.SetColumnWidth(0, 80)  // Round
+	table.SetColumnWidth(1, 200) // Race
+	table.SetColumnWidth(2, 300) // Circuit
+	table.SetColumnWidth(3, 100) // Date
+	table.SetColumnWidth(4, 100) // Time
+
 	return table
 }

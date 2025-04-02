@@ -102,7 +102,7 @@ func CreateUpcomingTable(state *appstate.AppState, race *NextRace) *widget.Table
 
 	table.SetColumnWidth(0, 150)
 	table.SetColumnWidth(1, 400)
-	table.Resize(fyne.NewSize(600, 600))
+
 	return table
 }
 

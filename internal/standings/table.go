@@ -60,7 +60,6 @@ func CreateDriverStandingsTable(state *appstate.AppState, standings []DriverStan
 	table.SetColumnWidth(2, 160) // Constructor
 	table.SetColumnWidth(3, 80)  // Points
 	table.SetColumnWidth(4, 80)  // Wins
-	table.Resize(fyne.NewSize(900, 700))
 
 	return table
 }
@@ -108,6 +107,5 @@ func CreateConstructorStandingsTable(state *appstate.AppState, standings []Const
 	table.SetColumnWidth(2, 120) // Nationality
 	table.SetColumnWidth(3, 100) // Points
 
-	table.Resize(fyne.NewSize(900, 700))
 	return table
 }

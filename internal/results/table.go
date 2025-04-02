@@ -76,7 +76,6 @@ func CreateRaceResultsTable(state *appstate.AppState, race *RaceResultsEvent) *w
 	table.SetColumnWidth(4, 60)  // Laps
 	table.SetColumnWidth(5, 160) // Time/Status
 
-	table.Resize(fyne.NewSize(900, 700))
 	return table
 }
 
@@ -129,7 +128,6 @@ func CreateQualifyingResultsTable(state *appstate.AppState, event *QualifyingEve
 	table.SetColumnWidth(4, 100) // Q2
 	table.SetColumnWidth(5, 100) // Q3
 
-	table.Resize(fyne.NewSize(900, 700))
 	return table
 }
 
@@ -187,6 +185,5 @@ func CreateSprintResultsTable(state *appstate.AppState, event *SprintEvent) *wid
 	table.SetColumnWidth(4, 60)  // Laps
 	table.SetColumnWidth(5, 160) // Time/Status
 
-	table.Resize(fyne.NewSize(900, 700))
 	return table
 }
