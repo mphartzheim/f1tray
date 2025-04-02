@@ -68,8 +68,7 @@ func CreateScheduleTable(state *appstate.AppState, races []ScheduledRace) *widge
 				lon := race.Circuit.Location.Long
 				if lat != "" && lon != "" {
 					cell.OnTapped = func() {
-						url := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=17/%s/%s",
-							models.MapBaseURL, lat, lon, lat, lon)
+						url := fmt.Sprintf("%s?mlat=%s&mlon=%s#map=15/%s/%s", models.MapBaseURL, lat, lon, lat, lon)
 						util.OpenWebPage(url)
 					}
 				}
