@@ -155,6 +155,9 @@ func main() {
 		results := make(chan tabLoadResult)
 
 		updateSchedule() // Doesn't like being in a channel
+		if state.Debug {
+			fmt.Println("✅ Loaded Schedule")
+		}
 		go func() { updateUpcoming(); results <- tabLoadResult{"Upcoming", nil} }()
 		go func() { updateRaceResults(); results <- tabLoadResult{"Race Results", nil} }()
 		go func() { updateQualifyingResults(); results <- tabLoadResult{"Qualifying Results", nil} }()
