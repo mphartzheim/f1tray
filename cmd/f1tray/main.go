@@ -14,6 +14,7 @@ import (
 	"github.com/mphartzheim/f1tray/internal/standings"
 	"github.com/mphartzheim/f1tray/internal/themes"
 	"github.com/mphartzheim/f1tray/internal/upcoming"
+	"github.com/mphartzheim/f1tray/internal/userconfig"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -37,10 +38,17 @@ func main() {
 	currentYear := fmt.Sprintf("%d", time.Now().Year())
 	state := &appstate.AppState{Window: myWindow, SelectedYear: currentYear, Debug: *debugFlag}
 
+	cfg, _ := userconfig.Load()
+
 	themeSelect := widget.NewSelect(themes.SortedThemeList(), func(selected string) {
 		fyne.CurrentApp().Settings().SetTheme(themes.AvailableThemes()[selected])
+		cfg.SelectedTheme = selected
+		_ = userconfig.Save(cfg)
 	})
-	themeSelect.SetSelected("System") // Or load from config
+
+	themeSelect.SetSelected(cfg.SelectedTheme)
+	fyne.CurrentApp().Settings().SetTheme(themes.AvailableThemes()[cfg.SelectedTheme])
+
 	prefsTab := container.NewVBox(
 		container.NewHBox(
 			widget.NewLabel("Select Theme:"),
@@ -290,6 +298,9 @@ func main() {
 		container.NewTabItem("Standings", standingsTabs),
 		container.NewTabItem("Preferences", preferencesTabs),
 	)
+
+	state.ResultsTabs = resultsTabs
+	state.OuterTabs = outerTabs
 
 	content := container.NewBorder(topRow, nil, nil, nil, outerTabs)
 	myWindow.SetContent(content)
