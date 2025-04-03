@@ -149,7 +149,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 			update,
 		)
 
-		table.SetColumnWidth(0, 60)
+		table.SetColumnWidth(0, 70)
 		table.SetColumnWidth(1, 200)
 		table.SetColumnWidth(2, 280)
 		table.SetColumnWidth(3, 280)

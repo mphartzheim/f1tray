@@ -12,15 +12,17 @@ import (
 	"github.com/mphartzheim/f1tray/internal/models"
 	"github.com/mphartzheim/f1tray/internal/processes"
 	"github.com/mphartzheim/f1tray/internal/ui"
+	"github.com/mphartzheim/f1tray/internal/ui/helpers"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs/preferences"
-	"github.com/mphartzheim/f1tray/internal/ui/tabs/results"
 	"github.com/mphartzheim/f1tray/internal/ui/tabs/standings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/layout"
 	fyneTheme "fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -53,7 +55,7 @@ func main() {
 	myApp := setupApp()
 
 	// Build the UI and obtain key components.
-	uiComps := buildUI(myApp, &state)
+	uiComps, countdownBinding := buildUI(myApp, &state)
 
 	// Set up the system tray integration.
 	configureSystemTray(myApp, uiComps)
@@ -63,10 +65,15 @@ func main() {
 
 	// Lazy-load additional data once the UI is ready.
 	// Dereference the pointers so that RefreshAllData gets models.TabData values.
-	go processes.RefreshAllData(uiComps.notificationLabel, uiComps.notificationWrapper, *uiComps.upcomingTabData, *uiComps.resultsTabData)
+	go processes.RefreshAllData(uiComps.notificationLabel,
+		uiComps.notificationWrapper,
+		*uiComps.upcomingTabData,
+		*uiComps.resultsTabData)
 
 	// Start background auto-refresh.
 	go processes.StartAutoRefresh(&state, strconv.Itoa(time.Now().Year()))
+
+	go processes.StartCountdown(countdownBinding, &state)
 
 	// Start a ticker to periodically refresh the Upcoming tab.
 	startUpcomingTicker(&state, uiComps.tabsContainer, uiComps.upcomingTab)
@@ -106,14 +113,14 @@ func setupApp() fyne.App {
 }
 
 // buildUI constructs the main window, header, tabs, and notification overlay.
-func buildUI(myApp fyne.App, state *models.AppState) UIComponents {
+func buildUI(myApp fyne.App, state *models.AppState) (UIComponents, binding.String) {
 	// Create main window.
 	myWindow := myApp.NewWindow("F1 Viewer")
 	myWindow.SetFixedSize(true)
 	models.MainWindow = myWindow
 
 	// Create header (yearSelect and header container).
-	yearSelect, headerContainer := createHeader()
+	yearSelect, headerContainer, countdownBinding := createHeader()
 
 	// Create all tabs.
 	scheduleTab, upcomingTab, resultsOuterTab, standingsOuterTab, preferencesTab,
@@ -147,11 +154,11 @@ func buildUI(myApp fyne.App, state *models.AppState) UIComponents {
 		// Store as pointers so that later functions can use their Refresh methods.
 		upcomingTabData: &upcomingTabDataVal,
 		resultsTabData:  &resultsTabDataVal,
-	}
+	}, countdownBinding
 }
 
 // createHeader builds the header container with a "Season" label and a year selector.
-func createHeader() (*widget.Select, fyne.CanvasObject) {
+func createHeader() (*widget.Select, fyne.CanvasObject, binding.String) {
 	currentYear := time.Now().Year()
 	years := []string{}
 	for y := currentYear; y >= 1950; y-- {
@@ -159,32 +166,36 @@ func createHeader() (*widget.Select, fyne.CanvasObject) {
 	}
 	yearSelect := widget.NewSelect(years, nil)
 	yearSelect.SetSelected(years[0])
-	headerContainer := container.NewHBox(widget.NewLabel("Season"), yearSelect)
-	return yearSelect, headerContainer
+	countdownBinding := binding.NewString()
+	_ = countdownBinding.Set("Loading countdown…")
+	countdownLabel := widget.NewLabelWithData(countdownBinding)
+	countdownLabel.Alignment = fyne.TextAlignTrailing
+
+	headerContainer := container.NewHBox(widget.NewLabel("Season"), yearSelect, layout.NewSpacer(), countdownLabel)
+	return yearSelect, headerContainer, countdownBinding
 }
 
 // createTabs builds each of the tabs (Schedule, Upcoming, Results, Standings, Preferences)
 // and returns the tab items along with inner tab data and the main tabs container.
-func createTabs(yearSelect *widget.Select, state *models.AppState) (scheduleTab, upcomingTab, resultsOuterTab, standingsOuterTab, preferencesTab *container.TabItem,
+func createTabs(yearSelect *widget.Select, state *models.AppState) (
+	scheduleTab, upcomingTab, resultsOuterTab, standingsOuterTab, preferencesTab *container.TabItem,
 	upcomingTabData, resultsTabData models.TabData,
 	resultsInnerTabs, standingsInnerTabs *container.AppTabs,
-	tabsContainer *container.AppTabs) {
+	tabsContainer *container.AppTabs,
+) {
+	// Load all core tabs concurrently
+	tabsData := helpers.LoadTabsConcurrently(state, yearSelect.Selected)
 
-	// Schedule Tab.
-	scheduleTabData := tabs.CreateScheduleTableTab(processes.ParseSchedule, yearSelect.Selected)
-	scheduleTab = container.NewTabItem("Schedule", scheduleTabData.Content)
+	scheduleTab = tabsData.ScheduleTab
+	upcomingTab = tabsData.UpcomingTab
+	resultsOuterTab = tabsData.ResultsOuterTab
+	standingsOuterTab = tabsData.StandingsOuterTab
 
-	// Upcoming Tab.
-	upcomingTabData = tabs.CreateUpcomingTab(state, processes.ParseUpcoming, yearSelect.Selected)
-	upcomingTab = container.NewTabItem("Upcoming", upcomingTabData.Content)
-
-	// Results Tab.
-	resultsTabData, resultsInnerTabs = results.CreateResultsTab(yearSelect.Selected, "last")
-	resultsOuterTab = container.NewTabItem("Results", resultsTabData.Content)
-
-	// Standings Tab.
-	standingsTabData, standingsInnerTabs := standings.CreateStandingsTab(yearSelect.Selected, yearSelect.Selected)
-	standingsOuterTab = container.NewTabItem("Standings", standingsTabData.Content)
+	upcomingTabData = tabsData.UpcomingTabData
+	upcomingTabData.Refresh()
+	resultsTabData = tabsData.ResultsTabData
+	resultsInnerTabs = tabsData.ResultsInnerTabs
+	standingsInnerTabs = tabsData.StandingsInnerTabs
 
 	// Preferences Tab.
 	preferencesTab = container.NewTabItem("Preferences", preferences.CreatePreferencesTab(
