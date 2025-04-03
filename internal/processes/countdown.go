@@ -32,16 +32,42 @@ func StartCountdown(binding binding.String, state *models.AppState) {
 			if now.After(next.StartTime) {
 				break // Find the next session
 			}
-			remaining := next.StartTime.Sub(now)
-			binding.Set(fmt.Sprintf("Next: %s in %02dh %02dm %02ds",
-				next.Label,
-				int(remaining.Hours()),
-				int(remaining.Minutes())%60,
-				int(remaining.Seconds())%60,
-			))
+			duration := next.StartTime.Sub(now)
+			weeks := int(duration.Hours()) / (24 * 7)
+			days := (int(duration.Hours()) / 24) % 7
+			hours := int(duration.Hours()) % 24
+			minutes := int(duration.Minutes()) % 60
+			seconds := int(duration.Seconds()) % 60
+
+			parts := []string{}
+			if weeks > 0 {
+				parts = append(parts, fmt.Sprintf("%dw", weeks))
+			}
+			if days > 0 {
+				parts = append(parts, fmt.Sprintf("%dd", days))
+			}
+			if hours > 0 || len(parts) > 0 {
+				parts = append(parts, fmt.Sprintf("%02dh", hours))
+			}
+			parts = append(parts, fmt.Sprintf("%02dm", minutes))
+			parts = append(parts, fmt.Sprintf("%02ds", seconds))
+
+			binding.Set(fmt.Sprintf("Next: %s in %s", next.Label, join(parts, " ")))
+
 			time.Sleep(1 * time.Second)
 		}
 	}
+}
+
+func join(parts []string, sep string) string {
+	result := ""
+	for i, p := range parts {
+		if i > 0 {
+			result += sep
+		}
+		result += p
+	}
+	return result
 }
 
 func findNextSession(state *models.AppState) *models.SessionInfo {
