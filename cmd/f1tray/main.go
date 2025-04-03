@@ -115,7 +115,7 @@ func setupApp() fyne.App {
 // buildUI constructs the main window, header, tabs, and notification overlay.
 func buildUI(myApp fyne.App, state *models.AppState) (UIComponents, binding.String) {
 	// Create main window.
-	myWindow := myApp.NewWindow("F1 Viewer")
+	myWindow := myApp.NewWindow("F1 Tray")
 	myWindow.SetFixedSize(true)
 	models.MainWindow = myWindow
 
