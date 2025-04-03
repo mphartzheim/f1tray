@@ -299,6 +299,7 @@ type AppState struct {
 	UpcomingSessions    []SessionInfo `json:"upcoming_sessions"`
 	FavoriteDrivers     []string      `json:"favorite_drivers"`
 	FavoriteConstructor string        `json:"favorite_constructor"`
+	LastUpcomingHash    string        `json:"last_upcoming_hash"`
 }
 
 // SessionInfo holds individual session data for notification purposes.
