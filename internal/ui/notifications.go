@@ -11,14 +11,22 @@ import (
 )
 
 // CreateNotification creates a notification overlay container that is centered on the given window's canvas.
-func CreateNotification(win fyne.Window) (*widget.Label, fyne.CanvasObject) {
+// If withLoading is true, an infinite progress bar is added.
+func CreateNotification(win fyne.Window, withLoading bool) (*widget.Label, fyne.CanvasObject) {
 	notificationLabel := widget.NewLabel("")
 	notificationLabel.Alignment = fyne.TextAlignCenter
 
-	// Build a padded horizontal container with the label and close button.
-	popup := container.NewPadded(container.NewHBox(
-		notificationLabel,
-	))
+	// Build the content container.
+	contentItems := []fyne.CanvasObject{notificationLabel}
+	var progressBar *widget.ProgressBarInfinite
+	if withLoading {
+		progressBar = widget.NewProgressBarInfinite()
+		contentItems = append(contentItems, progressBar)
+	}
+
+	// Use a VBox to stack the label (and progress bar, if any) vertically.
+	popupContent := container.NewVBox(contentItems...)
+	popup := container.NewPadded(popupContent)
 
 	// Create a background rectangle.
 	popupBG := canvas.NewRectangle(theme.Color(theme.ColorNamePrimary))
@@ -28,29 +36,30 @@ func CreateNotification(win fyne.Window) (*widget.Label, fyne.CanvasObject) {
 	notificationContainer := container.NewStack(popupBG, popup)
 	// Center the notification container.
 	centered := container.NewCenter(notificationContainer)
-	// Wrap in a Max container so that it fills the canvas.
+	// Wrap in a container that fills the canvas.
 	wrapper := container.NewStack(centered)
 	wrapper.Hide() // start hidden
 
-	// We need the overlay reference in the close button callback.
-	var overlay fyne.CanvasObject = wrapper
-	return notificationLabel, overlay
+	return notificationLabel, wrapper
 }
 
 // ShowNotification creates and displays the notification overlay (centered) on the provided window.
-// The overlay is sized to fill the window and is automatically removed after 3 seconds.
-func ShowNotification(win fyne.Window, text string) fyne.CanvasObject {
-	label, overlay := CreateNotification(win)
+// If withLoading is true, an infinite loading bar is displayed and the overlay is not auto-removed.
+// Otherwise, the overlay is automatically removed after 3 seconds.
+func ShowNotification(win fyne.Window, text string, withLoading bool) fyne.CanvasObject {
+	label, overlay := CreateNotification(win, withLoading)
 	label.SetText(text)
-	// Ensure the overlay fills the canvas.
 	overlay.Resize(win.Canvas().Size())
 	overlay.Show()
 	win.Canvas().Overlays().Add(overlay)
 
-	// Auto-remove the overlay after 3 seconds.
-	go func() {
-		time.Sleep(3 * time.Second)
-		win.Canvas().Overlays().Remove(overlay)
-	}()
+	if !withLoading {
+		// Auto-remove the overlay after 3 seconds when not in loading mode.
+		go func() {
+			time.Sleep(3 * time.Second)
+			win.Canvas().Overlays().Remove(overlay)
+		}()
+	}
+
 	return overlay
 }

@@ -16,8 +16,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const dtLayout = "2006-01-02 15:04:05"
-
 // CreateUpcomingTab builds a tab showing upcoming race sessions, with a clickable label for map access and a link to F1TV.
 func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [][]string, error), year string) models.TabData {
 
@@ -35,6 +33,7 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 	})
 
 	refresh := func() bool {
+		fmt.Println("🔁 Running UpcomingTab refresh()")
 		data, err := processes.FetchData(url)
 		if err != nil {
 			status.SetText("Failed to fetch upcoming data.")
@@ -77,44 +76,61 @@ func CreateUpcomingTab(state *models.AppState, parseFunc func([]byte) (string, [
 		} else {
 			var upcoming []models.SessionInfo
 			now := time.Now()
-
+			const dtLayout = "2006-01-02 15:04:05Z" // Updated layout for Zulu times
 			for _, race := range upcomingResp.MRData.RaceTable.Races {
-				// Build session datetime strings using available session times.
-				sessions := make(map[string]string)
+				fmt.Println("➡️ Race:", race.RaceName)
+
+				type rawSession struct {
+					Label string
+					Time  string
+				}
+
+				var sessions []rawSession
+
 				if race.FirstPractice.Date != "" && race.FirstPractice.Time != "" {
-					sessions["Practice"] = race.FirstPractice.Date + " " + race.FirstPractice.Time
+					sessions = append(sessions, rawSession{"Practice 1", race.FirstPractice.Date + " " + race.FirstPractice.Time})
 				}
 				if race.SecondPractice.Date != "" && race.SecondPractice.Time != "" {
-					sessions["Practice 2"] = race.SecondPractice.Date + " " + race.SecondPractice.Time
+					sessions = append(sessions, rawSession{"Practice 2", race.SecondPractice.Date + " " + race.SecondPractice.Time})
 				}
 				if race.ThirdPractice.Date != "" && race.ThirdPractice.Time != "" {
-					sessions["Practice 3"] = race.ThirdPractice.Date + " " + race.ThirdPractice.Time
+					sessions = append(sessions, rawSession{"Practice 3", race.ThirdPractice.Date + " " + race.ThirdPractice.Time})
 				}
 				if race.Qualifying.Date != "" && race.Qualifying.Time != "" {
-					sessions["Qualifying"] = race.Qualifying.Date + " " + race.Qualifying.Time
+					sessions = append(sessions, rawSession{"Qualifying", race.Qualifying.Date + " " + race.Qualifying.Time})
 				}
 				if race.Sprint.Date != "" && race.Sprint.Time != "" {
-					sessions["Sprint"] = race.Sprint.Date + " " + race.Sprint.Time
+					sessions = append(sessions, rawSession{"Sprint", race.Sprint.Date + " " + race.Sprint.Time})
 				}
-				// Always include Race session.
 				if race.Date != "" && race.Time != "" {
-					sessions["Race"] = race.Date + " " + race.Time
+					sessions = append(sessions, rawSession{"Race", race.Date + " " + race.Time})
 				}
 
-				for sessionType, datetime := range sessions {
-					startTime, err := time.Parse(dtLayout, datetime)
+				for _, s := range sessions {
+					startTime, err := time.Parse(dtLayout, s.Time)
 					if err != nil {
-						continue
+						fmt.Println("❌ Failed with dtLayout, trying fallback:", s.Time)
+						startTime, err = time.Parse("2006-01-02 15:04:05", s.Time)
+						if err != nil {
+							fmt.Println("❌ Still failed to parse datetime:", s.Time, "for", s.Label)
+							continue
+						}
 					}
+
+					fmt.Println("🕓 Parsed:", s.Label, "=>", startTime.Format(time.RFC3339))
 					if startTime.After(now) {
 						upcoming = append(upcoming, models.SessionInfo{
-							Type:      sessionType,
+							Type:      s.Label,
 							StartTime: startTime,
-							Label:     race.RaceName + " – " + sessionType,
+							Label:     race.RaceName + " – " + s.Label,
 						})
 					}
 				}
 			}
+
+			state.UpcomingSessions = upcoming
+			fmt.Println("✅ Loaded", len(upcoming), "upcoming sessions into AppState.")
+
 			state.UpcomingSessions = upcoming
 
 			// Configure the Next Race label.

@@ -46,12 +46,12 @@ func CreateDriverStandingsTableTab(parseFunc func([]byte) (string, [][]string, e
 			if len(favs) < 2 {
 				prefs.FavoriteDrivers = append(favs, driverName)
 			} else {
-				ui.ShowNotification(models.MainWindow, "You can only select up to two favorite drivers.")
+				ui.ShowNotification(models.MainWindow, "You can only select up to two favorite drivers.", false)
 				return
 			}
 		}
 		if err := config.SaveConfig(*prefs); err != nil {
-			ui.ShowNotification(models.MainWindow, "Failed to save config.")
+			ui.ShowNotification(models.MainWindow, "Failed to save config.", false)
 			return
 		}
 		refresh()

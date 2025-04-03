@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v0.3.2] - 2025-04-02
+
+### ✨ Features
+- **Live Countdown Timer**: A dynamic countdown now ticks toward the next F1 session, down to the second. Never miss lights out again.
+
+### 🎯 Improvements
+- **Next Race Highlighting**: We've turned up the contrast — the upcoming race is now easier to spot at a glance.
+
+### 🛠 Under the Hood
+- **Notification Refactor**: The alert system was streamlined for cleaner logic and future flexibility.
+
+---
+
 ## [v0.3.1] - 2025-03-31
 
 ### ✨ Features

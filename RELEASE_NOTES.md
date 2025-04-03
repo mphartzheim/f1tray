@@ -1,33 +1,16 @@
-## v0.3.1 – Favorite Constructors + Performance Foundations
-**Release Date:** 2025-03-31  
-**Tag:** `v0.3.1`
+### 🚀 F1Tray v0.3.2 — Countdown to Lights Out  
+**Release Date:** 2025-04-02
 
----
+This update introduces a sleek new countdown feature that keeps you locked in and ready for the next session. Whether it’s qualifying, a sprint, or the main event — you’ll know exactly when to tune in.
 
-### What's New
+#### 🆕 What’s New
+- **Live Countdown Timer**  
+  A real-time countdown now displays how long until the next session begins. It updates every second, so you’re always race-ready.
 
-This release focuses on enhancing constructor data integration, personalizing the experience with favorites, and laying the groundwork for future performance tuning.
+#### 🎯 Enhancements
+- **Next Race Highlighting**  
+  The upcoming session is now visually emphasized in the interface, making it easier than ever to spot what’s next on the calendar.
 
----
-
-### ✨ Features
-- **Favorite Constructors**  
-  You can now star your favorite constructor teams. Favorites are tracked globally across the app and can be used to highlight your top picks.
-
-- **Constructor Links Everywhere**  
-  Constructor names are now clickable anywhere they appear, taking you directly to their profile pages for more info.
-
----
-
-### 🧠 Improvements
-- **Constructor URL Caching**  
-  The app now pulls and caches the full constructor list from the Jolpica API to enable consistent access to team URLs.
-
-- **On-Demand Loading**  
-  The constructor list is only downloaded if it doesn’t already exist locally, helping reduce startup time and save bandwidth.
-
----
-
-### 🧪 Dev Tools
-- **Benchmarking Framework**  
-  Added foundational tools for internal performance benchmarking and diagnostics. Expect more fine-tuning in upcoming builds.
+#### 🧠 Under the Hood
+- **Notification Refactor**  
+  We cleaned up the notification system code to make it more maintainable and future-proof.

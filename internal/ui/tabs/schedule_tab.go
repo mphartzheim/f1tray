@@ -130,6 +130,9 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 
 				// Instead of a stroke, change the text color for the highlighted row.
 				if id.Row == highlightRow {
+					if id.Col == 0 {
+						cl.Text = baseText + " Next →"
+					}
 					cl.SetTextColor(theme.Current().Color(theme.ColorNamePrimary, fyne.CurrentApp().Settings().ThemeVariant()))
 					cl.Refresh()
 				}
@@ -146,7 +149,7 @@ func CreateScheduleTableTab(parseFunc func([]byte) (string, [][]string, error), 
 			update,
 		)
 
-		table.SetColumnWidth(0, 60)
+		table.SetColumnWidth(0, 70)
 		table.SetColumnWidth(1, 200)
 		table.SetColumnWidth(2, 280)
 		table.SetColumnWidth(3, 280)

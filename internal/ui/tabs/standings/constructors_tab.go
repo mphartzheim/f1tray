@@ -32,13 +32,13 @@ func CreateConstructorStandingsTableTab(parseFunc func([]byte) (string, [][]stri
 			prefs.FavoriteConstructor = ""
 		} else {
 			if prefs.FavoriteConstructor != "" {
-				ui.ShowNotification(models.MainWindow, "You can only select one favorite constructor.")
+				ui.ShowNotification(models.MainWindow, "You can only select one favorite constructor.", false)
 				return
 			}
 			prefs.FavoriteConstructor = constructorName
 		}
 		if err := config.SaveConfig(*prefs); err != nil {
-			ui.ShowNotification(models.MainWindow, "Failed to save config.")
+			ui.ShowNotification(models.MainWindow, "Failed to save config.", false)
 			return
 		}
 		refresh()
