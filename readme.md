@@ -1,8 +1,17 @@
-# F1Tray
+# F1Tray (Archived)
 
 [![Build Status](https://github.com/mphartzheim/f1tray/actions/workflows/release.yml/badge.svg)](https://github.com/mphartzheim/f1tray/actions/workflows/release.yml)
 [![GitHub release](https://img.shields.io/github/v/release/mphartzheim/f1tray?include_prereleases)](https://github.com/mphartzheim/f1tray/releases)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/mphartzheim/f1tray)](https://golang.org/dl/)
+
+> ⚠️ **Note:** This project is no longer maintained.  
+> It was an experimental exploration of using AI-assisted development to build a cross-platform desktop tray application.
+
+For the actively developed successor, check out [`f1viewer`](https://github.com/mphartzheim/f1viewer) – a faster, cleaner, and more extensible project for browsing Formula 1 data in real time.
+
+---
+
+## Overview
 
 **F1Tray** is a minimal, cross-platform desktop tray application that shows live and upcoming Formula 1 session information. It features quick access to race results, qualifying times, championship standings, and weekend schedules—right from your system tray.
 
@@ -11,33 +20,24 @@
 ## Features
 
 ### 🏁 Upcoming Sessions at a Glance
-See a list of upcoming F1 sessions with the current session highlighted in real-time.
-
-- Session start times adjusted to your local time zone.
-- Highlights any session that is currently in progress.
-- Support for session notifications based on your preferences.
+- Localized session start times.
+- Real-time session highlighting.
+- Notification support.
 
 ### 🏆 Race Results & Qualifying
-Quickly check the final standings for races, sprints, and qualifying rounds.
-
-- Driver positions, time gaps, and status.
-- Differentiates between Race, Sprint, Qualifying, and Sprint Qualifying.
+- Final standings with driver positions and time gaps.
+- Differentiates session types clearly.
 
 ### 🧮 Driver & Constructor Standings
-Stay up-to-date on the championship battle.
-
-- Full season standings for drivers and constructors.
-- Highlights current leaders and team points.
-- Auto-updates after each race.
+- Full season rankings.
+- Highlights leaders and points.
 
 ### 🔔 Custom Notifications
-Receive notifications at the start of each session, or configure alerts for minutes/hours beforehand.
-
-- Configurable for each session type (e.g., Practice, Qualifying, Race).
-- Integrates cleanly with your desktop notification system.
+- Per-session configurable alerts.
+- Desktop integration.
 
 ### 🎨 Theming & UI
-F1Tray offers both light and dark themes to match your desktop environment.
+- Light and dark themes supported.
 
 ---
 
@@ -57,10 +57,10 @@ F1Tray offers both light and dark themes to match your desktop environment.
 
 ## Design Highlights
 
-- Built with [Fyne](https://fyne.io/) for a native look and feel.
+- Built with [Fyne](https://fyne.io/) for a native desktop look.
 - Uses data from the [Jolpica API](https://github.com/jolpica/api) (Apache 2.0).
-- Auto-refreshes data in the background.
-- Configurable options include light/dark theme, session alert timing, and window behavior on close.
+- Background data refresh.
+- User-configurable options for appearance and behavior.
 
 ---
 
