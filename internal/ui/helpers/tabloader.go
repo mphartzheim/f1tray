@@ -10,69 +10,73 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-type TabResults struct {
-	ScheduleTabData  models.TabData
-	UpcomingTabData  models.TabData
-	ResultsTabData   models.TabData
-	StandingsTabData models.TabData
-
-	ScheduleTab       *container.TabItem
-	UpcomingTab       *container.TabItem
-	ResultsOuterTab   *container.TabItem
-	StandingsOuterTab *container.TabItem
-
+type TabsLoadResult struct {
+	ScheduleTab        *container.TabItem
+	ScheduleTabData    models.TabData
+	UpcomingTab        *container.TabItem
+	UpcomingTabData    models.TabData
+	ResultsOuterTab    *container.TabItem
+	ResultsTabData     models.TabData
 	ResultsInnerTabs   *container.AppTabs
+	StandingsOuterTab  *container.TabItem
+	StandingsTabData   models.TabData
 	StandingsInnerTabs *container.AppTabs
 }
 
-func LoadTabsConcurrently(state *models.AppState, selectedYear string) TabResults {
+func LoadTabsConcurrently(state *models.AppState, selectedYear string) TabsLoadResult {
 	type tabResult struct {
 		name      string
-		tabItem   *container.TabItem
-		tabData   models.TabData
+		tab       *container.TabItem
+		data      models.TabData
 		innerTabs *container.AppTabs
 	}
 
-	scheduleCh := make(chan tabResult)
-	upcomingCh := make(chan tabResult)
-	resultsCh := make(chan tabResult)
-	standingsCh := make(chan tabResult)
+	tabResults := make(chan tabResult, 4)
 
+	// Schedule
 	go func() {
 		data := tabs.CreateScheduleTableTab(processes.ParseSchedule, selectedYear)
-		scheduleCh <- tabResult{name: "Schedule", tabItem: container.NewTabItem("Schedule", data.Content), tabData: data}
+		tabResults <- tabResult{name: "schedule", tab: container.NewTabItem("Schedule", data.Content), data: data}
 	}()
 
+	// Upcoming
 	go func() {
 		data := tabs.CreateUpcomingTab(state, processes.ParseUpcoming, selectedYear)
-		upcomingCh <- tabResult{name: "Upcoming", tabItem: container.NewTabItem("Upcoming", data.Content), tabData: data}
+		tabResults <- tabResult{name: "upcoming", tab: container.NewTabItem("Upcoming", data.Content), data: data}
 	}()
 
+	// Results
 	go func() {
 		data, inner := results.CreateResultsTab(selectedYear, "last")
-		resultsCh <- tabResult{name: "Results", tabItem: container.NewTabItem("Results", data.Content), tabData: data, innerTabs: inner}
+		tabResults <- tabResult{name: "results", tab: container.NewTabItem("Results", data.Content), data: data, innerTabs: inner}
 	}()
 
+	// Standings
 	go func() {
-		data, inner := standings.CreateStandingsTab(selectedYear, selectedYear)
-		standingsCh <- tabResult{name: "Standings", tabItem: container.NewTabItem("Standings", data.Content), tabData: data, innerTabs: inner}
+		data, inner := standings.CreateStandingsTab(selectedYear, "last")
+		tabResults <- tabResult{name: "standings", tab: container.NewTabItem("Standings", data.Content), data: data, innerTabs: inner}
 	}()
 
-	schedule := <-scheduleCh
-	upcoming := <-upcomingCh
-	results := <-resultsCh
-	standings := <-standingsCh
-
-	return TabResults{
-		ScheduleTabData:    schedule.tabData,
-		UpcomingTabData:    upcoming.tabData,
-		ResultsTabData:     results.tabData,
-		StandingsTabData:   standings.tabData,
-		ScheduleTab:        schedule.tabItem,
-		UpcomingTab:        upcoming.tabItem,
-		ResultsOuterTab:    results.tabItem,
-		StandingsOuterTab:  standings.tabItem,
-		ResultsInnerTabs:   results.innerTabs,
-		StandingsInnerTabs: standings.innerTabs,
+	var res TabsLoadResult
+	for i := 0; i < 4; i++ {
+		r := <-tabResults
+		switch r.name {
+		case "schedule":
+			res.ScheduleTab = r.tab
+			res.ScheduleTabData = r.data
+		case "upcoming":
+			res.UpcomingTab = r.tab
+			res.UpcomingTabData = r.data
+		case "results":
+			res.ResultsOuterTab = r.tab
+			res.ResultsTabData = r.data
+			res.ResultsInnerTabs = r.innerTabs
+		case "standings":
+			res.StandingsOuterTab = r.tab
+			res.StandingsTabData = r.data
+			res.StandingsInnerTabs = r.innerTabs
+		}
 	}
+
+	return res
 }

@@ -46,38 +46,41 @@ type UIComponents struct {
 }
 
 func main() {
+	processes.StartBenchmark("main.totalStartup")
+
 	state := models.AppState{FirstRun: true}
 
-	// Preload and cache constructors.json.
+	processes.StartBenchmark("main.loadConstructors")
 	loadConstructors()
+	processes.EndBenchmark("main.loadConstructors")
 
-	// Create the Fyne app with its initial theme.
 	myApp := setupApp()
 
-	// Build the UI and obtain key components.
+	processes.StartBenchmark("main.buildUI")
 	uiComps, countdownBinding := buildUI(myApp, &state)
+	processes.EndBenchmark("main.buildUI")
 
-	// Set up the system tray integration.
 	configureSystemTray(myApp, uiComps)
-
-	// Configure window behavior (show/hide and close interception).
 	setupWindowBehavior(myApp, uiComps.window)
 
-	// Lazy-load additional data once the UI is ready.
-	// Dereference the pointers so that RefreshAllData gets models.TabData values.
-	go processes.RefreshAllData(uiComps.notificationLabel,
-		uiComps.notificationWrapper,
-		*uiComps.upcomingTabData,
-		*uiComps.resultsTabData)
+	processes.StartBenchmark("main.RefreshAllData")
+	go func() {
+		processes.StartBenchmark("main.refreshThread")
+		processes.RefreshAllData(
+			uiComps.notificationLabel,
+			uiComps.notificationWrapper,
+			*uiComps.upcomingTabData,
+			*uiComps.resultsTabData,
+		)
+		processes.EndBenchmark("main.refreshThread")
+	}()
+	processes.EndBenchmark("main.RefreshAllData")
 
-	// Start background auto-refresh.
 	go processes.StartAutoRefresh(&state, strconv.Itoa(time.Now().Year()))
-
 	go processes.StartCountdown(countdownBinding, &state)
+	startUpcomingTicker(&state, uiComps.tabsContainer, uiComps.upcomingTab, uiComps.upcomingTabData)
 
-	// Start a ticker to periodically refresh the Upcoming tab.
-	startUpcomingTicker(&state, uiComps.tabsContainer, uiComps.upcomingTab)
-
+	processes.EndBenchmark("main.totalStartup")
 	myApp.Run()
 }
 
@@ -115,7 +118,7 @@ func setupApp() fyne.App {
 // buildUI constructs the main window, header, tabs, and notification overlay.
 func buildUI(myApp fyne.App, state *models.AppState) (UIComponents, binding.String) {
 	// Create main window.
-	myWindow := myApp.NewWindow("F1 Viewer")
+	myWindow := myApp.NewWindow("F1 Tray")
 	myWindow.SetFixedSize(true)
 	models.MainWindow = myWindow
 
@@ -123,9 +126,11 @@ func buildUI(myApp fyne.App, state *models.AppState) (UIComponents, binding.Stri
 	yearSelect, headerContainer, countdownBinding := createHeader()
 
 	// Create all tabs.
+	processes.StartBenchmark("main.loadTabs")
 	scheduleTab, upcomingTab, resultsOuterTab, standingsOuterTab, preferencesTab,
 		upcomingTabDataVal, resultsTabDataVal, resultsInnerTabs, standingsInnerTabs,
 		tabsContainer := createTabs(yearSelect, state)
+	processes.EndBenchmark("main.loadTabs")
 
 	// Register callbacks for inner tab updates.
 	registerTabCallbacks(tabsContainer, resultsOuterTab, standingsOuterTab, resultsInnerTabs, standingsInnerTabs)
@@ -324,14 +329,31 @@ func setupWindowBehavior(myApp fyne.App, win fyne.Window) {
 
 // startUpcomingTicker starts a ticker that refreshes the Upcoming tab every 60 seconds
 // if the Upcoming tab is visible and today is a session day.
-func startUpcomingTicker(state *models.AppState, tabsContainer *container.AppTabs, upcomingTab *container.TabItem) {
+func startUpcomingTicker(state *models.AppState, tabsContainer *container.AppTabs, upcomingTab *container.TabItem, upcomingTabData *models.TabData) {
 	go func() {
 		ticker := time.NewTicker(60 * time.Second)
 		defer ticker.Stop()
+
 		for range ticker.C {
+			url := fmt.Sprintf(models.UpcomingURL, strconv.Itoa(time.Now().Year()))
+			data, err := processes.FetchData(url)
+			if err != nil {
+				fmt.Println("⚠️ Ticker: Failed to fetch upcoming data:", err)
+				continue
+			}
+
+			hash := tabs.HashUpcomingResponse(data)
+			if hash != state.LastUpcomingHash {
+				fmt.Println("🔁 Ticker: Upcoming data changed — reloading tab")
+				state.LastUpcomingHash = hash
+				upcomingTabData.Refresh()
+				continue
+			}
+
+			// Data is the same — maybe the session switched to LIVE
 			if tabsContainer.Selected() == upcomingTab && processes.IsSessionDay(state.UpcomingSessions) {
-				// Refresh the Upcoming tab.
-				// (Assuming upcomingTabData.Refresh() is the correct way to update its content.)
+				fmt.Println("🕒 Ticker: Data unchanged — refreshing UI for session state")
+				tabsContainer.Refresh()
 			}
 		}
 	}()

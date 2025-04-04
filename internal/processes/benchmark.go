@@ -9,7 +9,6 @@ import (
 
 var benchmarks = make(map[string]time.Time)
 
-// StartBenchmark records the current time for a given label if debug mode is enabled.
 func StartBenchmark(label string) {
 	if !config.Get().Debug.Enabled {
 		return
@@ -17,17 +16,12 @@ func StartBenchmark(label string) {
 	benchmarks[label] = time.Now()
 }
 
-// EndBenchmark prints the elapsed time since StartBenchmark for the given label.
 func EndBenchmark(label string) {
 	if !config.Get().Debug.Enabled {
 		return
 	}
-	start, exists := benchmarks[label]
-	if !exists {
-		fmt.Printf("[BENCHMARK] %s not found\n", label)
-		return
+	if start, ok := benchmarks[label]; ok {
+		duration := time.Since(start)
+		fmt.Printf("[BENCHMARK] %s: %s\n", label, duration.Round(time.Millisecond))
 	}
-	elapsed := time.Since(start)
-	fmt.Printf("[BENCHMARK] %s: %v\n", label, elapsed)
-	delete(benchmarks, label)
 }
